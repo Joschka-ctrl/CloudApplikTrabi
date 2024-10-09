@@ -1,0 +1,27 @@
+.Navbar{
+background-color: #363636;
+width: 100%;
+}
+.NavbarList{
+  display: flex; /* Use flexbox for horizontal alignment */
+  list-style-type: none; /* Remove bullet points */
+  padding: 10 0 0 0; /* Remove default padding */
+  margin-inline: 10; /* Remove default margin */
+}
+.NavbarItem {
+  margin-inline: 10px; /* Space between items */
+}
+  
+.NavbarItem a {
+  color: white; /* Link color */
+  text-decoration: none; /* Remove underline */
+}
+  
+.NavbarItem a:hover {
+  text-decoration: underline; /* Underline on hover */
+}
+.VerticalDivider{
+    background-color: #ffffff;
+    width: 1px;
+    
+}

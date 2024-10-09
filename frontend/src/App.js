@@ -1,5 +1,6 @@
 import "./App.css";
-import ContactSection from './pages/Contact.js';
+import Navbar from "./components/Navbar.js";
+import ContactSection from "./pages/Contact.js";
 import Defects from "./pages/Defects";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
@@ -8,6 +9,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <Router>
+          <Navbar />
           <Routes>
             <Route path="/" element={<ContactSection />} />
             <Route path="/defects" element={<Defects />} />
