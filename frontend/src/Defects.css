@@ -187,3 +187,20 @@
 .cancel-button:hover {
   background-color: #757575;
 }
+
+.refresh-button {
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 3px;
+}
+
+.buttons-top{
+    gap: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}

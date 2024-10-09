@@ -100,6 +100,7 @@ export default function Defects() {
         // Bearbeitungsmodus verlassen
         setEditingDefectId(null);
         setNewStatus("");
+        refreshData();
       })
       .catch((error) => {
         console.error("Fehler beim Aktualisieren des Defekts:", error);
@@ -123,18 +124,39 @@ export default function Defects() {
     }
   };
 
+  const refreshData = () => {
+    fetch("http://localhost:3015/defects")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Netzwerkantwort war nicht ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setData(data);
+      })
+      .catch((error) => {
+        console.error("Fehler beim Abrufen der Daten:", error);
+      });
+  };
+
   const editDefect = (defect) => {
     setEditingDefectId(defect.id);
     setNewStatus(defect.status);
   };
 
+
+
   return (
     <div className="defects-container">
       <h1>Defects</h1>
+      <div className="buttons-top">
+      <button className="refresh-button" onClick={refreshData}>Refresh</button>
       <button className="create-button" onClick={() => setShowForm(!showForm)}>
         {showForm ? "Close Form" : "Create Defect"}
       </button>
-
+      </div>
       {showForm && (
         <form className="defect-form" onSubmit={createDefect}>
           <h2>Create New Defect</h2>
@@ -219,7 +241,7 @@ export default function Defects() {
             <th>Detail Description</th>
             <th>Reporting Date</th>
             <th>Status</th>
-            <th>Actions</th> {/* Neue Spalte für Aktionen */}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
