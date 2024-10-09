@@ -99,3 +99,91 @@
 .delete-button:hover {
   background-color: #d32f2f;
 }
+
+.create-button {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 3px;
+  }
+  
+  .create-button:hover {
+    background-color: #1976d2;
+  }
+  
+  .defect-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .defect-form h2 {
+    margin-top: 0;
+  }
+  
+  .defect-form label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .defect-form input[type="text"],
+  .defect-form input[type="date"],
+  .defect-form textarea,
+  .defect-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+  }
+  
+  .defect-form textarea {
+    resize: vertical;
+  }
+  
+  .submit-button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+  }
+  
+  .submit-button:hover {
+    background-color: #45a049;
+  }
+
+
+  .save-button,
+.cancel-button {
+  padding: 5px 10px;
+  margin-right: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 3px;
+}
+
+.save-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #45a049;
+}
+
+.cancel-button:hover {
+  background-color: #757575;
+}
