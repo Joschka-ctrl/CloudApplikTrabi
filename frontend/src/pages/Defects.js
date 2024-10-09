@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 export default function Defects() {
-  const [data, setData] = useState("");
+  const [data, setData] = useState([]);
   useEffect(() => {
-    fetch("http://localhost:3015")
+    fetch("http://localhost:3015/defects")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        return response.text(); // Use .text() to read the response body
+        return response.json(); // Use .text() to read the response body
       })
       .then((data) => {
         console.log(data); // Log the fetched data
@@ -20,6 +20,9 @@ export default function Defects() {
   return (
     <div>
       <h1>Defects</h1>
+      {data.map((defect, idx) => {
+        return <p key={defect.id}>{defect.object}</p>;
+      })}
     </div>
   );
 }
