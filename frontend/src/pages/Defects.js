@@ -242,24 +242,7 @@ export default function Defects() {
         </form>
       )}
 
-<table className="defects-table">
-        <thead>
-          <tr>
-            <th>Object</th>
-            <th>Location</th>
-            <th>Short Description</th>
-            <th>Detail Description</th>
-            <th>Reporting Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((defect) => (
-    <h1>Defects</h1>
-    
-    {/* Defect Filter Component */}
- 
+
    
     <DefectFilter onFilterChange={handleFilterChange} />
 
