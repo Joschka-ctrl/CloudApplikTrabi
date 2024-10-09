@@ -1,11 +1,17 @@
 import "./App.css";
 import Defects from "./pages/Defects";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <Defects />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Defects />} />
+            <Route path="/defects" element={<Defects />} />
+          </Routes>
+        </Router>
       </header>
     </div>
   );
