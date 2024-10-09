@@ -1,0 +1,101 @@
+/* Defects.css */
+
+.defects-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .defects-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .defects-table th,
+  .defects-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .defects-table th {
+    background-color: #f2f2f2;
+    color: #333;
+  }
+  
+ 
+  
+  .defects-table tr:hover {
+    background-color: #434343;
+  }
+  
+  .status {
+    font-weight: bold;
+  }
+  
+  .status.open {
+    color: red;
+  }
+  
+  .status.closed {
+    color: green;
+  }
+  
+  .status["in work"] {
+    color: orange;
+  }
+  
+  @media screen and (max-width: 600px) {
+    .defects-table, .defects-table thead, .defects-table tbody, .defects-table th, .defects-table td, .defects-table tr {
+      display: block;
+    }
+  
+    .defects-table tr {
+      margin-bottom: 15px;
+    }
+  
+    .defects-table td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+    }
+  
+    .defects-table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      width: 50%;
+      padding-left: 15px;
+      font-weight: bold;
+      text-align: left;
+    }
+  }
+  
+
+  edit-button,
+.delete-button {
+  padding: 5px 10px;
+  margin-right: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 3px;
+}
+
+.edit-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.delete-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.edit-button:hover {
+  background-color: #45a049;
+}
+
+.delete-button:hover {
+  background-color: #d32f2f;
+}
