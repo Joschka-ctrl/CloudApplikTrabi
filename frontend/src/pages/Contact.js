@@ -5,19 +5,19 @@ import React from 'react';
 // Daten für die Kontakte
 const contacts = [
     {
-        firstName: 'Max',
-        lastName: 'Mustermann',
-        email: 'max.mustermann@example.com',
+        firstName: 'Sascha',
+        lastName: 'Kiebler',
+        email: 'sascha.kiebler@htwg-konstanz.de',
     },
     {
-        firstName: 'Erika',
-        lastName: 'Musterfrau',
-        email: 'erika.musterfrau@example.com',
+        firstName: 'Ben',
+        lastName: 'Keller',
+        email: 'be911Kell@htwg-konstanz.de',
     },
     {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
+        firstName: 'Joschka',
+        lastName: 'Peeters',
+        email: 'j0741pee@htwg-konstanz.de',
     },
 ];
 
