@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "../Defects.css";
+import DefectFilter from './defectFilters.js';
 
 export default function Defects() {
   const [data, setData] = useState([]);
+  const [filterText, setFilterText] = useState(''); // Status für den Filtertext
   const [showForm, setShowForm] = useState(false);
   const [editingDefectId, setEditingDefectId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -146,7 +148,15 @@ export default function Defects() {
     setNewStatus(defect.status);
   };
 
+  // Funktion zum Festlegen des Filtertextes
+  const handleFilterChange = (text) => {
+    setFilterText(text); // Aktualisiere den Filtertext
+  };
 
+  // Defekte filtern basierend auf dem Filtertext
+  const filteredDefects = data.filter(defect =>
+    defect.object.toLowerCase().includes(filterText.toLowerCase())
+  );
 
   return (
     <div className="defects-container">
@@ -232,20 +242,25 @@ export default function Defects() {
         </form>
       )}
 
-<table className="defects-table">
-        <thead>
-          <tr>
-            <th>Object</th>
-            <th>Location</th>
-            <th>Short Description</th>
-            <th>Detail Description</th>
-            <th>Reporting Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((defect) => (
+
+   
+    <DefectFilter onFilterChange={handleFilterChange} />
+
+
+    <table className="defects-table">
+      <thead>
+        <tr>
+          <th>Object</th>
+          <th>Location</th>
+          <th>Short Description</th>
+          <th>Detail Description</th>
+          <th>Reporting Date</th>
+          <th>Status</th>
+          <th>Actions</th> {/* Neue Spalte für Aktionen */}
+        </tr>
+      </thead>
+      <tbody>
+      {filteredDefects.map((defect) => (
             <tr key={defect.id}>
               <td>{defect.object}</td>
               <td>{defect.location}</td>
