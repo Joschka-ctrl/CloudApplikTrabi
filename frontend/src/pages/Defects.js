@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "../Defects.css";
+import DefectFilter from './defectFilters.js';
 
 export default function Defects() {
   const [data, setData] = useState([]);
+  const [filterText, setFilterText] = useState(''); // Status für den Filtertext
 
   useEffect(() => {
     fetch("http://localhost:3015/defects")
@@ -75,50 +77,67 @@ export default function Defects() {
     }
   };
 
+  // Funktion zum Festlegen des Filtertextes
+  const handleFilterChange = (text) => {
+    setFilterText(text); // Aktualisiere den Filtertext
+  };
+
+  // Defekte filtern basierend auf dem Filtertext
+  const filteredDefects = data.filter(defect =>
+    defect.object.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="defects-container">
-      <h1>Defects</h1>
-      <table className="defects-table">
-        <thead>
-          <tr>
-            <th>Object</th>
-            <th>Location</th>
-            <th>Short Description</th>
-            <th>Detail Description</th>
-            <th>Reporting Date</th>
-            <th>Status</th>
-            <th>Actions</th> {/* Neue Spalte für Aktionen */}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((defect) => (
+    <h1>Defects</h1>
+    
+    {/* Defect Filter Component */}
+ 
+   
+    <DefectFilter onFilterChange={handleFilterChange} />
+
+
+    <table className="defects-table">
+      <thead>
+        <tr>
+          <th>Object</th>
+          <th>Location</th>
+          <th>Short Description</th>
+          <th>Detail Description</th>
+          <th>Reporting Date</th>
+          <th>Status</th>
+          <th>Actions</th> {/* Neue Spalte für Aktionen */}
+        </tr>
+      </thead>
+      <tbody>
+      {filteredDefects.map((defect) => (
             <tr key={defect.id}>
-              <td>{defect.object}</td>
-              <td>{defect.location}</td>
-              <td>{defect.shortDescription}</td>
-              <td>{defect.detailDescription}</td>
-              <td>{defect.reportingDate}</td>
-              <td className={`status ${defect.status.toLowerCase()}`}>
-                {defect.status}
-              </td>
-              <td>
-                <button
-                  className="edit-button"
-                  onClick={() => editDefect(defect)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="delete-button"
-                  onClick={() => deleteDefect(defect.id)}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+            <td>{defect.object}</td>
+            <td>{defect.location}</td>
+            <td>{defect.shortDescription}</td>
+            <td>{defect.detailDescription}</td>
+            <td>{defect.reportingDate}</td>
+            <td className={`status ${defect.status.toLowerCase()}`}>
+              {defect.status}
+            </td>
+            <td>
+              <button
+                className="edit-button"
+                onClick={() => editDefect(defect)}
+              >
+                Edit
+              </button>
+              <button
+                className="delete-button"
+                onClick={() => deleteDefect(defect.id)}
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+);
 }
