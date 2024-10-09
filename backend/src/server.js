@@ -1,94 +1,132 @@
 const express = require("express");
 const app = express();
 const port = 3015;
+const db = require('./database'); 
 
 app.use(express.json());
 
-let defects = [
-  {
-    id: 1,
-    object: "Parkhaus am Stadtgraben",
-    location: "Entry to staircases in 2nd level",
-    shortDescription: "Door does not close properly",
-    detailDescription: "When closing the door, sometimes it doesn't latch properly.",
-    reportingDate: "2024-10-08",
-    status: "open",
-  },
-  // Weitere Dummy-Daten
-];
 
-// Alle Defects abrufen (mit optionalen Filtern)
-app.get('/defects', (req, res) => {
-  let filteredDefects = defects;
-  const { location, status } = req.query;
-
-  if (location) {
-    filteredDefects = filteredDefects.filter(d => d.location.toLowerCase().includes(location.toLowerCase()));
-  }
-  if (status) {
-    filteredDefects = filteredDefects.filter(d => d.status.toLowerCase() === status.toLowerCase());
-  }
-  res.json(filteredDefects);
-});
-
-// Einzelnes Defect abrufen
-app.get('/defects/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const defect = defects.find(d => d.id === id);
-  if (defect) {
-    res.json(defect);
-  } else {
-    res.status(404).json({ message: 'Defect nicht gefunden' });
-  }
-});
-
-// Neues Defect erstellen
+// **1. Defect erstellen**
 app.post('/defects', (req, res) => {
-  const newDefect = {
-    id: defects.length + 1,
-    object: req.body.object,
-    location: req.body.location,
-    shortDescription: req.body.shortDescription,
-    detailDescription: req.body.detailDescription,
-    reportingDate: req.body.reportingDate,
-    status: req.body.status,
-  };
-  defects.push(newDefect);
-  res.status(201).json(newDefect);
+  const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
+
+  // Validierung
+  if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status) {
+      return res.status(400).json({ error: 'Alle Felder sind erforderlich.' });
+  }
+  if (shortDescription.length > 80) {
+      return res.status(400).json({ error: 'Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.' });
+  }
+
+  const sql = `INSERT INTO defects (object, location, shortDescription, detailDescription, reportingDate, status)
+               VALUES (?, ?, ?, ?, ?, ?)`;
+  const params = [object, location, shortDescription, detailDescription, reportingDate, status];
+
+  db.run(sql, params, function(err) {
+      if (err) {
+          res.status(500).json({ error: err.message });
+      } else {
+          res.status(201).json({
+              id: this.lastID,
+              object,
+              location,
+              shortDescription,
+              detailDescription,
+              reportingDate,
+              status
+          });
+      }
+  });
 });
 
-// Defect aktualisieren
+// **2. Alle Defects abrufen**
+app.get('/defects', (req, res) => {
+  const { location, status } = req.query;
+  let sql = 'SELECT * FROM defects';
+  let params = [];
+
+  if (location && status) {
+      sql += ' WHERE location LIKE ? AND status = ?';
+      params.push(`%${location}%`, status);
+  } else if (location) {
+      sql += ' WHERE location LIKE ?';
+      params.push(`%${location}%`);
+  } else if (status) {
+      sql += ' WHERE status = ?';
+      params.push(status);
+  }
+
+  db.all(sql, params, (err, rows) => {
+      if (err) {
+          res.status(500).json({ error: err.message });
+      } else {
+          res.json(rows);
+      }
+  });
+});
+
+// **3. Einzelnes Defect abrufen**
+app.get('/defects/:id', (req, res) => {
+  const id = req.params.id;
+  const sql = 'SELECT * FROM defects WHERE id = ?';
+  const params = [id];
+
+  db.get(sql, params, (err, row) => {
+      if (err) {
+          res.status(500).json({ error: err.message });
+      } else if (row) {
+          res.json(row);
+      } else {
+          res.status(404).json({ error: 'Defect nicht gefunden.' });
+      }
+  });
+});
+
+// **4. Defect aktualisieren**
 app.put('/defects/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = defects.findIndex(d => d.id === id);
-  if (index !== -1) {
-    defects[index] = {
-      id: id,
-      object: req.body.object,
-      location: req.body.location,
-      shortDescription: req.body.shortDescription,
-      detailDescription: req.body.detailDescription,
-      reportingDate: req.body.reportingDate,
-      status: req.body.status,
-    };
-    res.json(defects[index]);
-  } else {
-    res.status(404).json({ message: 'Defect nicht gefunden' });
+  const id = req.params.id;
+  const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
+
+  // Validierung
+  if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status) {
+      return res.status(400).json({ error: 'Alle Felder sind erforderlich.' });
   }
+  if (shortDescription.length > 80) {
+      return res.status(400).json({ error: 'Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.' });
+  }
+
+  const sql = `UPDATE defects SET
+               object = ?, location = ?, shortDescription = ?, detailDescription = ?, reportingDate = ?, status = ?
+               WHERE id = ?`;
+  const params = [object, location, shortDescription, detailDescription, reportingDate, status, id];
+
+  db.run(sql, params, function(err) {
+      if (err) {
+          res.status(500).json({ error: err.message });
+      } else if (this.changes === 0) {
+          res.status(404).json({ error: 'Defect nicht gefunden.' });
+      } else {
+          res.json({ message: 'Defect aktualisiert.' });
+      }
+  });
 });
 
-// Defect löschen
+// **5. Defect löschen**
 app.delete('/defects/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = defects.findIndex(d => d.id === id);
-  if (index !== -1) {
-    defects.splice(index, 1);
-    res.json({ message: 'Defect gelöscht' });
-  } else {
-    res.status(404).json({ message: 'Defect nicht gefunden' });
-  }
-});
-  
+  const id = req.params.id;
+  const sql = 'DELETE FROM defects WHERE id = ?';
+  const params = [id];
+
+  db.run(sql, params, function(err) {
+      if (err) {
+          res.status(500).json({ error: err.message });
+      } else if (this.changes === 0) {
+          res.status(404).json({ error: 'Defect nicht gefunden.' });
+      } else {
+          res.json({ message: 'Defect gelöscht.' });
+      }
+  });
+}); 
 
 app.listen(port, () => {
   console.log("Listening on Port: " + port);
