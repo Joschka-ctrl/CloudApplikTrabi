@@ -1,27 +1,53 @@
 .Navbar{
 background-color: #363636;
 width: 100%;
+display: flex;
+align-items: center;
+height: 54px;
 }
 .NavbarList{
   display: flex; /* Use flexbox for horizontal alignment */
   list-style-type: none; /* Remove bullet points */
-  padding: 10 0 0 0; /* Remove default padding */
-  margin-inline: 10; /* Remove default margin */
+  padding: 0 0 0 0; /* Remove default padding */
+  margin-inline: 0; /* Remove default margin */
+  height: 100%;
 }
 .NavbarItem {
-  margin-inline: 10px; /* Space between items */
+  padding-inline: 10px; /* Space between items */
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
-  
+.NavbarItem.l{
+border-radius: 4px 0px 0px 4px;
+}
+.NavbarItem.m{
+border-radius: 0px;
+}
+.NavbarItem.r{
+border-radius: 0px 4px 4px 0px;
+}
+
+.NavbarItem:hover{
+    background-color: #484848;
+}
 .NavbarItem a {
   color: white; /* Link color */
   text-decoration: none; /* Remove underline */
+  height: 100%;
+  padding: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
   
 .NavbarItem a:hover {
-  text-decoration: underline; /* Underline on hover */
+  
 }
 .VerticalDivider{
-    background-color: #ffffff;
-    width: 1px;
-    
+    background-color: #aaaaaa;
+    width: 2px;
+    height: 80%;
+    border-radius: 1px;
+    align-self: center;
 }

@@ -6,11 +6,11 @@ const Navbar = () => {
   return (
     <nav className="Navbar">
       <ul className="NavbarList">
-        <li className="NavbarItem">
+        <li className="NavbarItem l">
           <Link to="/">Contact Section</Link>
         </li>
         <div className="VerticalDivider" />
-        <li className="NavbarItem">
+        <li className="NavbarItem r">
           <Link to="/defects">Defects</Link>
         </li>
       </ul>
