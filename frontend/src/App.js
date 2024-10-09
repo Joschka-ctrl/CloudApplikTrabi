@@ -9,7 +9,7 @@ function App() {
       <header className="App-header">
         <Router>
           <Routes>
-            <Route path="/" element={<Defects />} />
+            <Route path="/" element={<ContactSection />} />
             <Route path="/defects" element={<Defects />} />
           </Routes>
         </Router>
