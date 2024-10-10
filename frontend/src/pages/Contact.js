@@ -12,7 +12,7 @@ const contacts = [
     {
         firstName: 'Ben',
         lastName: 'Keller',
-        email: 'be911Kell@htwg-konstanz.de',
+        email: 'be911kel@htwg-konstanz.de',
     },
     {
         firstName: 'Joschka',
