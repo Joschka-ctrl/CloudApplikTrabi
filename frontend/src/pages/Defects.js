@@ -5,6 +5,7 @@ import DefectFilter from './defectFilters.js';
 export default function Defects() {
   const [data, setData] = useState([]);
   const [filterText, setFilterText] = useState(''); // Status für den Filtertext
+  const [filterType, setFilterType] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingDefectId, setEditingDefectId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -149,13 +150,14 @@ export default function Defects() {
   };
 
   // Funktion zum Festlegen des Filtertextes
-  const handleFilterChange = (text) => {
+  const handleFilterChange = (text,type) => {
+    setFilterType(type);
     setFilterText(text); // Aktualisiere den Filtertext
   };
 
   // Defekte filtern basierend auf dem Filtertext
   const filteredDefects = data.filter(defect =>
-    defect.object.toLowerCase().includes(filterText.toLowerCase())
+    defect[filterType || 'object'].toLowerCase().includes(filterText.toLowerCase())
   );
 
   return (
