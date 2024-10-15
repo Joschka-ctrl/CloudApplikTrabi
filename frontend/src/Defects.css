@@ -1,5 +1,3 @@
-/* Defects.css */
-
 .defects-container {
     padding: 20px;
     font-family: Arial, sans-serif;
@@ -39,10 +37,6 @@
   
   .status.closed {
     color: green;
-  }
-  
-  .status["in work"] {
-    color: orange;
   }
   
   @media screen and (max-width: 600px) {
