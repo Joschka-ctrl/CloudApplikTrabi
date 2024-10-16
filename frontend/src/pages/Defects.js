@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import DefectFilter from './defectFilters.js';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -172,28 +175,35 @@ export default function Defects() {
       </Button>
       </div>
       {showForm && (
-        <form className="defect-form" onSubmit={createDefect}>
+        <Form onSubmit={createDefect}>
           <h2>Create New Defect</h2>
-          <label>
+          <Row>
+          <Col>
+            <Form.Label >
             Object:
-            <input
+            <Form.Control
               type="text"
               name="object"
               value={newDefect.object}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+            </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Location:
-            <input
+            <Form.Control
               type="text"
               name="location"
               value={newDefect.location}
               onChange={handleInputChange}
               required
             />
-          </label>
+          </Form.Label>
+          </Col>
+          <Row>
+          <Col>
           <label>
             Short Description:
             <input
@@ -215,6 +225,9 @@ export default function Defects() {
               required
             ></textarea>
           </label>
+
+          </Col>
+          </Row>
           <label>
             Reporting Date:
             <input
@@ -240,10 +253,11 @@ export default function Defects() {
               <option value="rejected">Rejected</option>
             </select>
           </label>
+          </Row>
           <button type="submit" className="submit-button">
             Create Defect
           </button>
-        </form>
+        </Form>
       )}
 
 
@@ -251,7 +265,7 @@ export default function Defects() {
     <DefectFilter onFilterChange={handleFilterChange} />
 
 
-    <Table striped bordered hover size="sm" variant="dark">
+    <Table striped bordered hover size="sm" variant="light">
       <thead>
         <tr>
           <th>Object</th>

@@ -1,4 +1,4 @@
-import "./App.css";
+//import "./App.css";
 import Navbar from "./components/Navbar.js";
 import ContactSection from "./pages/Contact.js";
 import Defects from "./pages/Defects";
