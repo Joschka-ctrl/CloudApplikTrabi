@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.js";
 import ContactSection from "./pages/Contact.js";
 import Defects from "./pages/Defects";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App() {
   return (

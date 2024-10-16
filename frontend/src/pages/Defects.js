@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import "../Defects.css";
+//import "../Defects.css";
 import DefectFilter from './defectFilters.js';
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -164,10 +166,10 @@ export default function Defects() {
     <div className="defects-container">
       <h1>Defects</h1>
       <div className="buttons-top">
-      <button className="refresh-button" onClick={refreshData}>Refresh</button>
-      <button className="create-button" onClick={() => setShowForm(!showForm)}>
+      <Button variant="primary" onClick={refreshData}>Refresh</Button>
+      <Button variant="primary" onClick={() => setShowForm(!showForm)}>
         {showForm ? "Close Form" : "Create Defect"}
-      </button>
+      </Button>
       </div>
       {showForm && (
         <form className="defect-form" onSubmit={createDefect}>
@@ -249,7 +251,7 @@ export default function Defects() {
     <DefectFilter onFilterChange={handleFilterChange} />
 
 
-    <table className="defects-table">
+    <Table striped bordered hover size="sm" variant="dark">
       <thead>
         <tr>
           <th>Object</th>
@@ -258,7 +260,7 @@ export default function Defects() {
           <th>Detail Description</th>
           <th>Reporting Date</th>
           <th>Status</th>
-          <th>Actions</th> {/* Neue Spalte für Aktionen */}
+          <th>Actions</th> 
         </tr>
       </thead>
       <tbody>
@@ -306,25 +308,25 @@ export default function Defects() {
                   </>
                 ) : (
                   <>
-                    <button
-                      className="edit-button"
+                    <Button
+                      variant="success"
                       onClick={() => editDefect(defect)}
                     >
                       Edit
-                    </button>
-                    <button
-                      className="delete-button"
+                    </Button>
+                    <Button
+                      variant="danger"
                       onClick={() => deleteDefect(defect.id)}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </>
                 )}
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }
