@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
-import "../Defects.css";
+//import "../Defects.css";
 import DefectFilter from './defectFilters.js';
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -164,34 +169,41 @@ export default function Defects() {
     <div className="defects-container">
       <h1>Defects</h1>
       <div className="buttons-top">
-      <button className="refresh-button" onClick={refreshData}>Refresh</button>
-      <button className="create-button" onClick={() => setShowForm(!showForm)}>
+      <Button variant="primary" onClick={refreshData}>Refresh</Button>
+      <Button variant="primary" onClick={() => setShowForm(!showForm)}>
         {showForm ? "Close Form" : "Create Defect"}
-      </button>
+      </Button>
       </div>
       {showForm && (
-        <form className="defect-form" onSubmit={createDefect}>
+        <Form onSubmit={createDefect}>
           <h2>Create New Defect</h2>
-          <label>
+          <Row>
+          <Col>
+            <Form.Label >
             Object:
-            <input
+            <Form.Control
               type="text"
               name="object"
               value={newDefect.object}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+            </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Location:
-            <input
+            <Form.Control
               type="text"
               name="location"
               value={newDefect.location}
               onChange={handleInputChange}
               required
             />
-          </label>
+          </Form.Label>
+          </Col>
+          <Row>
+          <Col>
           <label>
             Short Description:
             <input
@@ -213,6 +225,9 @@ export default function Defects() {
               required
             ></textarea>
           </label>
+
+          </Col>
+          </Row>
           <label>
             Reporting Date:
             <input
@@ -238,10 +253,11 @@ export default function Defects() {
               <option value="rejected">Rejected</option>
             </select>
           </label>
+          </Row>
           <button type="submit" className="submit-button">
             Create Defect
           </button>
-        </form>
+        </Form>
       )}
 
 
@@ -249,7 +265,7 @@ export default function Defects() {
     <DefectFilter onFilterChange={handleFilterChange} />
 
 
-    <table className="defects-table">
+    <Table striped bordered hover size="sm" variant="light">
       <thead>
         <tr>
           <th>Object</th>
@@ -258,7 +274,7 @@ export default function Defects() {
           <th>Detail Description</th>
           <th>Reporting Date</th>
           <th>Status</th>
-          <th>Actions</th> {/* Neue Spalte für Aktionen */}
+          <th>Actions</th> 
         </tr>
       </thead>
       <tbody>
@@ -306,25 +322,25 @@ export default function Defects() {
                   </>
                 ) : (
                   <>
-                    <button
-                      className="edit-button"
+                    <Button
+                      variant="success"
                       onClick={() => editDefect(defect)}
                     >
                       Edit
-                    </button>
-                    <button
-                      className="delete-button"
+                    </Button>
+                    <Button
+                      variant="danger"
                       onClick={() => deleteDefect(defect.id)}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </>
                 )}
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }
