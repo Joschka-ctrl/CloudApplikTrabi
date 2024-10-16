@@ -202,11 +202,12 @@ export default function Defects() {
             />
           </Form.Label>
           </Col>
+          </Row>
           <Row>
           <Col>
-          <label>
+          <Form.Label>
             Short Description:
-            <input
+            <Form.Control
               type="text"
               name="shortDescription"
               value={newDefect.shortDescription}
@@ -214,33 +215,40 @@ export default function Defects() {
               maxLength="80"
               required
             />
-          </label>
-          <label>
+          </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Detail Description:
-            <textarea
+            <Form.Control as="textarea" rows={3}
               name="detailDescription"
               value={newDefect.detailDescription}
               onChange={handleInputChange}
               maxLength="1000"
               required
-            ></textarea>
-          </label>
+            ></Form.Control>
+          </Form.Label>
 
           </Col>
           </Row>
-          <label>
+
+          <Row>
+          <Col>
+          <Form.Label>
             Reporting Date:
-            <input
+            <Form.Control
               type="date"
               name="reportingDate"
               value={newDefect.reportingDate}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+          </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Status:
-            <select
+            <Form.Select
               name="status"
               value={newDefect.status}
               onChange={handleInputChange}
@@ -251,12 +259,14 @@ export default function Defects() {
               <option value="in work">In Work</option>
               <option value="closed">Closed</option>
               <option value="rejected">Rejected</option>
-            </select>
-          </label>
+            </Form.Select>
+          </Form.Label>
+
+          </Col>
           </Row>
-          <button type="submit" className="submit-button">
+          <Button type="submit" variant="success" >
             Create Defect
-          </button>
+          </Button>
         </Form>
       )}
 
@@ -287,7 +297,7 @@ export default function Defects() {
               <td>{defect.reportingDate}</td>
               <td>
                 {editingDefectId === defect.id ? (
-                  <select
+                  <Form.Select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
                   >
@@ -295,7 +305,7 @@ export default function Defects() {
                     <option value="in work">In Work</option>
                     <option value="closed">Closed</option>
                     <option value="rejected">Rejected</option>
-                  </select>
+                  </Form.Select>
                 ) : (
                   <span
                     className={`status ${defect.status.toLowerCase()}`}
