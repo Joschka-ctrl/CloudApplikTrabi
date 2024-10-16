@@ -22,9 +22,10 @@ export default function Defects() {
     reportingDate: "",
     status: "",
   });
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    fetch("http://localhost:3015/defects")
+    fetch(API_URL + "/defects")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Netzwerkantwort war nicht ok");
@@ -43,7 +44,7 @@ export default function Defects() {
   // Funktion zum Erstellen eines neuen Defekts
   const createDefect = (e) => {
     e.preventDefault();
-    fetch("http://localhost:3015/defects", {
+    fetch(API_URL + "/defects", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -133,7 +134,7 @@ export default function Defects() {
   };
 
   const refreshData = () => {
-    fetch("http://localhost:3015/defects")
+    fetch(API_URL + "/defects")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Netzwerkantwort war nicht ok");
