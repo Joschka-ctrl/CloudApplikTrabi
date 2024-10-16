@@ -1,6 +1,9 @@
 // src/ContactSection.js
 
 import React from 'react';
+import Button from 'react-bootstrap/Button';
+import Card from 'react-bootstrap/Card';
+
 
 // Daten für die Kontakte
 const contacts = [
@@ -23,27 +26,48 @@ const contacts = [
 
 const ContactSection = () => {
     return (
-        <div style={styles.container}>
+        <div>
             <h2>Kontakt</h2>
-            <ul style={styles.list}>
-                {contacts.map((contact, index) => (
-                    <li key={index} style={styles.item}>
-                        <h3>
-                            {contact.firstName} {contact.lastName}
-                        </h3>
-                        <p>Email: {contact.email}</p>
-                    </li>
-                ))}
-            </ul>
+            {contacts.map((contact, index) => (
+                <Card key={index} style={{ width: '18rem' }}>
+                    <Card.Body >
+                        <Card.Title> {contact.firstName} {contact.lastName}</Card.Title>
+                        <Card.Text><p>Email: {contact.email}</p></Card.Text>
+                        <Button variant="primary">Go somewhere</Button>
+                    </Card.Body>
+                </Card>
+            ))}
         </div>
     );
 };
+
+const BasicExample = () => {
+    return (
+        <Card style={{ width: '18rem' }}>
+            <Card.Img variant="top" src="holder.js/100px180" />
+            <Card.Body>
+                <Card.Title>Card Title</Card.Title>
+                <Card.Text>
+                    {contacts.map((contact, index) => (
+                        <li key={index} >
+                            <h3>
+                                {contact.firstName} {contact.lastName}
+                            </h3>
+                            <p>Email: {contact.email}</p>
+                        </li>
+                    ))}
+                </Card.Text>
+                <Button variant="primary">Go somewhere</Button>
+            </Card.Body>
+        </Card>
+    );
+}
 
 // Stil für die Komponente
 const styles = {
     container: {
         padding: '20px',
-     
+
         borderRadius: '5px',
         boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
     },
