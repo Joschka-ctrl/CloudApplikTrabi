@@ -9,7 +9,7 @@ import Col from 'react-bootstrap/Col';
 import Modal from 'react-bootstrap/Modal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
-import { Stack } from "react-bootstrap";
+import { OverlayTrigger, Stack, Tooltip } from "react-bootstrap";
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -175,9 +175,20 @@ export default function Defects() {
     defect[filterType || 'object'].toLowerCase().includes(filterText.toLowerCase())
   );
 
+  const renderTooltipAddDefect = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      Add Defect
+    </Tooltip>
+  );
+
+  const renderToolTipRefresh = (props) => (
+    <Tooltip id="button-tooltip" {...props}>
+      Refresh
+    </Tooltip>
+  )
+
   return (
-    <div className="defects-container">
-      <h1>Defects</h1>
+    <div>
       
         <Modal
         show={showForm}
@@ -292,7 +303,7 @@ export default function Defects() {
       </Modal>
 
 
-   
+   <h1>Defects</h1>
     <DefectFilter onFilterChange={handleFilterChange} />
 
 
@@ -300,16 +311,27 @@ export default function Defects() {
       <thead>
         <tr>
           <th className="text-center">
+            <OverlayTrigger
+        placement="top"
+        delay={{ show: 250, hide: 400 }}
+        overlay={renderToolTipRefresh}
+      >
       <Button 
         className="me-3"
         variant="outline-primary"  
         onClick={refreshData}>
           <FontAwesomeIcon icon={faArrowsRotate} />
       </Button>
-         
+      </OverlayTrigger>
+         <OverlayTrigger
+        placement="top"
+        delay={{ show: 250, hide: 400 }}
+        overlay={renderTooltipAddDefect}
+      >
           <Button variant="outline-primary" onClick={() => setShowForm(!showForm)}>
         <FontAwesomeIcon icon={faPlus} />
       </Button>
+      </OverlayTrigger>
           </th>
         </tr>
         <tr>
