@@ -22,7 +22,12 @@ export default function Defects() {
     reportingDate: "",
     status: "",
   });
-  const API_URL = process.env.REACT_APP_API_URL;
+  
+  const API_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3015" // Lokale Backend-URL
+    : process.env.REACT_APP_API_URL; // Produktions-Backend-URL
+
 
   useEffect(() => {
     fetch(API_URL + "/defects")
@@ -89,7 +94,7 @@ export default function Defects() {
 
     const updatedDefect = { ...defect, status: newStatus };
 
-    fetch(`http://localhost:3015/defects/${defectId}`, {
+    fetch(`${API_URL}/defects/${defectId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -118,7 +123,7 @@ export default function Defects() {
 
   const deleteDefect = (id) => {
     if (window.confirm("Sind Sie sicher, dass Sie diesen Defekt löschen möchten?")) {
-      fetch(`http://localhost:3015/defects/${id}`, {
+      fetch(`${API_URL}/defects/${id}`, {
         method: "DELETE",
       })
         .then((response) => {
