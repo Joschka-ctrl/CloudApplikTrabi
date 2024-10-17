@@ -2,6 +2,10 @@
 
 import React from 'react';
 
+
+import { Card, Button, Row, Col, Container } from 'react-bootstrap';
+
+
 // Daten für die Kontakte
 const contacts = [
     {
@@ -17,46 +21,46 @@ const contacts = [
     {
         firstName: 'Joschka',
         lastName: 'Peeters',
-        email: 'j0741pee@htwg-konstanz.de',
+        email: 'jo741pee@htwg-konstanz.de',
     },
 ];
 
+
+
 const ContactSection = () => {
     return (
-        <div style={styles.container}>
-            <h2>Kontakt</h2>
-            <ul style={styles.list}>
+        <Container className="mt-5">
+            <Row className="mt-5">
+            <h2 className="mt-5">Kontakt</h2>
+            </Row>
+            
+            <Row>
                 {contacts.map((contact, index) => (
-                    <li key={index} style={styles.item}>
-                        <h3>
-                            {contact.firstName} {contact.lastName}
-                        </h3>
-                        <p>Email: {contact.email}</p>
-                    </li>
+                    <Col key={index} xs={12} sm={12} md={6} lg={4} className="mb-4">
+                        <Card style={{ width: '18rem' }}>
+                            <Card.Body>
+                                <Card.Title>{contact.firstName} {contact.lastName}</Card.Title>
+                                <Card.Text style={{ minHeight: '100px' }}>
+                                   Email: {contact.email}
+                                </Card.Text>
+                                <Button
+                                    variant="primary"
+                                    onClick={() => handleEmailClick(contact.email)}
+                                >
+                                    E-Mail senden
+                                </Button>
+                                
+                            </Card.Body>
+                        </Card>
+                    </Col>
                 ))}
-            </ul>
-        </div>
+            </Row>
+        </Container>
     );
 };
 
-// Stil für die Komponente
-const styles = {
-    container: {
-        padding: '20px',
-     
-        borderRadius: '5px',
-        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
-    },
-    list: {
-        listStyleType: 'none',
-        padding: 0,
-    },
-    item: {
-        marginBottom: '15px',
-        padding: '10px',
-        border: '1px solid #ddd',
-        borderRadius: '4px',
-    },
-};
-
+const handleEmailClick = (email) => {
+    console.log(email);
+    window.location.href = `mailto:${email}?subject=Kontaktaufnahme,`;
+}; 
 export default ContactSection;

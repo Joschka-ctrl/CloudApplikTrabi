@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
-import "../Defects.css";
+//import "../Defects.css";
 import DefectFilter from './defectFilters.js';
+import Table from 'react-bootstrap/Table';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Modal from 'react-bootstrap/Modal';
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -18,8 +24,14 @@ export default function Defects() {
     status: "",
   });
 
+  const API_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3015" // Lokale Backend-URL
+    : process.env.REACT_APP_API_URL; // Produktions-Backend-URL
+
+
   useEffect(() => {
-    fetch("http://localhost:3015/defects")
+    fetch(API_URL + "/defects")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Netzwerkantwort war nicht ok");
@@ -38,7 +50,7 @@ export default function Defects() {
   // Funktion zum Erstellen eines neuen Defekts
   const createDefect = (e) => {
     e.preventDefault();
-    fetch("http://localhost:3015/defects", {
+    fetch(API_URL + "/defects", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -83,7 +95,7 @@ export default function Defects() {
 
     const updatedDefect = { ...defect, status: newStatus };
 
-    fetch(`http://localhost:3015/defects/${defectId}`, {
+    fetch(`${API_URL}/defects/${defectId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -112,7 +124,7 @@ export default function Defects() {
 
   const deleteDefect = (id) => {
     if (window.confirm("Sind Sie sicher, dass Sie diesen Defekt löschen möchten?")) {
-      fetch(`http://localhost:3015/defects/${id}`, {
+      fetch(`${API_URL}/defects/${id}`, {
         method: "DELETE",
       })
         .then((response) => {
@@ -128,7 +140,7 @@ export default function Defects() {
   };
 
   const refreshData = () => {
-    fetch("http://localhost:3015/defects")
+    fetch(API_URL + "/defects")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Netzwerkantwort war nicht ok");
@@ -164,37 +176,55 @@ export default function Defects() {
     <div className="defects-container">
       <h1>Defects</h1>
       <div className="buttons-top">
-      <button className="refresh-button" onClick={refreshData}>Refresh</button>
-      <button className="create-button" onClick={() => setShowForm(!showForm)}>
+      <Button variant="primary" onClick={refreshData}>Refresh</Button>
+      <Button variant="primary" onClick={() => setShowForm(!showForm)}>
         {showForm ? "Close Form" : "Create Defect"}
-      </button>
+      </Button>
       </div>
-      {showForm && (
-        <form className="defect-form" onSubmit={createDefect}>
-          <h2>Create New Defect</h2>
-          <label>
+        <Modal
+        show={showForm}
+        size="lg"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+      >
+        <Form onSubmit={createDefect} className="">
+        <Modal.Header closeButton onClick={() => setShowForm(false)}>
+        <Modal.Title id="contained-modal-title-vcenter">
+          Create New Defect
+        </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Row>
+          <Col>
+            <Form.Label >
             Object:
-            <input
+            <Form.Control
               type="text"
               name="object"
               value={newDefect.object}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+            </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Location:
-            <input
+            <Form.Control
               type="text"
               name="location"
               value={newDefect.location}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+          </Form.Label>
+          </Col>
+          </Row>
+          <Row>
+          <Col>
+          <Form.Label>
             Short Description:
-            <input
+            <Form.Control
               type="text"
               name="shortDescription"
               value={newDefect.shortDescription}
@@ -202,30 +232,43 @@ export default function Defects() {
               maxLength="80"
               required
             />
-          </label>
-          <label>
+          </Form.Label>
+          </Col>
+          <Col>
+          <Form.Label>
             Detail Description:
-            <textarea
+            <Form.Control 
+              as="textarea" 
+              rows={3}
               name="detailDescription"
               value={newDefect.detailDescription}
               onChange={handleInputChange}
               maxLength="1000"
               required
-            ></textarea>
-          </label>
-          <label>
+            ></Form.Control>
+          </Form.Label>
+
+          </Col>
+          </Row>
+          <Row>
+          <Col>
+          <Form.Label>
             Reporting Date:
-            <input
+            <Form.Control
               type="date"
               name="reportingDate"
               value={newDefect.reportingDate}
               onChange={handleInputChange}
               required
             />
-          </label>
-          <label>
+          </Form.Label>
+          </Col>
+          </Row>
+          <Row>
+          <Col>
+          <Form.Label>
             Status:
-            <select
+            <Form.Select
               name="status"
               value={newDefect.status}
               onChange={handleInputChange}
@@ -236,20 +279,26 @@ export default function Defects() {
               <option value="in work">In Work</option>
               <option value="closed">Closed</option>
               <option value="rejected">Rejected</option>
-            </select>
-          </label>
-          <button type="submit" className="submit-button">
+            </Form.Select>
+          </Form.Label>
+          </Col>
+          </Row>
+          <Button type="submit" variant="success">
             Create Defect
-          </button>
-        </form>
-      )}
+          </Button>
+        </Modal.Body>
+        <Modal.Footer>
+        <Button onClick={() => setShowForm(false)}>Close</Button>
+        </Modal.Footer>
+        </Form>
+      </Modal>
 
 
    
     <DefectFilter onFilterChange={handleFilterChange} />
 
 
-    <table className="defects-table">
+    <Table striped bordered hover size="sm" variant="light">
       <thead>
         <tr>
           <th>Object</th>
@@ -258,7 +307,7 @@ export default function Defects() {
           <th>Detail Description</th>
           <th>Reporting Date</th>
           <th>Status</th>
-          <th>Actions</th> {/* Neue Spalte für Aktionen */}
+          <th>Actions</th> 
         </tr>
       </thead>
       <tbody>
@@ -306,25 +355,25 @@ export default function Defects() {
                   </>
                 ) : (
                   <>
-                    <button
-                      className="edit-button"
+                    <Button
+                      variant="success"
                       onClick={() => editDefect(defect)}
                     >
                       Edit
-                    </button>
-                    <button
-                      className="delete-button"
+                    </Button>
+                    <Button
+                      variant="danger"
                       onClick={() => deleteDefect(defect.id)}
                     >
                       Delete
-                    </button>
+                    </Button>
                   </>
                 )}
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 }
