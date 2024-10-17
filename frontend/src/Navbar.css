@@ -7,9 +7,9 @@ width: 100%;
 display: flex;
 align-items: center;
 height: 54px;
+z-index: 1000;
 }
 .NavbarList{
-
   display: flex; /* Use flexbox for horizontal alignment */
   list-style-type: none; /* Remove bullet points */
   padding: 0 0 0 0; /* Remove default padding */
