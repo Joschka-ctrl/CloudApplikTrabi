@@ -7,6 +7,9 @@ import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Modal from 'react-bootstrap/Modal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { Stack } from "react-bootstrap";
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -175,12 +178,7 @@ export default function Defects() {
   return (
     <div className="defects-container">
       <h1>Defects</h1>
-      <div className="buttons-top">
-      <Button variant="primary" onClick={refreshData}>Refresh</Button>
-      <Button variant="primary" onClick={() => setShowForm(!showForm)}>
-        {showForm ? "Close Form" : "Create Defect"}
-      </Button>
-      </div>
+      
         <Modal
         show={showForm}
         size="lg"
@@ -301,6 +299,20 @@ export default function Defects() {
     <Table striped bordered hover size="sm" variant="light">
       <thead>
         <tr>
+          <th className="text-center">
+      <Button 
+        className="me-3"
+        variant="outline-primary"  
+        onClick={refreshData}>
+          <FontAwesomeIcon icon={faArrowsRotate} />
+      </Button>
+         
+          <Button variant="outline-primary" onClick={() => setShowForm(!showForm)}>
+        <FontAwesomeIcon icon={faPlus} />
+      </Button>
+          </th>
+        </tr>
+        <tr>
           <th>Object</th>
           <th>Location</th>
           <th>Short Description</th>
@@ -339,35 +351,35 @@ export default function Defects() {
               </td>
               <td>
                 {editingDefectId === defect.id ? (
-                  <>
-                    <button
-                      className="save-button"
+                  <Stack direction="horizontal" gap={2}>
+                    <Button
+                      variant="outline-success"
                       onClick={() => updateDefectStatus(defect.id)}
                     >
                       Save
-                    </button>
-                    <button
-                      className="cancel-button"
+                    </Button>
+                    <Button
+                      variant="outline-secondary"
                       onClick={() => setEditingDefectId(null)}
                     >
                       Cancel
-                    </button>
-                  </>
+                    </Button>
+                  </Stack>
                 ) : (
-                  <>
+                  <Stack direction="horizontal" gap={2}>
                     <Button
-                      variant="success"
+                      variant="outline-primary"
                       onClick={() => editDefect(defect)}
                     >
                       Edit
                     </Button>
                     <Button
-                      variant="danger"
+                      variant="outline-danger"
                       onClick={() => deleteDefect(defect.id)}
                     >
                       Delete
                     </Button>
-                  </>
+                  </Stack>
                 )}
               </td>
             </tr>
