@@ -188,7 +188,7 @@ export default function Defects() {
         centered
       >
         <Form onSubmit={createDefect} className="">
-        <Modal.Header closeButton>
+        <Modal.Header closeButton onClick={() => setShowForm(false)}>
         <Modal.Title id="contained-modal-title-vcenter">
           Create New Defect
         </Modal.Title>
