@@ -30,5 +30,6 @@
 **/values.dev.yaml
 **/build
 **/dist
+**/src/example.db
 LICENSE
 README.md
