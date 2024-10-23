@@ -7,7 +7,6 @@ const app = express();
 const port = 3015;
 // Importiere die Firestore-Instanz
 const db = require("./firestore.js");
-
 // Configure Multer middleware
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -16,12 +15,10 @@ const upload = multer({
 // Initialize Google Cloud Storage client
 const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
-  // keyFilename: "path/to/keyfile.json",
-  // projectId: "your-project-id",
+  projectId: "trabantparking",
 });
-const bucketName = "your-bucket-name"; // Replace with your bucket name
+const bucketName = "trabant_images"; // Replace with your bucket name
 const bucket = storage.bucket(bucketName);
-
 
 app.use(express.json());
 app.use(cors());
@@ -50,15 +47,13 @@ app.post("/defects", async (req, res) => {
       return res.status(400).json({ error: "Alle Felder sind erforderlich." });
     }
     if (shortDescription.length > 80) {
-      return res
-        .status(400)
-        .json({
-          error: "Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.",
-        });
+      return res.status(400).json({
+        error: "Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.",
+      });
     }
 
     // Firestore-Dokument erstellen
-    const docRef = await db.collection('defects').add({
+    const docRef = await db.collection("defects").add({
       object,
       location,
       shortDescription,
@@ -79,7 +74,6 @@ app.post("/defects", async (req, res) => {
       reportingDate,
       status,
     });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -90,15 +84,17 @@ app.get("/defects", async (req, res) => {
   try {
     const { location, status } = req.query;
 
-    let query = db.collection('defects');
+    let query = db.collection("defects");
 
     // Filter anwenden
     if (location && status) {
-      query = query.where('location', '==', location).where('status', '==', status);
+      query = query
+        .where("location", "==", location)
+        .where("status", "==", status);
     } else if (location) {
-      query = query.where('location', '==', location);
+      query = query.where("location", "==", location);
     } else if (status) {
-      query = query.where('status', '==', status);
+      query = query.where("status", "==", status);
     }
 
     // Daten abrufen
@@ -109,7 +105,6 @@ app.get("/defects", async (req, res) => {
     });
 
     res.json(defects);
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -119,7 +114,7 @@ app.get("/defects", async (req, res) => {
 app.get("/defects/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const docRef = db.collection('defects').doc(id);
+    const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -127,7 +122,6 @@ app.get("/defects/:id", async (req, res) => {
     }
 
     res.json({ id: doc.id, ...doc.data() });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -158,14 +152,12 @@ app.put("/defects/:id", async (req, res) => {
       return res.status(400).json({ error: "Alle Felder sind erforderlich." });
     }
     if (shortDescription.length > 80) {
-      return res
-        .status(400)
-        .json({
-          error: "Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.",
-        });
+      return res.status(400).json({
+        error: "Die Kurzbeschreibung darf maximal 80 Zeichen lang sein.",
+      });
     }
 
-    const docRef = db.collection('defects').doc(id);
+    const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -182,7 +174,6 @@ app.put("/defects/:id", async (req, res) => {
     });
 
     res.json({ message: "Defect aktualisiert." });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -192,7 +183,7 @@ app.put("/defects/:id", async (req, res) => {
 app.delete("/defects/:id", async (req, res) => {
   try {
     const id = req.params.id;
-    const docRef = db.collection('defects').doc(id);
+    const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -202,7 +193,6 @@ app.delete("/defects/:id", async (req, res) => {
     await docRef.delete();
 
     res.json({ message: "Defect gelöscht." });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -263,7 +253,9 @@ app.post(
           imageUrl: publicUrl,
         });
 
-        res.status(200).json({ message: "Bild hochgeladen.", imageUrl: publicUrl });
+        res
+          .status(200)
+          .json({ message: "Bild hochgeladen.", imageUrl: publicUrl });
       });
 
       stream.end(fileBuffer);
