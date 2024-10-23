@@ -10,8 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
     "cors": "^2.8.5",
     "express": "^4.21.1",
+    "firebase-admin": "^12.6.0",
     "sqlite3": "^5.1.7"
   }
 }
