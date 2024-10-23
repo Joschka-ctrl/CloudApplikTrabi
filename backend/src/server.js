@@ -1,9 +1,27 @@
+const multer = require("multer"); // For handling file uploads
+const { Storage } = require("@google-cloud/storage");
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = 3015;
 // Importiere die Firestore-Instanz
 const db = require("./firestore.js");
+
+// Configure Multer middleware
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
+
+// Initialize Google Cloud Storage client
+const storage = new Storage({
+  // Optional: specify credentials or project ID if not using default settings
+  // keyFilename: "path/to/keyfile.json",
+  // projectId: "your-project-id",
+});
+const bucketName = "your-bucket-name"; // Replace with your bucket name
+const bucket = storage.bucket(bucketName);
+
 
 app.use(express.json());
 app.use(cors());
@@ -189,6 +207,71 @@ app.delete("/defects/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// **6. Bild hochladen**
+app.post(
+  "/defects/:id/uploadPicture",
+  upload.single("picture"),
+  async (req, res) => {
+    try {
+      const id = req.params.id;
+
+      // Prüfen, ob das Defect existiert
+      const docRef = db.collection("defects").doc(id);
+      const doc = await docRef.get();
+
+      if (!doc.exists) {
+        return res.status(404).json({ error: "Defect nicht gefunden." });
+      }
+
+      // Prüfen, ob eine Datei hochgeladen wurde
+      if (!req.file) {
+        return res.status(400).json({ error: "Kein Bild hochgeladen." });
+      }
+
+      // Dateipuffer und -informationen abrufen
+      const fileBuffer = req.file.buffer;
+      const originalName = req.file.originalname;
+      const mimeType = req.file.mimetype;
+
+      // Eindeutigen Dateinamen erstellen
+      const fileName = `defects/${id}/${Date.now()}_${originalName}`;
+
+      // Datei zu Google Cloud Storage hochladen
+      const file = bucket.file(fileName);
+      const stream = file.createWriteStream({
+        metadata: {
+          contentType: mimeType,
+        },
+        resumable: false,
+      });
+
+      stream.on("error", (err) => {
+        console.error(err);
+        res.status(500).json({ error: "Fehler beim Hochladen des Bildes." });
+      });
+
+      stream.on("finish", async () => {
+        // Datei öffentlich lesbar machen
+        await file.makePublic();
+
+        // Öffentliche URL der Datei abrufen
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+
+        // Defect-Dokument mit der Bild-URL aktualisieren
+        await docRef.update({
+          imageUrl: publicUrl,
+        });
+
+        res.status(200).json({ message: "Bild hochgeladen.", imageUrl: publicUrl });
+      });
+
+      stream.end(fileBuffer);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 app.listen(port, () => {
   console.log("Listening on Port: " + port);

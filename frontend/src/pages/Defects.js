@@ -17,6 +17,7 @@ export default function Defects() {
     detailDescription: "",
     reportingDate: "",
     status: "",
+    file: null,
   });
 
   const API_URL = process.env.NODE_ENV === "development"
@@ -32,6 +33,10 @@ export default function Defects() {
 
   const createDefect = (e) => {
     e.preventDefault();
+
+    // Prepare defect data without the file
+    const { file, ...defectData } = newDefect;
+
     fetch(API_URL + "/defects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,6 +45,30 @@ export default function Defects() {
       .then((response) => response.json())
       .then((data) => {
         setData((prevData) => [...prevData, data]);
+
+        // If a file is selected, upload it
+        if (file) {
+          const formData = new FormData();
+          formData.append("picture", file);
+
+          fetch(`${API_URL}/defects/${data.id}/uploadPicture`, {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json())
+            .then((uploadData) => {
+              // Optionally update the defect with the image URL
+              setData((prevData) =>
+                prevData.map((defect) =>
+                  defect.id === data.id
+                    ? { ...defect, imageUrl: uploadData.imageUrl }
+                    : defect
+                )
+              );
+            })
+            .catch(console.error);
+        }
+
         setNewDefect({
           object: "",
           location: "",
@@ -56,6 +85,11 @@ export default function Defects() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewDefect({ ...newDefect, [name]: value });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setNewDefect((prevDefect) => ({ ...prevDefect, file }));
   };
 
   const updateDefectStatus = (defectId) => {
@@ -97,10 +131,6 @@ export default function Defects() {
   const editDefect = (defect) => {
     setEditingDefectId(defect.id);
     setNewStatus(defect.status);
-  };
-
-  const handleFileChange = (e) => {
-    setNewDefect({ ...newDefect, file: e.target.files[0] }); // Save the selected file
   };
   
   const handleFilterChange = (text, type) => {
