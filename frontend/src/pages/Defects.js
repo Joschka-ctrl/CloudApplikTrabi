@@ -99,6 +99,10 @@ export default function Defects() {
     setNewStatus(defect.status);
   };
 
+  const handleFileChange = (e) => {
+    setNewDefect({ ...newDefect, file: e.target.files[0] }); // Save the selected file
+  };
+  
   const handleFilterChange = (text, type) => {
     setFilterType(type);
     setFilterText(text);
@@ -132,6 +136,7 @@ export default function Defects() {
         onSubmit={createDefect}
         defect={newDefect}
         handleInputChange={handleInputChange}
+        handleFileChange={handleFileChange}
       />
     </div>
   );

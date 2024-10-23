@@ -2,7 +2,7 @@
 var admin = require("firebase-admin");
 
 // Lade den privaten Schlüssel deines Service-Kontos
-const serviceAccount = require('./Downloads/cloud-eigl-firebase-adminsdk-5gdjf-15af4bd2c6.json');
+const serviceAccount = require('../../../../secret/gauth.json');
 
 // Initialisiere Firebase
 admin.initializeApp({

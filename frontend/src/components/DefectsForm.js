@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Form, Modal, Row, Col } from 'react-bootstrap';
 
-export default function DefectForm({ show, onClose, onSubmit, defect, handleInputChange }) {
+export default function DefectForm({ show, onClose, onSubmit, defect, handleInputChange, handleFileChange }) {
   return (
     <Modal show={show} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
       <Form onSubmit={onSubmit}>
@@ -96,6 +96,19 @@ export default function DefectForm({ show, onClose, onSubmit, defect, handleInpu
                   <option value="closed">Closed</option>
                   <option value="rejected">Rejected</option>
                 </Form.Select>
+              </Form.Label>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <Form.Label>
+                Upload File:
+                <Form.Control
+                  type="file"
+                  name="file"
+                  onChange={handleFileChange} // Handle file input change
+                  required
+                />
               </Form.Label>
             </Col>
           </Row>
