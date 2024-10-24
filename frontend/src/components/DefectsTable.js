@@ -4,11 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 
 export default function DefectTable({
-  data,
   filteredDefects,
-  filterText,
-  filterType,
-  onFilterChange,
   editDefect,
   deleteDefect,
   refreshData,
