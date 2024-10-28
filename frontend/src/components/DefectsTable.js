@@ -10,10 +10,8 @@ export default function DefectTable({
   editingDefectId,
   newStatus,
   setNewStatus,
-  updateDefectStatus,
   showDefectDetail,
   defectDetailId,
-  toggleDetailPage,
 }) {
   const renderTooltipAddDefect = (props) => (
     <Tooltip id="button-tooltip" {...props}>
@@ -72,7 +70,7 @@ export default function DefectTable({
         </thead>
         <tbody>
           {filteredDefects.map((defect) => (
-            <tr key={defect.id} onClick={() => toggleDetailPage(defect)}>
+            <tr key={defect.id} onClick={() => openDefect(defect.id)}>
               <td>{defect.object}</td>
               <td>{defect.location}</td>
               <td>{defect.shortDescription}</td>

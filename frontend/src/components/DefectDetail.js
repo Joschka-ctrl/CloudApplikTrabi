@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  Button,
   Col,
   Container,
   Image,
@@ -10,7 +11,13 @@ import {
   Stack,
 } from "react-bootstrap";
 
-export default function DefectDetail({ show, defectId, onClose }) {
+export default function DefectDetail({
+  show,
+  defectId,
+  onClose,
+  editDefect,
+  deleteDefect,
+}) {
   const [defect, setDefect] = useState({ id: "undefined" });
 
   const API_URL =
@@ -25,6 +32,10 @@ export default function DefectDetail({ show, defectId, onClose }) {
       .catch(console.error);
   }, [API_URL, defectId]);
 
+  const callEditDefect = () => {
+    editDefect(defect);
+  };
+
   return (
     <Modal show={show} size="xl" centered>
       <ModalHeader className="pb-0" closeButton onClick={onClose}>
@@ -37,6 +48,28 @@ export default function DefectDetail({ show, defectId, onClose }) {
       </ModalHeader>
       <ModalBody>
         <Container>
+          <Row>
+          <Stack direction="horizontal" gap={3} style={{ width: "100%" }}>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    onClose();
+                    setTimeout(callEditDefect, 50);
+                  }}
+                >
+                  Bearbeiten
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    onClose();
+                    deleteDefect(defectId);
+                  }}
+                >
+                  Löschen
+                </Button>
+              </Stack>
+          </Row>
           <Row className="my-4">
             <Col lg={6} md={12} className="d-flex flex-column gap-3">
               <h5 className="fw-bold text-secondary">
@@ -75,12 +108,18 @@ export default function DefectDetail({ show, defectId, onClose }) {
               className="d-flex justify-content-center align-items-start"
             >
               <div
-                style={{ width: "256px", height: "256px", overflow: "hidden" }}
+                style={{
+                  width: "80%",
+                  overflow: "hidden",
+                }}
               >
                 <Image
                   fluid
                   src={`${API_URL}/image/${defect.imageUrl}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </div>
             </Col>

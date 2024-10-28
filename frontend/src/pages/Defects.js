@@ -3,7 +3,7 @@ import DefectTable from "../components/DefectsTable.js";
 import DefectForm from "../components/DefectsForm.js";
 import DefectDetail from "../components/DefectDetail.js";
 import DefectFilter from './defectFilters.js';
-import DefectDetail from "../components/DefectsDetail.js";
+import EditDefect from "../components/EditDefect.js";
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -12,8 +12,9 @@ export default function Defects() {
   const [showDefectDetail, setShowDefectDetail] = useState(false);
   const [detailedDefectId, setDetailedDefectId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [showDetailPage, setShowDetailPage] = useState(false);
+  const [showEditDefectPage, setShowEditDefectPage] = useState(false);
   const [detailDefect, setDetailDefect] = useState(null);
+  const [editingDefectId,setEditingDefectId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newDefect, setNewDefect] = useState({
     object: "",
@@ -163,7 +164,7 @@ export default function Defects() {
 
   const toggleDetailPage = (defect) => {
     setDetailDefect(defect);
-    setShowDetailPage(!showDetailPage);
+    setShowEditDefectPage(!showEditDefectPage);
   };
 
   const updateDefect = (updatedDefect) => {
@@ -177,7 +178,7 @@ export default function Defects() {
         setData((prevData) =>
           prevData.map((defect) => (defect.id === data.id ? data : defect))
         );
-        setShowDetailPage(false);
+        setShowEditDefectPage(false);
         refreshData();
       })
       .catch(console.error);
@@ -188,7 +189,7 @@ export default function Defects() {
       fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
         .then(() => {
           setData((prevData) => prevData.filter((defect) => defect.id !== id));
-          setShowDetailPage(false);
+          setShowEditDefectPage(false);
         })
         .catch(console.error);
     }
@@ -198,6 +199,8 @@ export default function Defects() {
     <div className='d-flex justify-content-center flex-column'>
       <h1>Defects</h1>
       <DefectFilter onFilterChange={handleFilterChange} />
+      <p>Editing State: {showEditDefectPage}</p>
+      {showEditDefectPage ? true : false}
       <DefectTable
         filteredDefects={data}
         refreshData={refreshData}
@@ -220,16 +223,16 @@ export default function Defects() {
         show={showDefectDetail}
         defectId={detailedDefectId}
         onClose={() => setShowDefectDetail(false)}
+        editDefect={(defect)=>{setDetailDefect(defect);setShowEditDefectPage(true);console.log("Opening Edit Defect Dialog", showEditDefectPage)}}
+        deleteDefect={deleteDefect}
       />
-      {showDetailPage && detailDefect && (
-        <DefectDetail
-          show={showDetailPage}
-          onClose={toggleDetailPage}
+      <EditDefect
+          show={showEditDefectPage}
+          onClose={()=>setShowEditDefectPage(false)}
           defect={detailDefect}
           updateDefect={updateDefect}
           deleteDefect={deleteDefectDetail}
         />
-      )}
     </div>
   );
 }

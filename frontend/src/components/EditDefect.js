@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 
-export default function DefectDetail({ defect, show, onClose, updateDefect, deleteDefect }) {
+export default function EditDefect({ defect, show, onClose, updateDefect, deleteDefect }) {
   const [editedDefect, setEditedDefect] = useState(defect || {});
 
   useEffect(() => {
