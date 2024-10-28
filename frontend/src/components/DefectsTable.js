@@ -1,7 +1,8 @@
-import React from 'react';
-import { Button, Table, Stack, OverlayTrigger, Tooltip } from 'react-bootstrap';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { Button, Table, Stack, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 export default function DefectTable({
   filteredDefects,
@@ -12,7 +13,9 @@ export default function DefectTable({
   editingDefectId,
   newStatus,
   setNewStatus,
-  updateDefectStatus
+  updateDefectStatus,
+  showDefectDetail,
+  defectDetailId,
 }) {
   const renderTooltipAddDefect = (props) => (
     <Tooltip id="button-tooltip" {...props}>
@@ -25,6 +28,11 @@ export default function DefectTable({
       Refresh
     </Tooltip>
   );
+
+  const openDefect = (id) => {
+    showDefectDetail(true);
+    defectDetailId(id);
+  };
 
   return (
     <div>
@@ -60,10 +68,9 @@ export default function DefectTable({
             <th>Object</th>
             <th>Location</th>
             <th>Short Description</th>
-            <th>Detail Description</th>
             <th>Reporting Date</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th className="text-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +79,6 @@ export default function DefectTable({
               <td>{defect.object}</td>
               <td>{defect.location}</td>
               <td>{defect.shortDescription}</td>
-              <td>{defect.detailDescription}</td>
               <td>{defect.reportingDate}</td>
               <td>
                 {editingDefectId === defect.id ? (
@@ -109,6 +115,14 @@ export default function DefectTable({
                   </Stack>
                 ) : (
                   <Stack direction="horizontal" gap={2}>
+                    <Button
+                      variant="outline-info"
+                      onClick={() => {
+                        openDefect(defect.id);
+                      }}
+                    >
+                      Open
+                    </Button>
                     <Button
                       variant="outline-primary"
                       onClick={() => editDefect(defect)}

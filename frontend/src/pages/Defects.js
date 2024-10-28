@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import DefectTable from "../components/DefectsTable.js";
 import DefectForm from "../components/DefectsForm.js";
-import DefectFilter from './defectFilters.js';
+import DefectFilter from "./defectFilters.js";
+import DefectDetail from "../components/DefectDetail.js";
 
 export default function Defects() {
   const [data, setData] = useState([]);
-  const [filterText, setFilterText] = useState('');
-  const [filterType, setFilterType] = useState('');
+  const [filterText, setFilterText] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [showDefectDetail, setShowDefectDetail] = useState(false);
+  const [detailedDefectId, setDetailedDefectId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingDefectId, setEditingDefectId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -20,9 +23,10 @@ export default function Defects() {
     file: null,
   });
 
-  const API_URL = process.env.NODE_ENV === "development"
-    ? "http://localhost:3015"
-    : process.env.REACT_APP_API_URL;
+  const API_URL =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3015"
+      : process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     fetch(API_URL + "/defects")
@@ -115,24 +119,31 @@ export default function Defects() {
 
   const deleteDefect = (id) => {
     if (window.confirm("Delete this defect?")) {
-    fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
-      .then(() => setData((prevData) => prevData.filter((defect) => defect.id !== id)))
-      .catch(console.error);
+      fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
+        .then(() =>
+          setData((prevData) => prevData.filter((defect) => defect.id !== id))
+        )
+        .catch(console.error);
     }
   };
 
   const refreshData = async () => {
     if (filterText && filterType) {
-    await
-      fetch(API_URL + "/defects?filterType=" + filterType + "&filterText=" + filterText)
-      .then((response) => response.json())
-      .then(setData)
-      .catch(console.error);
+      await fetch(
+        API_URL +
+          "/defects?filterType=" +
+          filterType +
+          "&filterText=" +
+          filterText
+      )
+        .then((response) => response.json())
+        .then(setData)
+        .catch(console.error);
     } else {
-    fetch(API_URL + "/defects")
-      .then((response) => response.json())
-      .then(setData)
-      .catch(console.error);
+      fetch(API_URL + "/defects")
+        .then((response) => response.json())
+        .then(setData)
+        .catch(console.error);
     }
   };
 
@@ -140,7 +151,7 @@ export default function Defects() {
     setEditingDefectId(defect.id);
     setNewStatus(defect.status);
   };
-  
+
   const handleFilterChange = (text, type) => {
     setFilterType(type);
     setFilterText(text);
@@ -164,6 +175,8 @@ export default function Defects() {
         newStatus={newStatus}
         setNewStatus={setNewStatus}
         updateDefectStatus={updateDefectStatus}
+        showDefectDetail={setShowDefectDetail}
+        defectDetailId={setDetailedDefectId}
       />
       <DefectForm
         show={showForm}
@@ -172,6 +185,11 @@ export default function Defects() {
         defect={newDefect}
         handleInputChange={handleInputChange}
         handleFileChange={handleFileChange}
+      />
+      <DefectDetail
+        show={showDefectDetail}
+        defectId={detailedDefectId}
+        onClose={() => setShowDefectDetail(false)}
       />
     </div>
   );

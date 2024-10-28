@@ -84,21 +84,23 @@ app.get("/defects", async (req, res) => {
   try {
     const { filterType, filterText } = req.query;
     const allowedFilterFields = [
-      'object',
-      'location',
-      'shortDescription',
-      'detailDescription',
-      'reportingDate',
-      'status',
+      "object",
+      "location",
+      "shortDescription",
+      "detailDescription",
+      "reportingDate",
+      "status",
     ];
 
     let query = db.collection("defects");
 
     if (filterType && filterText) {
       if (allowedFilterFields.includes(filterType)) {
-        query = query.where(filterType, '>=', filterText).where(filterType, '<=', filterText + '\uf8ff');
+        query = query
+          .where(filterType, ">=", filterText)
+          .where(filterType, "<=", filterText + "\uf8ff");
       } else {
-        return res.status(400).json({ error: 'Invalid filter field.' });
+        return res.status(400).json({ error: "Invalid filter field." });
       }
     }
 
@@ -112,6 +114,7 @@ app.get("/defects", async (req, res) => {
     res.json(defects);
   } catch (err) {
     res.status(500).json({ error: err.message });
+    console.log(err.message);
   }
 });
 
