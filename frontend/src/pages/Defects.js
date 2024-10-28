@@ -121,11 +121,19 @@ export default function Defects() {
     }
   };
 
-  const refreshData = () => {
+  const refreshData = async () => {
+    if (filterText && filterType) {
+    await
+      fetch(API_URL + "/defects?filterType=" + filterType + "&filterText=" + filterText)
+      .then((response) => response.json())
+      .then(setData)
+      .catch(console.error);
+    } else {
     fetch(API_URL + "/defects")
       .then((response) => response.json())
       .then(setData)
       .catch(console.error);
+    }
   };
 
   const editDefect = (defect) => {
@@ -138,19 +146,16 @@ export default function Defects() {
     setFilterText(text);
   };
 
-  const filteredDefects = data.filter((defect) =>
-    defect[filterType || 'object'].toLowerCase().includes(filterText.toLowerCase())
-  );
+  useEffect(() => {
+    refreshData();
+  }, [filterText, filterType]);
 
   return (
     <div>
       <h1>Defects</h1>
       <DefectFilter onFilterChange={handleFilterChange} />
       <DefectTable
-        data={data}
-        filteredDefects={filteredDefects}
-        filterText={filterText}
-        filterType={filterType}
+        filteredDefects={data}
         editDefect={editDefect}
         deleteDefect={deleteDefect}
         refreshData={refreshData}

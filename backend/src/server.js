@@ -82,19 +82,24 @@ app.post("/defects", async (req, res) => {
 // **2. Alle Defects abrufen**
 app.get("/defects", async (req, res) => {
   try {
-    const { location, status } = req.query;
+    const { filterType, filterText } = req.query;
+    const allowedFilterFields = [
+      'object',
+      'location',
+      'shortDescription',
+      'detailDescription',
+      'reportingDate',
+      'status',
+    ];
 
     let query = db.collection("defects");
 
-    // Filter anwenden
-    if (location && status) {
-      query = query
-        .where("location", "==", location)
-        .where("status", "==", status);
-    } else if (location) {
-      query = query.where("location", "==", location);
-    } else if (status) {
-      query = query.where("status", "==", status);
+    if (filterType && filterText) {
+      if (allowedFilterFields.includes(filterType)) {
+        query = query.where(filterType, '>=', filterText).where(filterType, '<=', filterText + '\uf8ff');
+      } else {
+        return res.status(400).json({ error: 'Invalid filter field.' });
+      }
     }
 
     // Daten abrufen
