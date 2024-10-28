@@ -5,14 +5,12 @@ import { faPlus, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 
 export default function DefectTable({
   filteredDefects,
-  editDefect,
-  deleteDefect,
   refreshData,
   toggleForm,
   editingDefectId,
   newStatus,
   setNewStatus,
-  updateDefectStatus
+  toggleDetailPage,
 }) {
   const renderTooltipAddDefect = (props) => (
     <Tooltip id="button-tooltip" {...props}>
@@ -60,19 +58,16 @@ export default function DefectTable({
             <th>Object</th>
             <th>Location</th>
             <th>Short Description</th>
-            <th>Detail Description</th>
             <th>Reporting Date</th>
             <th>Status</th>
-            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredDefects.map((defect) => (
-            <tr key={defect.id}>
+            <tr key={defect.id} onClick={() => toggleDetailPage(defect)}>
               <td>{defect.object}</td>
               <td>{defect.location}</td>
               <td>{defect.shortDescription}</td>
-              <td>{defect.detailDescription}</td>
               <td>{defect.reportingDate}</td>
               <td>
                 {editingDefectId === defect.id ? (
@@ -89,39 +84,6 @@ export default function DefectTable({
                   <span className={`status ${defect.status.toLowerCase()}`}>
                     {defect.status}
                   </span>
-                )}
-              </td>
-              <td>
-                {editingDefectId === defect.id ? (
-                  <Stack direction="horizontal" gap={2}>
-                    <Button
-                      variant="outline-success"
-                      onClick={() => updateDefectStatus(defect.id)}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline-secondary"
-                      onClick={() => setNewStatus(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Stack direction="horizontal" gap={2}>
-                    <Button
-                      variant="outline-primary"
-                      onClick={() => editDefect(defect)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      onClick={() => deleteDefect(defect.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Stack>
                 )}
               </td>
             </tr>
