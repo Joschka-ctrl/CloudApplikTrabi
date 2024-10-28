@@ -105,13 +105,13 @@ export default function DefectDetail({ defect, show, onClose, updateDefect, dele
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="danger" onClick={() => deleteDefect(defect.id)}>
+        <Button variant="outline-danger" onClick={() => deleteDefect(defect.id)}>
           Löschen
         </Button>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="outline-secondary" onClick={onClose}>
           Abbrechen
         </Button>
-        <Button variant="primary" onClick={handleSave}>
+        <Button variant="outline-primary" onClick={handleSave}>
           Speichern
         </Button>
       </Modal.Footer>

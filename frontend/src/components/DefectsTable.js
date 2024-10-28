@@ -26,7 +26,7 @@ export default function DefectTable({
 
   return (
     <div>
-      <Table striped bordered hover size="sm" variant="light">
+      <Table striped bordered hover size="sm" variant="light" style={{cursor: "pointer"}}>
         <thead>
           <tr>
             <th className="text-center">
