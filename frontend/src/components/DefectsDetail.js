@@ -90,10 +90,17 @@ export default function DefectDetail({ defect, show, onClose, updateDefect, dele
           </Form.Group>
           <Form.Group controlId="formImage">
             <Form.Label>Bild</Form.Label>
-            {/* Platzhalter für das Bild, Implementierung folgt später */}
+            <br/>
+            {editedDefect.imageUrl && (
+              <img
+                src={editedDefect.imageUrl}
+                alt="Defect Image"
+                style={{ maxWidth: '100%', maxHeight: '200px' }}
+              />
+            ) ||
             <div style={{ width: '100%', height: '200px', backgroundColor: '#e9ecef' }}>
               Bild wird hier angezeigt
-            </div>
+            </div>}
           </Form.Group>
         </Form>
       </Modal.Body>
