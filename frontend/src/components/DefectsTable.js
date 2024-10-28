@@ -2,12 +2,9 @@ import React from "react";
 import { Button, Table, Stack, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
-import { useNavigate } from "react-router-dom";
 
 export default function DefectTable({
   filteredDefects,
-  editDefect,
-  deleteDefect,
   refreshData,
   toggleForm,
   editingDefectId,
@@ -16,6 +13,7 @@ export default function DefectTable({
   updateDefectStatus,
   showDefectDetail,
   defectDetailId,
+  toggleDetailPage,
 }) {
   const renderTooltipAddDefect = (props) => (
     <Tooltip id="button-tooltip" {...props}>
@@ -36,7 +34,7 @@ export default function DefectTable({
 
   return (
     <div>
-      <Table striped bordered hover size="sm" variant="light">
+      <Table striped bordered hover size="sm" variant="light" style={{cursor: "pointer"}}>
         <thead>
           <tr>
             <th className="text-center">
@@ -70,12 +68,11 @@ export default function DefectTable({
             <th>Short Description</th>
             <th>Reporting Date</th>
             <th>Status</th>
-            <th className="text-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody>
           {filteredDefects.map((defect) => (
-            <tr key={defect.id}>
+            <tr key={defect.id} onClick={() => toggleDetailPage(defect)}>
               <td>{defect.object}</td>
               <td>{defect.location}</td>
               <td>{defect.shortDescription}</td>
@@ -95,47 +92,6 @@ export default function DefectTable({
                   <span className={`status ${defect.status.toLowerCase()}`}>
                     {defect.status}
                   </span>
-                )}
-              </td>
-              <td>
-                {editingDefectId === defect.id ? (
-                  <Stack direction="horizontal" gap={2}>
-                    <Button
-                      variant="outline-success"
-                      onClick={() => updateDefectStatus(defect.id)}
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      variant="outline-secondary"
-                      onClick={() => setNewStatus(null)}
-                    >
-                      Cancel
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Stack direction="horizontal" gap={2}>
-                    <Button
-                      variant="outline-info"
-                      onClick={() => {
-                        openDefect(defect.id);
-                      }}
-                    >
-                      Open
-                    </Button>
-                    <Button
-                      variant="outline-primary"
-                      onClick={() => editDefect(defect)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      onClick={() => deleteDefect(defect.id)}
-                    >
-                      Delete
-                    </Button>
-                  </Stack>
                 )}
               </td>
             </tr>

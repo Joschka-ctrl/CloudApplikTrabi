@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import DefectTable from "../components/DefectsTable.js";
 import DefectForm from "../components/DefectsForm.js";
-import DefectFilter from "./defectFilters.js";
 import DefectDetail from "../components/DefectDetail.js";
+import DefectFilter from './defectFilters.js';
+import DefectDetail from "../components/DefectsDetail.js";
 
 export default function Defects() {
   const [data, setData] = useState([]);
@@ -11,7 +12,8 @@ export default function Defects() {
   const [showDefectDetail, setShowDefectDetail] = useState(false);
   const [detailedDefectId, setDetailedDefectId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [editingDefectId, setEditingDefectId] = useState(null);
+  const [showDetailPage, setShowDetailPage] = useState(false);
+  const [detailDefect, setDetailDefect] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newDefect, setNewDefect] = useState({
     object: "",
@@ -38,19 +40,17 @@ export default function Defects() {
   const createDefect = (e) => {
     e.preventDefault();
 
-    // Prepare defect data without the file
     const { file, ...defectData } = newDefect;
 
     fetch(API_URL + "/defects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newDefect),
+      body: JSON.stringify(defectData),
     })
       .then((response) => response.json())
       .then((data) => {
         setData((prevData) => [...prevData, data]);
 
-        // If a file is selected, upload it
         if (file) {
           const formData = new FormData();
           formData.append("picture", file);
@@ -61,7 +61,6 @@ export default function Defects() {
           })
             .then((response) => response.json())
             .then((uploadData) => {
-              // Optionally update the defect with the image URL
               setData((prevData) =>
                 prevData.map((defect) =>
                   defect.id === data.id
@@ -80,6 +79,7 @@ export default function Defects() {
           detailDescription: "",
           reportingDate: "",
           status: "",
+          file: null,
         });
         setShowForm(false);
       })
@@ -161,17 +161,47 @@ export default function Defects() {
     refreshData();
   }, [filterText, filterType]);
 
+  const toggleDetailPage = (defect) => {
+    setDetailDefect(defect);
+    setShowDetailPage(!showDetailPage);
+  };
+
+  const updateDefect = (updatedDefect) => {
+    fetch(`${API_URL}/defects/${updatedDefect.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedDefect),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setData((prevData) =>
+          prevData.map((defect) => (defect.id === data.id ? data : defect))
+        );
+        setShowDetailPage(false);
+        refreshData();
+      })
+      .catch(console.error);
+  };
+
+  const deleteDefectDetail = (id) => {
+    if (window.confirm("Diesen Defekt löschen?")) {
+      fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
+        .then(() => {
+          setData((prevData) => prevData.filter((defect) => defect.id !== id));
+          setShowDetailPage(false);
+        })
+        .catch(console.error);
+    }
+  };
+
   return (
-    <div>
+    <div className='d-flex justify-content-center flex-column'>
       <h1>Defects</h1>
       <DefectFilter onFilterChange={handleFilterChange} />
       <DefectTable
         filteredDefects={data}
-        editDefect={editDefect}
-        deleteDefect={deleteDefect}
         refreshData={refreshData}
         toggleForm={() => setShowForm(!showForm)}
-        editingDefectId={editingDefectId}
         newStatus={newStatus}
         setNewStatus={setNewStatus}
         updateDefectStatus={updateDefectStatus}
@@ -191,6 +221,15 @@ export default function Defects() {
         defectId={detailedDefectId}
         onClose={() => setShowDefectDetail(false)}
       />
+      {showDetailPage && detailDefect && (
+        <DefectDetail
+          show={showDetailPage}
+          onClose={toggleDetailPage}
+          defect={detailDefect}
+          updateDefect={updateDefect}
+          deleteDefect={deleteDefectDetail}
+        />
+      )}
     </div>
   );
 }
