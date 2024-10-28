@@ -250,12 +250,12 @@ app.post(
 
         // Defect-Dokument mit der Bild-URL aktualisieren
         await docRef.update({
-          imageUrl: publicUrl,
+          imageUrl: file.id,
         });
 
         res
           .status(200)
-          .json({ message: "Bild hochgeladen.", imageUrl: publicUrl });
+          .json({ message: "Bild hochgeladen.", imageUrl: file.id });
       });
 
       stream.end(fileBuffer);
@@ -264,6 +264,21 @@ app.post(
     }
   }
 );
+
+app.get("/image/:fileName", async (req, res) => {
+  const fileName = req.params.fileName;
+  const file = bucket.file(fileName);
+
+  file
+    .createReadStream()
+    .on("error", (err) => {
+      res.status(500).send("Error fetching image");
+    })
+    .on("response", (response) => {
+      res.setHeader("Content-Type", response.headers["content-type"]);
+    })
+    .pipe(res);
+});
 
 app.listen(port, () => {
   console.log("Listening on Port: " + port);
