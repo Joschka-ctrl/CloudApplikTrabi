@@ -5,7 +5,7 @@ export default function DefectForm({ show, onClose, onSubmit, defect, handleInpu
   return (
     <Modal show={show} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
       <Form onSubmit={onSubmit}>
-        <Modal.Header closeButton onClick={onClose}>
+        <Modal.Header closeButton onHide={onClose}>
           <Modal.Title id="contained-modal-title-vcenter">
             {defect.id ? 'Edit Defect' : 'Create New Defect'}
           </Modal.Title>

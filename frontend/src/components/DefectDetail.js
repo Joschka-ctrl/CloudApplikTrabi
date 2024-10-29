@@ -1,3 +1,9 @@
+import {
+  faDeleteLeft,
+  faPenToSquare,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
 import {
   Button,
@@ -30,46 +36,58 @@ export default function DefectDetail({
       .then((response) => response.json())
       .then(setDefect)
       .catch(console.error);
-  }, [API_URL, defectId]);
+      console.log("Fetching Defect Detail");
+  }, [API_URL, defectId, show]);
 
   const callEditDefect = () => {
     editDefect(defect);
   };
 
   return (
-    <Modal show={show} size="xl" centered>
-      <ModalHeader className="pb-0" closeButton onClick={onClose}>
+    <Modal show={show} size="xl" centered backdrop="static">
+      <Modal.Header className="pb-0" closeButton onHide={onClose}>
         <Stack direction="horizontal" style={{ width: "100%" }}>
           <h3 className="fw-bold">Defektdetails</h3>
-          <p className="ms-auto me-4 text-muted small mb-0 align-self-end">
-            ID: {defectId}
-          </p>
-        </Stack>
-      </ModalHeader>
-      <ModalBody>
-        <Container>
-          <Row>
-          <Stack direction="horizontal" gap={3} style={{ width: "100%" }}>
-                <Button
-                  variant="primary"
+          <Stack>
+            <div className="ms-auto me-4">
+              <Stack
+                direction="horizontal"
+                gap={3}
+                style={{ width: "100%" }}
+                className="text-muted"
+              >
+                <div
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    if (window.confirm("Möchten Sie diesen Defekt löschen?")) {
+                      console.log("Deleting Defect");
+                      onClose();
+                      deleteDefect(defectId);
+                    }
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTrash} size={24} />
+                </div>
+                <div
+                  style={{ cursor: "pointer" }}
                   onClick={() => {
                     onClose();
                     setTimeout(callEditDefect, 50);
                   }}
                 >
-                  Bearbeiten
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={() => {
-                    onClose();
-                    deleteDefect(defectId);
-                  }}
-                >
-                  Löschen
-                </Button>
+                  <FontAwesomeIcon icon={faPenToSquare} size={24} />
+                </div>
               </Stack>
-          </Row>
+              <p className="text-muted small mb-0 align-self-end">
+                ID: {defectId}
+              </p>
+            </div>
+          </Stack>
+        </Stack>
+      </Modal.Header>
+      <ModalBody>
+        <Container>
+          <Row></Row>
           <Row className="my-4">
             <Col lg={6} md={12} className="d-flex flex-column gap-3">
               <h5 className="fw-bold text-secondary">

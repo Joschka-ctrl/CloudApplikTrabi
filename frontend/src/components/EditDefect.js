@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 
-export default function EditDefect({ defect, show, onClose, updateDefect, deleteDefect }) {
+export default function EditDefect({ defect, show, onClose, updateDefect, deleteDefect, backToDetail }) {
   const [editedDefect, setEditedDefect] = useState(defect || {});
 
   useEffect(() => {
@@ -108,10 +108,10 @@ export default function EditDefect({ defect, show, onClose, updateDefect, delete
         <Button variant="outline-danger" onClick={() => deleteDefect(defect.id)}>
           Löschen
         </Button>
-        <Button variant="outline-secondary" onClick={onClose}>
+        <Button variant="outline-secondary" onClick={()=>{onClose(); backToDetail(defect.id);}}>
           Abbrechen
         </Button>
-        <Button variant="outline-primary" onClick={handleSave}>
+        <Button variant="outline-primary" onClick={()=>{handleSave(); onClose(); setTimeout(()=>{backToDetail(defect.id)},250);}}>
           Speichern
         </Button>
       </Modal.Footer>

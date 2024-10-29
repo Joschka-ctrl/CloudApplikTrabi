@@ -128,6 +128,14 @@ export default function Defects() {
     }
   };
 
+  const deleteDefectNoDialog = (id) => {
+      fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
+        .then(() =>
+          setData((prevData) => prevData.filter((defect) => defect.id !== id))
+        )
+        .catch(console.error);
+  };
+
   const refreshData = async () => {
     if (filterText && filterType) {
       await fetch(
@@ -178,7 +186,6 @@ export default function Defects() {
         setData((prevData) =>
           prevData.map((defect) => (defect.id === data.id ? data : defect))
         );
-        setShowEditDefectPage(false);
         refreshData();
       })
       .catch(console.error);
@@ -224,14 +231,18 @@ export default function Defects() {
         defectId={detailedDefectId}
         onClose={() => setShowDefectDetail(false)}
         editDefect={(defect)=>{setDetailDefect(defect);setShowEditDefectPage(true);console.log("Opening Edit Defect Dialog", showEditDefectPage)}}
-        deleteDefect={deleteDefect}
+        deleteDefect={deleteDefectNoDialog}
       />
       <EditDefect
           show={showEditDefectPage}
           onClose={()=>setShowEditDefectPage(false)}
           defect={detailDefect}
           updateDefect={updateDefect}
-          deleteDefect={deleteDefectDetail}
+          deleteDefect={deleteDefectNoDialog}
+          backToDetail={(defectId) => {
+            setShowDefectDetail(true);
+            setDetailedDefectId(defectId);
+          }}
         />
     </div>
   );
