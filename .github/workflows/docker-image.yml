@@ -18,7 +18,7 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-    - name: Authenticate Docker with Google Cloud
+    - name: Authenticate Docker with Google Cloud bidde
       run: |
         gcloud auth configure-docker
 
