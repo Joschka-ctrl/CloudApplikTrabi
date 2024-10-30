@@ -25,20 +25,20 @@ jobs:
     # Build and push Docker image for Frontend
     - name: Build Frontend Docker image
       run: |
-        docker build -t frontend-server:latest -f frontend/Dockerfile ./frontend
+        docker build -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
 
     - name: Tag Docker image
       run: |
-        docker tag frontend-server:latest europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest
+        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1
 
     - name: Push Frontend Docker image
       run: |
-        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest
+        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1
 
     # Deploy Frontend to Cloud Run
     - name: Deploy Frontend to Cloud Run
       run: |
-        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
+        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1 --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
 
     # Build and push Docker image for Backend
     - name: Build Backend Docker image
