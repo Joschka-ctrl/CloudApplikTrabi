@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DefectTable from "../components/DefectsTable.js";
 import DefectForm from "../components/DefectsForm.js";
 import DefectDetail from "../components/DefectDetail.js";
-import DefectFilter from './defectFilters.js';
+import DefectFilter from "./defectFilters.js";
 import EditDefect from "../components/EditDefect.js";
 
 export default function Defects() {
@@ -14,7 +14,7 @@ export default function Defects() {
   const [showForm, setShowForm] = useState(false);
   const [showEditDefectPage, setShowEditDefectPage] = useState(false);
   const [detailDefect, setDetailDefect] = useState(null);
-  const [editingDefectId,setEditingDefectId] = useState(null);
+  const [editingDefectId, setEditingDefectId] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newDefect, setNewDefect] = useState({
     object: "",
@@ -50,7 +50,7 @@ export default function Defects() {
     })
       .then((response) => response.json())
       .then((data) => {
-        setData((prevData) => [...prevData, data]);
+        setData((prevData) => [...prevData, data]); 
 
         if (file) {
           const formData = new FormData();
@@ -129,11 +129,11 @@ export default function Defects() {
   };
 
   const deleteDefectNoDialog = (id) => {
-      fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
-        .then(() =>
-          setData((prevData) => prevData.filter((defect) => defect.id !== id))
-        )
-        .catch(console.error);
+    fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
+      .then(() =>
+        setData((prevData) => prevData.filter((defect) => defect.id !== id))
+      )
+      .catch(console.error);
   };
 
   const refreshData = async () => {
@@ -203,7 +203,7 @@ export default function Defects() {
   };
 
   return (
-    <div className='d-flex justify-content-center flex-column'>
+    <div className="d-flex justify-content-center flex-column">
       <h1>Defects</h1>
       <DefectFilter onFilterChange={handleFilterChange} />
       <p>Editing State: {showEditDefectPage}</p>
@@ -230,20 +230,24 @@ export default function Defects() {
         show={showDefectDetail}
         defectId={detailedDefectId}
         onClose={() => setShowDefectDetail(false)}
-        editDefect={(defect)=>{setDetailDefect(defect);setShowEditDefectPage(true);console.log("Opening Edit Defect Dialog", showEditDefectPage)}}
+        editDefect={(defect) => {
+          setDetailDefect(defect);
+          setShowEditDefectPage(true);
+          console.log("Opening Edit Defect Dialog", showEditDefectPage);
+        }}
         deleteDefect={deleteDefectNoDialog}
       />
       <EditDefect
-          show={showEditDefectPage}
-          onClose={()=>setShowEditDefectPage(false)}
-          defect={detailDefect}
-          updateDefect={updateDefect}
-          deleteDefect={deleteDefectNoDialog}
-          backToDetail={(defectId) => {
-            setShowDefectDetail(true);
-            setDetailedDefectId(defectId);
-          }}
-        />
+        show={showEditDefectPage}
+        onClose={() => setShowEditDefectPage(false)}
+        defect={detailDefect}
+        updateDefect={updateDefect}
+        deleteDefect={deleteDefectNoDialog}
+        backToDetail={(defectId) => {
+          setShowDefectDetail(true);
+          setDetailedDefectId(defectId);
+        }}
+      />
     </div>
   );
 }

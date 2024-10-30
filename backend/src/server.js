@@ -15,9 +15,9 @@ const upload = multer({
 // Initialize Google Cloud Storage client
 const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
-  projectId: "trabantparking",
+  projectId: "trabantparking-stage",
 });
-const bucketName = "trabant_images"; // Replace with your bucket name
+const bucketName = "trabant_images_stage"; // Replace with your bucket name
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
@@ -114,7 +114,7 @@ app.get("/defects", async (req, res) => {
     res.json(defects);
   } catch (err) {
     res.status(500).json({ error: err.message });
-    console.log(err.message);
+    console.log("Error getting defects", err);
   }
 });
 
@@ -250,12 +250,6 @@ app.post(
       });
 
       stream.on("finish", async () => {
-        // Datei öffentlich lesbar machen
-        await file.makePublic();
-
-        // Öffentliche URL der Datei abrufen
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
-
         // Defect-Dokument mit der Bild-URL aktualisieren
         await docRef.update({
           imageUrl: file.id,

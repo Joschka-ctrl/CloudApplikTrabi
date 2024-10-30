@@ -32,7 +32,14 @@ export default function DefectTable({
 
   return (
     <div>
-      <Table striped bordered hover size="sm" variant="light" style={{cursor: "pointer"}}>
+      <Table
+        striped
+        bordered
+        hover
+        size="sm"
+        variant="light"
+        style={{ cursor: "pointer" }}
+      >
         <thead>
           <tr>
             <th className="text-center">
@@ -69,31 +76,37 @@ export default function DefectTable({
           </tr>
         </thead>
         <tbody>
-          {filteredDefects.map((defect) => (
-            <tr key={defect.id} onClick={() => openDefect(defect.id)}>
-              <td>{defect.object}</td>
-              <td>{defect.location}</td>
-              <td>{defect.shortDescription}</td>
-              <td>{defect.reportingDate}</td>
-              <td>
-                {editingDefectId === defect.id ? (
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value)}
-                  >
-                    <option value="open">Open</option>
-                    <option value="in work">In Work</option>
-                    <option value="closed">Closed</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                ) : (
-                  <span className={`status ${defect.status.toLowerCase()}`}>
-                    {defect.status}
-                  </span>
-                )}
-              </td>
+          {Array.isArray(filteredDefects) && filteredDefects.length > 0 ? (
+            filteredDefects.map((defect) => (
+              <tr key={defect.id} onClick={() => openDefect(defect.id)}>
+                <td>{defect.object}</td>
+                <td>{defect.location}</td>
+                <td>{defect.shortDescription}</td>
+                <td>{defect.reportingDate}</td>
+                <td>
+                  {editingDefectId === defect.id ? (
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value)}
+                    >
+                      <option value="open">Open</option>
+                      <option value="in work">In Work</option>
+                      <option value="closed">Closed</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  ) : (
+                    <span className={`status ${defect.status.toLowerCase()}`}>
+                      {defect.status}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5">No defects available</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
     </div>
