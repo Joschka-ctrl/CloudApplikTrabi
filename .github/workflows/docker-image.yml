@@ -25,7 +25,7 @@ jobs:
     # Build and push Docker image for Frontend
     - name: Build Frontend Docker image
       run: |
-        docker build -t ${{ secrets.GCP_PROJECT_ID }}/frontend-server:latest -f frontend/Dockerfile ./frontend
+        docker build -t frontend-server:latest -f frontend/Dockerfile ./frontend
 
     - name: Tag Docker image
       run: |
@@ -43,7 +43,7 @@ jobs:
     # Build and push Docker image for Backend
     - name: Build Backend Docker image
       run: |
-        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend-server:latest -f backend/Dockerfile ./backend
+        docker build -t backend-server:latest -f backend/Dockerfile ./backend
 
     - name: Tag Docker Image
       run: |
