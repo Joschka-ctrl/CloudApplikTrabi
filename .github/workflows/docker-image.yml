@@ -29,11 +29,11 @@ jobs:
 
     - name: Tag Docker image
       run: |
-        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1
+        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
 
     - name: Push Frontend Docker image
       run: |
-        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1
+        docker push europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
 
     # Deploy Frontend to Cloud Run
     - name: Deploy Frontend to Cloud Run
