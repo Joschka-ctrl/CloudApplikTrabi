@@ -38,7 +38,7 @@ jobs:
     # Deploy Frontend to Cloud Run
     - name: Deploy Frontend to Cloud Run
       run: |
-        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:1.1.1 --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
+        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1 --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
 
     # Build and push Docker image for Backend
     - name: Build Backend Docker image
@@ -47,13 +47,13 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag backend-server:latest europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest
+        docker tag backend-server:latest europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest
 
     - name: Push Backend Docker image
       run: |
-        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest
+        docker push europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest
 
     # Deploy Backend to Cloud Run
     - name: Deploy Backend to Cloud Run
       run: |
-        gcloud run deploy trabbiback --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3015 --memory=1Gi
+        gcloud run deploy trabbiback --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3015 --memory=1Gi
