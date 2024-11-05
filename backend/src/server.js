@@ -12,12 +12,14 @@ const upload = multer({
   storage: multer.memoryStorage(),
 });
 
+// Dynamisch den Bucket basierend auf dem Projekt festlegen
+const projectId = process.env.GOOGLE_CLOUD_PROJECT || "trabantparking";
 // Initialize Google Cloud Storage client
 const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
-  projectId: "trabantparking-stage",
+  projectId: projectId,
 });
-const bucketName = "trabant_images_stage"; // Replace with your bucket name
+const bucketName = `trabant_images`; // Dynamischer Bucket-Name basierend auf dem Projekt
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
