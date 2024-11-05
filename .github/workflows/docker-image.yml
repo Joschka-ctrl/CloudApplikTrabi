@@ -20,7 +20,7 @@ jobs:
 
     - name: Authenticate Docker with Google Cloud bidde jz
       run: |
-        gcloud auth configure-docker
+        gcloud auth configure-docker europe-west1-docker.pkg.dev
 
     # Build and push Docker image for Frontend
     - name: Build Frontend Docker image
