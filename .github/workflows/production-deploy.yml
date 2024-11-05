@@ -68,14 +68,14 @@ jobs:
       run: |
         docker push europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
 
-        # Deploy Frontend to Cloud Run with Backend URL as environment variable
-        - name: Deploy Frontend to Cloud Run
-          run: |
-            gcloud run deploy trabbifront \
-              --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1 \
-              --platform=managed \
-              --region=europe-west1 \
-              --allow-unauthenticated \
-              --port=3000 \
-              --memory=1Gi \
-              --set-env-vars REACT_APP_API_URL=${{ env.REACT_APP_API_URL }}
+    # Deploy Frontend to Cloud Run with Backend URL as environment variable
+    - name: Deploy Frontend to Cloud Run
+      run: |
+        gcloud run deploy trabbifront \
+          --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1 \
+          --platform=managed \
+          --region=europe-west1 \
+          --allow-unauthenticated \
+          --port=3000 \
+          --memory=1Gi \
+          --set-env-vars REACT_APP_API_URL=${{ env.REACT_APP_API_URL }}
