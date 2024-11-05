@@ -19,7 +19,7 @@ const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
   projectId: projectId,
 });
-const bucketName = `trabant_images`; // Dynamischer Bucket-Name basierend auf dem Projekt
+const bucketName = `${projectId}_images`; // Dynamischer Bucket-Name basierend auf dem Projekt
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
