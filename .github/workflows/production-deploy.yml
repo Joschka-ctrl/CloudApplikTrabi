@@ -18,34 +18,16 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
 
-    - name: Authenticate Docker with Google Cloud bidde jz
+    - name: Authenticate Docker with Google Cloud
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
-
-    # Build and push Docker image for Frontend
-    - name: Build Frontend Docker image
-      run: |
-        docker build -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
-
-    - name: Tag Docker image
-      run: |
-        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
-
-    - name: Push Frontend Docker image
-      run: |
-        docker push europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
-
-    # Deploy Frontend to Cloud Run
-    - name: Deploy Frontend to Cloud Run
-      run: |
-        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1 --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
 
     # Build and push Docker image for Backend
     - name: Build Backend Docker image
       run: |
         docker build -t backend-server:latest -f backend/Dockerfile ./backend
 
-    - name: Tag Docker Image
+    - name: Tag Backend Docker Image
       run: |
         docker tag backend-server:latest europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest
 
@@ -55,5 +37,44 @@ jobs:
 
     # Deploy Backend to Cloud Run
     - name: Deploy Backend to Cloud Run
+      id: deploy-backend
       run: |
-        gcloud run deploy trabbiback --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3015 --memory=1Gi
+        gcloud run deploy trabbiback \
+          --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/backend-server:latest \
+          --platform=managed \
+          --region=europe-west1 \
+          --allow-unauthenticated \
+          --port=3015 \
+          --memory=1Gi
+
+    # Get Backend URL
+    - name: Get Backend URL
+      id: get-backend-url
+      run: |
+        REACT_APP_API_URL=$(gcloud run services describe trabbiback --platform managed --region europe-west1 --format 'value(status.url)')
+        echo "REACT_APP_API_URL=${REACT_APP_API_URL}" >> $GITHUB_ENV
+
+    # Build and push Docker image for Frontend
+    - name: Build Frontend Docker image
+      run: |
+        docker build -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
+
+    - name: Tag Frontend Docker Image
+      run: |
+        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
+
+    - name: Push Frontend Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1
+
+    # Deploy Frontend to Cloud Run with Backend URL as environment variable
+    - name: Deploy Frontend to Cloud Run
+      run: |
+        gcloud run deploy trabbifront \
+          --image=europe-west1-docker.pkg.dev/trabantparking-prod/docker-repo/frontend-server:1.1.1 \
+          --platform=managed \
+          --region=europe-west1 \
+          --allow-unauthenticated \
+          --port=3000 \
+          --memory=1Gi \
+          --set-env-vars REACT_APP_API_URL=${{ env.REACT_APP_API_URL }}
