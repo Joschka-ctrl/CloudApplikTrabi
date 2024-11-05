@@ -25,7 +25,7 @@ jobs:
     # Build and push Docker image for Backend
     - name: Build Backend Docker image
       run: |
-        docker build -t backend-server:latest -f backend/Dockerfile ./backend
+        docker build --build-arg BUCKET_ENV=_prod -t backend-server:latest -f backend/Dockerfile ./backend
 
     - name: Tag Backend Docker Image
       run: |

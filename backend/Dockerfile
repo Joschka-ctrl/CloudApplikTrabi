@@ -11,6 +11,8 @@ FROM node:${NODE_VERSION}-alpine
 # Use production node environment by default.
 ENV NODE_ENV production
 
+ARG BUCKET_ENV
+ENV BUCKET_ENV=${BUCKET_ENV}
 
 WORKDIR /usr/src/app
 

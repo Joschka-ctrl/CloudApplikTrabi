@@ -19,7 +19,10 @@ const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
   projectId: projectId,
 });
-const bucketName = `${projectId}_images`; // Dynamischer Bucket-Name basierend auf dem Projekt
+
+const bucket_env = process.env.BUCKET_ENV || ""; // Standardmäßig wird der Bucket für die Entwicklung verwendet
+const bucketName = `trabant_images${bucket_env}`; // Dynamischer Bucket-Name basierend auf dem Projekt
+console.log("Using bucket: " + bucketName);
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
