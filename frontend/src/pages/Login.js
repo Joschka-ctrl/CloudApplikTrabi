@@ -2,18 +2,21 @@
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { redirect, useNavigate } from "react-router-dom";
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       onLogin(userCredential.user); // Benutzer nach erfolgreichem Login zurückgeben
-      
+      console.log(userCredential.user);
+      navigate("/defects");
     } catch (err) {
       setError("Login failed. Please check your credentials.");
     }

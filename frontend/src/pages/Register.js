@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { redirect } from "react-router-dom";
 
 function Register({ onRegister }) {
   const [email, setEmail] = useState("");
@@ -13,6 +14,8 @@ function Register({ onRegister }) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       onRegister(userCredential.user); // Benutzer nach erfolgreicher Registrierung zurückgeben
+      console.log(userCredential.user);
+      redirect("/defects");
     } catch (err) {
       setError("Registration failed. Please try again.");
     }

@@ -5,8 +5,14 @@ import DefectForm from "../components/DefectsForm.js";
 import DefectDetail from "../components/DefectDetail.js";
 import DefectFilter from "./defectFilters.js";
 import EditDefect from "../components/EditDefect.js";
+import { useNavigate } from "react-router-dom";
 
-export default function Defects() {
+export default function Defects({ onLogin }) {
+  const navigate = useNavigate();
+  if (!user) {
+    navigate("/login");
+  }
+    
   const [data, setData] = useState([]);
   const [filterText, setFilterText] = useState("");
   const [filterType, setFilterType] = useState("");

@@ -11,7 +11,6 @@ const db = require("./firestore.js"); // Firestore-Datenbank
 // Initialisiere Firebase Admin SDK für Authentifizierung
 if (!admin.apps.length) {
   admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
   });
 }
 
