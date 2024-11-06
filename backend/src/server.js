@@ -1,54 +1,61 @@
-const multer = require("multer"); // For handling file uploads
-const { Storage } = require("@google-cloud/storage");
 
 const express = require("express");
 const cors = require("cors");
+const multer = require("multer");
+const { Storage } = require("@google-cloud/storage");
+const admin = require('firebase-admin');
 const app = express();
 const port = 3015;
-// Importiere die Firestore-Instanz
-const db = require("./firestore.js");
+const db = require("./firestore.js"); // Firestore-Datenbank
+
+// Initialisiere Firebase Admin SDK für Authentifizierung
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+}
+
+// Middleware zur Authentifizierung
+const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken; // Die Benutzerdaten sind jetzt in den Routen verfügbar
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
 // Configure Multer middleware
 const upload = multer({
   storage: multer.memoryStorage(),
 });
 
-// Dynamisch den Bucket basierend auf dem Projekt festlegen
+// Google Cloud Storage Konfiguration
 const projectId = process.env.GOOGLE_CLOUD_PROJECT || "trabantparking";
-// Initialize Google Cloud Storage client
-const storage = new Storage({
-  // Optional: specify credentials or project ID if not using default settings
-  projectId: projectId,
-});
-
-const bucket_env = process.env.BUCKET_ENV || ""; // Standardmäßig wird der Bucket für die Entwicklung verwendet
-const bucketName = `trabant_images${bucket_env}`; // Dynamischer Bucket-Name basierend auf dem Projekt
+const storage = new Storage({ projectId });
+const bucket_env = process.env.BUCKET_ENV || "";
+const bucketName = `trabant_images${bucket_env}`;
 console.log("Using bucket: " + bucketName);
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
 app.use(cors());
 
-// **1. Defect erstellen**
-app.post("/defects", async (req, res) => {
+// **1. Defect erstellen (geschützte Route)**
+app.post("/defects", authenticateToken, async (req, res) => {
   try {
-    const {
-      object,
-      location,
-      shortDescription,
-      detailDescription,
-      reportingDate,
-      status,
-    } = req.body;
+    const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
 
-    // Validierung (identisch zu vorher)
-    if (
-      !object ||
-      !location ||
-      !shortDescription ||
-      !detailDescription ||
-      !reportingDate ||
-      !status
-    ) {
+    if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status) {
       return res.status(400).json({ error: "Alle Felder sind erforderlich." });
     }
     if (shortDescription.length > 80) {
@@ -57,27 +64,13 @@ app.post("/defects", async (req, res) => {
       });
     }
 
-    // Firestore-Dokument erstellen
     const docRef = await db.collection("defects").add({
-      object,
-      location,
-      shortDescription,
-      detailDescription,
-      reportingDate,
-      status,
+      object, location, shortDescription, detailDescription, reportingDate, status,
     });
-
-    // ID des neuen Dokuments abrufen
     const newDefectId = docRef.id;
 
     res.status(201).json({
-      id: newDefectId,
-      object,
-      location,
-      shortDescription,
-      detailDescription,
-      reportingDate,
-      status,
+      id: newDefectId, object, location, shortDescription, detailDescription, reportingDate, status,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -85,55 +78,34 @@ app.post("/defects", async (req, res) => {
 });
 
 // **2. Alle Defects abrufen**
-app.get("/defects", async (req, res) => {
+app.get("/defects", authenticateToken, async (req, res) => {
   try {
     const { filterType, filterText } = req.query;
-    const allowedFilterFields = [
-      "object",
-      "location",
-      "shortDescription",
-      "detailDescription",
-      "reportingDate",
-      "status",
-    ];
-
+    const allowedFilterFields = ["object", "location", "shortDescription", "detailDescription", "reportingDate", "status"];
     let query = db.collection("defects");
 
-    if (filterType && filterText) {
-      if (allowedFilterFields.includes(filterType)) {
-        query = query
-          .where(filterType, ">=", filterText)
-          .where(filterType, "<=", filterText + "\uf8ff");
-      } else {
-        return res.status(400).json({ error: "Invalid filter field." });
-      }
+    if (filterType && filterText && allowedFilterFields.includes(filterType)) {
+      query = query.where(filterType, ">=", filterText).where(filterType, "<=", filterText + "\uf8ff");
+    } else if (filterType && !allowedFilterFields.includes(filterType)) {
+      return res.status(400).json({ error: "Invalid filter field." });
     }
 
-    // Daten abrufen
     const snapshot = await query.get();
-    const defects = [];
-    snapshot.forEach((doc) => {
-      defects.push({ id: doc.id, ...doc.data() });
-    });
-
+    const defects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(defects);
   } catch (err) {
     res.status(500).json({ error: err.message });
-    console.log("Error getting defects", err);
   }
 });
 
 // **3. Einzelnes Defect abrufen**
-app.get("/defects/:id", async (req, res) => {
+app.get("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
-    if (!doc.exists) {
-      return res.status(404).json({ error: "Defect nicht gefunden." });
-    }
-
+    if (!doc.exists) return res.status(404).json({ error: "Defect nicht gefunden." });
     res.json({ id: doc.id, ...doc.data() });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -141,27 +113,12 @@ app.get("/defects/:id", async (req, res) => {
 });
 
 // **4. Defect aktualisieren**
-app.put("/defects/:id", async (req, res) => {
+app.put("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
-    const {
-      object,
-      location,
-      shortDescription,
-      detailDescription,
-      reportingDate,
-      status,
-    } = req.body;
+    const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
 
-    // Validierung (identisch zu vorher)
-    if (
-      !object ||
-      !location ||
-      !shortDescription ||
-      !detailDescription ||
-      !reportingDate ||
-      !status
-    ) {
+    if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status) {
       return res.status(400).json({ error: "Alle Felder sind erforderlich." });
     }
     if (shortDescription.length > 80) {
@@ -173,19 +130,9 @@ app.put("/defects/:id", async (req, res) => {
     const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
-    if (!doc.exists) {
-      return res.status(404).json({ error: "Defect nicht gefunden." });
-    }
+    if (!doc.exists) return res.status(404).json({ error: "Defect nicht gefunden." });
 
-    await docRef.update({
-      object,
-      location,
-      shortDescription,
-      detailDescription,
-      reportingDate,
-      status,
-    });
-
+    await docRef.update({ object, location, shortDescription, detailDescription, reportingDate, status });
     res.json({ message: "Defect aktualisiert." });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -193,18 +140,15 @@ app.put("/defects/:id", async (req, res) => {
 });
 
 // **5. Defect löschen**
-app.delete("/defects/:id", async (req, res) => {
+app.delete("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
-    if (!doc.exists) {
-      return res.status(404).json({ error: "Defect nicht gefunden." });
-    }
+    if (!doc.exists) return res.status(404).json({ error: "Defect nicht gefunden." });
 
     await docRef.delete();
-
     res.json({ message: "Defect gelöscht." });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -212,66 +156,43 @@ app.delete("/defects/:id", async (req, res) => {
 });
 
 // **6. Bild hochladen**
-app.post(
-  "/defects/:id/uploadPicture",
-  upload.single("picture"),
-  async (req, res) => {
-    try {
-      const id = req.params.id;
+app.post("/defects/:id/uploadPicture", authenticateToken, upload.single("picture"), async (req, res) => {
+  try {
+    const id = req.params.id;
+    const docRef = db.collection("defects").doc(id);
+    const doc = await docRef.get();
 
-      // Prüfen, ob das Defect existiert
-      const docRef = db.collection("defects").doc(id);
-      const doc = await docRef.get();
+    if (!doc.exists) return res.status(404).json({ error: "Defect nicht gefunden." });
+    if (!req.file) return res.status(400).json({ error: "Kein Bild hochgeladen." });
 
-      if (!doc.exists) {
-        return res.status(404).json({ error: "Defect nicht gefunden." });
-      }
+    const fileBuffer = req.file.buffer;
+    const originalName = req.file.originalname;
+    const mimeType = req.file.mimetype;
+    const fileName = `defects/${id}/${Date.now()}_${originalName}`;
 
-      // Prüfen, ob eine Datei hochgeladen wurde
-      if (!req.file) {
-        return res.status(400).json({ error: "Kein Bild hochgeladen." });
-      }
+    const file = bucket.file(fileName);
+    const stream = file.createWriteStream({
+      metadata: { contentType: mimeType },
+      resumable: false,
+    });
 
-      // Dateipuffer und -informationen abrufen
-      const fileBuffer = req.file.buffer;
-      const originalName = req.file.originalname;
-      const mimeType = req.file.mimetype;
+    stream.on("error", (err) => {
+      console.error(err);
+      res.status(500).json({ error: "Fehler beim Hochladen des Bildes." });
+    });
 
-      // Eindeutigen Dateinamen erstellen
-      const fileName = `defects/${id}/${Date.now()}_${originalName}`;
+    stream.on("finish", async () => {
+      await docRef.update({ imageUrl: file.id });
+      res.status(200).json({ message: "Bild hochgeladen.", imageUrl: file.id });
+    });
 
-      // Datei zu Google Cloud Storage hochladen
-      const file = bucket.file(fileName);
-      const stream = file.createWriteStream({
-        metadata: {
-          contentType: mimeType,
-        },
-        resumable: false,
-      });
-
-      stream.on("error", (err) => {
-        console.error(err);
-        res.status(500).json({ error: "Fehler beim Hochladen des Bildes." });
-      });
-
-      stream.on("finish", async () => {
-        // Defect-Dokument mit der Bild-URL aktualisieren
-        await docRef.update({
-          imageUrl: file.id,
-        });
-
-        res
-          .status(200)
-          .json({ message: "Bild hochgeladen.", imageUrl: file.id });
-      });
-
-      stream.end(fileBuffer);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
+    stream.end(fileBuffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
-);
+});
 
+// **7. Bild abrufen**
 app.get("/image/:fileName", async (req, res) => {
   const fileName = req.params.fileName;
   const file = bucket.file(fileName);
