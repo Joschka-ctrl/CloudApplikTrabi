@@ -58,6 +58,7 @@ app.post("/defects", async (req, res) => {
     }
 
     // Firestore-Dokument erstellen
+    let updatedAt = new Date().toISOString();
     const docRef = await db.collection("defects").add({
       object,
       location,
@@ -65,6 +66,7 @@ app.post("/defects", async (req, res) => {
       detailDescription,
       reportingDate,
       status,
+      updatedAt,
     });
 
     // ID des neuen Dokuments abrufen
