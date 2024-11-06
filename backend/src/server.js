@@ -12,12 +12,17 @@ const upload = multer({
   storage: multer.memoryStorage(),
 });
 
+// Dynamisch den Bucket basierend auf dem Projekt festlegen
+const projectId = process.env.GOOGLE_CLOUD_PROJECT || "trabantparking";
 // Initialize Google Cloud Storage client
 const storage = new Storage({
   // Optional: specify credentials or project ID if not using default settings
-  projectId: "trabantparking-stage",
+  projectId: projectId,
 });
-const bucketName = "trabant_images_stage"; // Replace with your bucket name
+
+const bucket_env = process.env.BUCKET_ENV || ""; // Standardmäßig wird der Bucket für die Entwicklung verwendet
+const bucketName = `trabant_images${bucket_env}`; // Dynamischer Bucket-Name basierend auf dem Projekt
+console.log("Using bucket: " + bucketName);
 const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
@@ -53,6 +58,7 @@ app.post("/defects", async (req, res) => {
     }
 
     // Firestore-Dokument erstellen
+    let updatedAt = new Date().toISOString();
     const docRef = await db.collection("defects").add({
       object,
       location,
@@ -60,6 +66,7 @@ app.post("/defects", async (req, res) => {
       detailDescription,
       reportingDate,
       status,
+      updatedAt,
     });
 
     // ID des neuen Dokuments abrufen
@@ -172,6 +179,8 @@ app.put("/defects/:id", async (req, res) => {
       return res.status(404).json({ error: "Defect nicht gefunden." });
     }
 
+    let updatedAt = new Date().toISOString();
+
     await docRef.update({
       object,
       location,
@@ -179,6 +188,7 @@ app.put("/defects/:id", async (req, res) => {
       detailDescription,
       reportingDate,
       status,
+      updatedAt,
     });
 
     res.json({ message: "Defect aktualisiert." });
