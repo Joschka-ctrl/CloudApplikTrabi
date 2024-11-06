@@ -177,6 +177,8 @@ app.put("/defects/:id", async (req, res) => {
       return res.status(404).json({ error: "Defect nicht gefunden." });
     }
 
+    let updatedAt = new Date().toISOString();
+
     await docRef.update({
       object,
       location,
@@ -184,6 +186,7 @@ app.put("/defects/:id", async (req, res) => {
       detailDescription,
       reportingDate,
       status,
+      updatedAt,
     });
 
     res.json({ message: "Defect aktualisiert." });
