@@ -3,9 +3,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDyrUu_sdx_C_E2iy9ZuMZX0W4KqMRa380",
-  authDomain: "trabantparking-prod.firebaseapp.com",
-  projectId: "trabantparking-prod",
+  apiKey: "AIzaSyCHuN2pr0uFCBl1Ud8yQOo0yn0gWANAUuA",
+  authDomain: "trabantparking.firebaseapp.com",
+  projectId: "trabantparking",
 };
 
 const app = initializeApp(firebaseConfig);

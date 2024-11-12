@@ -1,7 +1,7 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase"; // Stellen Sie sicher, dass der Pfad korrekt ist
-import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const AuthContext = createContext();
 

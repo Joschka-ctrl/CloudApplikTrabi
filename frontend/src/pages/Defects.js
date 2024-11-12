@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../components/AuthProvider"; // Import your auth provider hook
 import DefectTable from "../components/DefectsTable.js";
 import DefectForm from "../components/DefectsForm.js";
 import DefectDetail from "../components/DefectDetail.js";
@@ -6,6 +7,7 @@ import DefectFilter from "./defectFilters.js";
 import EditDefect from "../components/EditDefect.js";
 
 export default function Defects() {
+  const { user } = useAuth(); // Use the user object from AuthProvider
   const [data, setData] = useState([]);
   const [filterText, setFilterText] = useState("");
   const [filterType, setFilterType] = useState("");
@@ -31,60 +33,80 @@ export default function Defects() {
       ? "http://localhost:3015"
       : process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch(API_URL + "/defects")
-      .then((response) => response.json())
-      .then(setData)
-      .catch(console.error);
-  }, [API_URL]);
+  const fetchWithAuth = async (url, options = {}) => {
+    if (user) {
+      const token = await user.getIdToken(); // Fetch the token from the user object
+      const headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      };
+      return fetch(url, { ...options, headers });
+    } else {
+      throw new Error("User is not authenticated");
+    }
+  };
 
-  const createDefect = (e) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetchWithAuth(`${API_URL}/defects`);
+        if (!response.ok) {
+          throw new Error("Error fetching data");
+        }
+        const data = await response.json();
+        setData(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+  }, [API_URL, user]);
+
+  const createDefect = async (e) => {
     e.preventDefault();
 
     const { file, ...defectData } = newDefect;
+    try {
+      const response = await fetchWithAuth(`${API_URL}/defects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(defectData),
+      });
+      const data = await response.json();
+      setData((prevData) => [...prevData, data]);
 
-    fetch(API_URL + "/defects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(defectData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setData((prevData) => [...prevData, data]);
+      if (file) {
+        const formData = new FormData();
+        formData.append("picture", file);
 
-        if (file) {
-          const formData = new FormData();
-          formData.append("picture", file);
-
-          fetch(`${API_URL}/defects/${data.id}/uploadPicture`, {
-            method: "POST",
-            body: formData,
-          })
-            .then((response) => response.json())
-            .then((uploadData) => {
-              setData((prevData) =>
-                prevData.map((defect) =>
-                  defect.id === data.id
-                    ? { ...defect, imageUrl: uploadData.imageUrl }
-                    : defect
-                )
-              );
-            })
-            .catch(console.error);
-        }
-
-        setNewDefect({
-          object: "",
-          location: "",
-          shortDescription: "",
-          detailDescription: "",
-          reportingDate: "",
-          status: "",
-          file: null,
+        const uploadResponse = await fetchWithAuth(`${API_URL}/defects/${data.id}/uploadPicture`, {
+          method: "POST",
+          body: formData,
         });
-        setShowForm(false);
-      })
-      .catch(console.error);
+        const uploadData = await uploadResponse.json();
+        setData((prevData) =>
+          prevData.map((defect) =>
+            defect.id === data.id
+              ? { ...defect, imageUrl: uploadData.imageUrl }
+              : defect
+          )
+        );
+      }
+
+      setNewDefect({
+        object: "",
+        location: "",
+        shortDescription: "",
+        detailDescription: "",
+        reportingDate: "",
+        status: "",
+        file: null,
+      });
+      setShowForm(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -97,11 +119,11 @@ export default function Defects() {
     setNewDefect((prevDefect) => ({ ...prevDefect, file }));
   };
 
-  const updateDefectStatus = (defectId) => {
+  const updateDefectStatus = async (defectId) => {
     const defect = data.find((d) => d.id === defectId);
     const updatedDefect = { ...defect, status: newStatus };
 
-    fetch(`${API_URL}/defects/${defectId}`, {
+    await fetchWithAuth(`${API_URL}/defects/${defectId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedDefect),
@@ -118,8 +140,8 @@ export default function Defects() {
       .catch(console.error);
   };
 
-  const deleteDefectNoDialog = (id) => {
-    fetch(`${API_URL}/defects/${id}`, { method: "DELETE" })
+  const deleteDefectNoDialog = async (id) => {
+    await fetchWithAuth(`${API_URL}/defects/${id}`, { method: "DELETE" })
       .then(() =>
         setData((prevData) => prevData.filter((defect) => defect.id !== id))
       )
@@ -128,7 +150,7 @@ export default function Defects() {
 
   const refreshData = async () => {
     if (filterText && filterType) {
-      await fetch(
+      await fetchWithAuth(
         API_URL +
           "/defects?filterType=" +
           filterType +
@@ -139,7 +161,7 @@ export default function Defects() {
         .then(setData)
         .catch(console.error);
     } else {
-      fetch(API_URL + "/defects")
+      await fetchWithAuth(API_URL + "/defects")
         .then((response) => response.json())
         .then(setData)
         .catch(console.error);
@@ -155,8 +177,8 @@ export default function Defects() {
     refreshData();
   }, [filterText, filterType]);
 
-  const updateDefect = (updatedDefect) => {
-    fetch(`${API_URL}/defects/${updatedDefect.id}`, {
+  const updateDefect = async (updatedDefect) => {
+    await fetchWithAuth(`${API_URL}/defects/${updatedDefect.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedDefect),

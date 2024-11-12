@@ -8,30 +8,6 @@ const app = express();
 const port = 3015;
 const db = require("./firestore.js"); // Firestore-Datenbank
 
-// Initialisiere Firebase Admin SDK für Authentifizierung
-if (!admin.apps.length) {
-  admin.initializeApp({
-  });
-}
-
-// Middleware zur Authentifizierung
-const authenticateToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken; // Die Benutzerdaten sind jetzt in den Routen verfügbar
-    next();
-  } catch (error) {
-    console.error('Authentication error:', error);
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-};
 
 // Configure Multer middleware
 const upload = multer({
@@ -48,6 +24,28 @@ const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
 app.use(cors());
+
+// Middleware zur Authentifizierung
+const authenticateToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Unauthorized access attempt detected');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken; // Benutzerdaten für spätere Verwendung verfügbar
+    console.log('Token of user ' + decodedToken.uid + ' verified successfully');
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error.message);
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
 
 // **1. Defect erstellen (geschützte Route)**
 app.post("/defects", authenticateToken, async (req, res) => {
