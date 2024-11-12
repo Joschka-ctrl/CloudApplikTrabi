@@ -1,0 +1,59 @@
+name: Build and Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - name: Authenticate Docker with Google Cloud
+      run: |
+        gcloud auth configure-docker
+
+    # Build and push Docker image for Frontend
+    - name: Build Frontend Docker image
+      run: |
+        docker build -t frontend-server:latest -f frontend/Dockerfile ./frontend
+
+    - name: Tag Docker image
+      run: |
+        docker tag frontend-server:latest europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest
+
+    - name: Push Frontend Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest
+
+    # Deploy Frontend to Cloud Run
+    - name: Deploy Frontend to Cloud Run
+      run: |
+        gcloud run deploy trabbifront --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/frontend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3000 --memory=1Gi
+
+    # Build and push Docker image for Backend
+    - name: Build Backend Docker image
+      run: |
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend-server:latest -f backend/Dockerfile ./backend
+
+    - name: Tag Docker Image
+      run: |
+        docker tag backend-server:latest europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest
+
+    - name: Push Backend Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest
+
+    # Deploy Backend to Cloud Run
+    - name: Deploy Backend to Cloud Run
+      run: |
+        gcloud run deploy trabbiback --image=europe-west1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-repo/backend-server:latest --platform=managed --region=europe-west1 --allow-unauthenticated --port=3015 --memory=1Gi
