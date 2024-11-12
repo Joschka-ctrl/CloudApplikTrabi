@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import ContactSection from "./pages/Contact";
 import Defects from "./pages/Defects";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -26,6 +27,7 @@ const App = () => {
                 }
               />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             </Routes>
           </header>
         </AuthProvider>

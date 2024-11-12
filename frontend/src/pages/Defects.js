@@ -13,6 +13,7 @@ export default function Defects() {
   const [filterType, setFilterType] = useState("");
   const [showDefectDetail, setShowDefectDetail] = useState(false);
   const [detailedDefectId, setDetailedDefectId] = useState(null);
+  const [defectDetail, setDefectDetail] = useState(null); // New state for defect detail
   const [showForm, setShowForm] = useState(false);
   const [showEditDefectPage, setShowEditDefectPage] = useState(false);
   const [detailDefect, setDetailDefect] = useState(null);
@@ -80,10 +81,13 @@ export default function Defects() {
         const formData = new FormData();
         formData.append("picture", file);
 
-        const uploadResponse = await fetchWithAuth(`${API_URL}/defects/${data.id}/uploadPicture`, {
-          method: "POST",
-          body: formData,
-        });
+        const uploadResponse = await fetchWithAuth(
+          `${API_URL}/defects/${data.id}/uploadPicture`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
         const uploadData = await uploadResponse.json();
         setData((prevData) =>
           prevData.map((defect) =>
@@ -151,17 +155,13 @@ export default function Defects() {
   const refreshData = async () => {
     if (filterText && filterType) {
       await fetchWithAuth(
-        API_URL +
-          "/defects?filterType=" +
-          filterType +
-          "&filterText=" +
-          filterText
+        `${API_URL}/defects?filterType=${filterType}&filterText=${filterText}`
       )
         .then((response) => response.json())
         .then(setData)
         .catch(console.error);
     } else {
-      await fetchWithAuth(API_URL + "/defects")
+      await fetchWithAuth(`${API_URL}/defects`)
         .then((response) => response.json())
         .then(setData)
         .catch(console.error);
@@ -193,6 +193,34 @@ export default function Defects() {
       .catch(console.error);
   };
 
+  // New useEffect to fetch defect details when defectId changes
+  useEffect(() => {
+    if (detailedDefectId !== null) {
+      const fetchDefectDetail = async () => {
+        try {
+          const response = await fetchWithAuth(
+            `${API_URL}/defects/${detailedDefectId}`
+          );
+          if (!response.ok) {
+            throw new Error("Error fetching defect detail");
+          }
+          const data = await response.json();
+          setDefectDetail(data);
+        } catch (error) {
+          console.error(error);
+        }
+      };
+
+      fetchDefectDetail();
+    }
+  }, [detailedDefectId]);
+
+  const handleCloseDefectDetail = () => {
+    setShowDefectDetail(false);
+    setDefectDetail(null);
+    setDetailedDefectId(null);
+  };
+
   return (
     <div className="d-flex justify-content-center flex-column">
       <h1>Defects</h1>
@@ -219,14 +247,14 @@ export default function Defects() {
       />
       <DefectDetail
         show={showDefectDetail}
-        defectId={detailedDefectId}
-        onClose={() => setShowDefectDetail(false)}
+        onClose={handleCloseDefectDetail}
         editDefect={(defect) => {
           setDetailDefect(defect);
           setShowEditDefectPage(true);
           console.log("Opening Edit Defect Dialog", showEditDefectPage);
         }}
         deleteDefect={deleteDefectNoDialog}
+        defect={defectDetail} // Pass the fetched defect detail
       />
       <EditDefect
         show={showEditDefectPage}
