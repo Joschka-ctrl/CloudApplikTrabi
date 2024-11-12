@@ -1,50 +1,47 @@
-// src/Login.js
 import React, { useState } from "react";
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { redirect, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../components/AuthProvider";
 
-function Login({ onLogin }) {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const { onLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      onLogin(userCredential.user); // Benutzer nach erfolgreichem Login zurückgeben
-      console.log(userCredential.user);
+      await onLogin(email, password);
       navigate("/defects");
     } catch (err) {
-      setError("Login failed. Please check your credentials.");
+      setError("Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.");
     }
   };
 
   return (
     <div>
-      <h2>Login</h2>
+      <h2>Anmelden</h2>
       <form onSubmit={handleLogin}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="E-Mail"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Passwort"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit">Anmelden</button>
         {error && <p>{error}</p>}
       </form>
     </div>
   );
-}
+};
 
 export default Login;

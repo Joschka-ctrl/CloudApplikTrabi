@@ -1,25 +1,8 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut,
-} from "firebase/auth";
-import { initializeApp } from "firebase/app";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "../firebase"; // Stellen Sie sicher, dass der Pfad korrekt ist
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
-// Firebase configuration - replace with your own config
-const firebaseConfig = {
-  apiKey: "AIzaSyDyrUu_sdx_C_E2iy9ZuMZX0W4KqMRa380",
-  authDomain: "trabantparking-prod.firebaseapp.com",
-  projectId: "trabantparking-prod",
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Create AuthContext
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -27,45 +10,47 @@ export const useAuth = () => {
 };
 
 const AuthProvider = ({ children }) => {
-  const [token, settoken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Handle login with Google
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      settoken(result.token);
-    } catch (error) {
-      console.error("Error during sign-in:", error);
-    }
-  };
-
-  // Monitor authentication state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currenttoken) => {
-      settoken(currenttoken);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
     });
+
+    // Aufräumen des Listeners bei Komponentendemontage
     return () => unsubscribe();
   }, []);
 
-  // Handle logout
-  const handleLogout = async () => {
+  const handleLogin = async (email, password) => {
     try {
-      await signOut(auth);
-      settoken(null);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      console.error("Error during sign-out:", error);
+      console.error("Fehler beim Anmelden:", error);
     }
   };
 
-  // Provide the authentication state and functions to children
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Fehler beim Abmelden:", error);
+    }
+  };
+
   const value = {
-    token,
+    user,
+    loading,
     onLogin: handleLogin,
     onLogout: handleLogout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthProvider;

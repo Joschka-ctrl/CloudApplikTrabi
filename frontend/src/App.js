@@ -1,26 +1,36 @@
-//import "./App.css";
-import Navbar from "./components/Navbar.js";
-import ContactSection from "./pages/Contact.js";
-import Defects from "./pages/Defects";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import AuthProvider from "./components/AuthProvider.js";
-import Login from "./pages/Login.js";
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import ContactSection from "./pages/Contact";
+import Defects from "./pages/Defects";
+import Login from "./pages/Login";
+import AuthProvider from "./components/AuthProvider";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
-    <Router>
-    <AuthProvider>
-      <header className="App-header">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<ContactSection />} />
-            <Route path="/defects" element={<Defects />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
-      </header>
-    </AuthProvider>
-    </Router>
+    <div className="App">
+      <Router>
+        <AuthProvider>
+          <header className="App-header">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<ContactSection />} />
+              <Route
+                path="/defects"
+                element={
+                  <ProtectedRoute>
+                    <Defects />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/login" element={<Login />} />
+            </Routes>
+          </header>
+        </AuthProvider>
+      </Router>
+    </div>
   );
 };
 
