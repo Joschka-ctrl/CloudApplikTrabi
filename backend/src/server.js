@@ -61,8 +61,16 @@ app.post("/defects", authenticateToken, async (req, res) => {
       });
     }
 
+    // Firestore-Dokument erstellen
+    let updatedAt = new Date().toISOString();
     const docRef = await db.collection("defects").add({
-      object, location, shortDescription, detailDescription, reportingDate, status,
+      object,
+      location,
+      shortDescription,
+      detailDescription,
+      reportingDate,
+      status,
+      updatedAt,
     });
     const newDefectId = docRef.id;
 
@@ -127,9 +135,22 @@ app.put("/defects/:id", authenticateToken, async (req, res) => {
     const docRef = db.collection("defects").doc(id);
     const doc = await docRef.get();
 
-    if (!doc.exists) return res.status(404).json({ error: "Defect nicht gefunden." });
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Defect nicht gefunden." });
+    }
 
-    await docRef.update({ object, location, shortDescription, detailDescription, reportingDate, status });
+    let updatedAt = new Date().toISOString();
+
+    await docRef.update({
+      object,
+      location,
+      shortDescription,
+      detailDescription,
+      reportingDate,
+      status,
+      updatedAt,
+    });
+
     res.json({ message: "Defect aktualisiert." });
   } catch (err) {
     res.status(500).json({ error: err.message });
