@@ -3,6 +3,8 @@
 ARG NODE_VERSION=18.15.0
 ARG REACT_APP_BACKEND_URL
 
+
+
 FROM node:${NODE_VERSION}-alpine AS base
 WORKDIR /usr/src/app
 
@@ -17,6 +19,10 @@ FROM deps AS build
 # Set environment variable for React app
 ARG REACT_APP_BACKEND_URL
 ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
+
+
+ARG AUTH_API_KEY
+ENV AUTH_API_KEY=${AUTH_API_KEY}
 
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
