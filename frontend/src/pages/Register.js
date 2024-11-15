@@ -1,14 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../components/AuthProvider";
 
-function Register({ onRegister }) {
+function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const user = useAuth().user;
+
+  useEffect(() => {
+    if (user) {
+      navigate("/defects");
+    }
+  })
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -18,9 +26,9 @@ function Register({ onRegister }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await onRegister(userCredential.user);
       navigate("/defects");
     } catch (err) {
+      console.error("Fehler beim Registrieren:", err);
       setError("Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.");
     }
   };
