@@ -18,7 +18,7 @@ function Register({ onRegister }) {
     }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      onRegister(userCredential.user);
+      await onRegister(userCredential.user);
       navigate("/defects");
     } catch (err) {
       setError("Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.");
