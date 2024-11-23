@@ -28,7 +28,7 @@ const authenticateToken = async (req, res, next) => {
   };
   
 // Create a new parking spot
-app.post('/parkingSpotsAuthenticated', authenticateToken,(req, res) => {
+app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
     const { id, occupied } = req.body;
     try {
         const newSpot = parkingService.createParkingSpot(id, occupied);
