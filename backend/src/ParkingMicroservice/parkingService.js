@@ -1,48 +1,48 @@
-const express = require('express');
+let parkingSpots = [{ id: "1", occupied: false}, { id: "2", occupied: true }];
 
-const app = express();
-const port = 3000;
+const getAllParkingSpots = () => {
+    return parkingSpots;
+};
 
-app.use(express.json());
+const getParkingSpotById = (id) => {
+    return parkingSpots.find(s => s.id === id);
+};
 
-let parkingSpots = [
-    { id: 1, occupied: false },
-    { id: 2, occupied: false },
-    { id: 3, occupied: false },
-    { id: 4, occupied: false },
-    { id: 5, occupied: false }
-];
+const createParkingSpot = (id, occupied) => {
+    if (parkingSpots.find(s => s.id === id)) {
+        throw new Error('Parking spot with this ID already exists');
+    }
+    const newSpot = { id, occupied };
+    parkingSpots.push(newSpot);
+    return newSpot;
+};
+const changeOccupancy = (id, newStatus) => {
+    const spot = parkingSpots.find(s => s.id === id);
+    if (!spot) {
+        throw new Error('Parking spot not found');
+    }
+    spot.occupied = newStatus;
+    console.log(`Changing occupancy of spot ${id} to: ${newStatus}`);
+    return { success: true, id, status: newStatus };
+};
 
-// Get all parking spots
-app.get('/parkingSpots', (req, res) => {
-    res.json(parkingSpots);
-});
+const getParkingDuration = (carId) => {
+    // Logik für Parkdauer einsehen
+    console.log(`Fetching parking duration for car: ${carId}`);
+    return { carId, duration: "2 hours" };
+};
 
-// Get a specific parking spot
-app.get('/parkingSpots/:id', (req, res) => {
-    const spot = parkingSpots.find(s => s.id === parseInt(req.params.id));
-    if (!spot) return res.status(404).send('Parking spot not found');
-    res.json(spot);
-});
+const startParking = (carId) => {
+    // Logik für Parkvorgang starten
+    console.log(`Starting parking for car: ${carId}`);
+    return { carId, started: true };
+};
 
-// Occupy a parking spot
-app.post('/parkingSpots/:id/occupy', (req, res) => {
-    const spot = parkingSpots.find(s => s.id === parseInt(req.params.id));
-    if (!spot) return res.status(404).send('Parking spot not found');
-    if (spot.occupied) return res.status(400).send('Parking spot already occupied');
-    spot.occupied = true;
-    res.json(spot);
-});
-
-// Vacate a parking spot
-app.post('/parkingSpots/:id/vacate', (req, res) => {
-    const spot = parkingSpots.find(s => s.id === parseInt(req.params.id));
-    if (!spot) return res.status(404).send('Parking spot not found');
-    if (!spot.occupied) return res.status(400).send('Parking spot already vacant');
-    spot.occupied = false;
-    res.json(spot);
-});
-
-app.listen(port, () => {
-    console.log(`Parking service running on port ${port}`);
-});
+module.exports = {
+    changeOccupancy, 
+    getParkingDuration, 
+    startParking,
+    getAllParkingSpots,
+    getParkingSpotById,
+    createParkingSpot
+};
