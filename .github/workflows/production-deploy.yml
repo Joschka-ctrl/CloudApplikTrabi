@@ -57,7 +57,7 @@ jobs:
     # Build Frontend Docker image with Backend URL as build argument
     - name: Build Frontend Docker image
       run: |
-        docker build --build-arg REACT_APP_BACKEND_URL=${{ env.BACKEND_URL }} -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
+        docker build --build-arg REACT_APP_BACKEND_URL=${{ env.BACKEND_URL }} --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_PROD }} -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
 
     # Tag and push the image as before
     - name: Tag Frontend Docker Image
