@@ -88,8 +88,17 @@ const getParkingDuration = (ticketNumber) => {
     if (!car) {
         throw new Error('Car with this ticket number not found');
     }
-    // prüfen ob car.parkingEndedAt = none, wenn none dann aktuelle Zeit nehmen sonst car.parkingEndedAt
-    const durationMillis = car.parkingEndedAt ? car.parkingEndedAt.toDate().getTime() - car.parkingStartedAt.toDate().getTime() : Date.now() - car.parkingStartedAt.toDate().getTime();
+
+    let durationMillis;
+    
+    if (car.parkingEndedAt && !(Date.now() - car.parkingEndedAt.toDate().getTime()) > 20 * 60 * 1000) {
+        // If car.parkingEndedAt is not null and the parking ended less than 20 minutes ago
+        durationMillis = car.parkingEndedAt.toDate().getTime() - car.parkingStartedAt.toDate().getTime();
+    } else {
+        // If car.parkingEndedAt is null or the parking ended more than 20 minutes ago
+        durationMillis = Date.now() - car.parkingStartedAt.toDate().getTime();
+    }
+
     const minutes = Math.floor(durationMillis / (1000 * 60));
     return minutes;
 };
