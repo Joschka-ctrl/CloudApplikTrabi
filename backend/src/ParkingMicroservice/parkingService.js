@@ -91,7 +91,7 @@ const getParkingDuration = (ticketNumber) => {
 
     let durationMillis;
     
-    if (car.parkingEndedAt && !(Date.now() - car.parkingEndedAt.toDate().getTime()) > 20 * 60 * 1000) {
+    if (car.parkingEndedAt && (Date.now() - car.parkingEndedAt.toDate().getTime()) < 2 * 60 * 1000) {
         // If car.parkingEndedAt is not null and the parking ended less than 20 minutes ago
         durationMillis = car.parkingEndedAt.toDate().getTime() - car.parkingStartedAt.toDate().getTime();
     } else {
@@ -99,7 +99,7 @@ const getParkingDuration = (ticketNumber) => {
         durationMillis = Date.now() - car.parkingStartedAt.toDate().getTime();
     }
 
-    const minutes = Math.floor(durationMillis / (1000 * 60));
+    const minutes = durationMillis / (1000 * 60);
     return minutes;
 };
 
