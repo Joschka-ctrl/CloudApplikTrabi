@@ -137,6 +137,16 @@ app.get("/payParkingFee/:carId", (req, res) => {
     }
 });
 
+app.get("/leaveParkhouse/:carId", (req, res) => {
+    try {
+        const ticketNumber = req.params.carId;
+        const result = parkingService.leaveParkhouse(ticketNumber);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
   });
