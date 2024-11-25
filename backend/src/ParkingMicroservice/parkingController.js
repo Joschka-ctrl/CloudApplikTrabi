@@ -1,3 +1,4 @@
+
 const express = require('express');
 const parkingService = require('./parkingService');
 const admin = require('firebase-admin');
@@ -63,11 +64,43 @@ app.get('/parkingSpots/:id', (req, res) => {
     res.json(spot);
 });
 
-//tested with postman
-app.post("/occupancy", (req, res) => {
-    const { id, occupied } = req.body;
+
+app.get("/getTicketNr", (req, res) => {
     try {
-        const result = parkingService.changeOccupancy(id, occupied);
+        const ticketNr = parkingService.getTicketNumber();
+        res.json({ ticketNr });
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+app.get("/currentOccupancy", (req, res) => {
+    const occupancy = parkingService.getCurrentOccupancy();
+    res.json({ occupancy });
+});
+
+app.get("/reserveParkingSpot1", (req, res) => {
+    const result = parkingService.reserveParkingSpot();
+    res.json(result);
+});
+
+//tested with postman
+app.post("/reserveParkingSpot", (req, res) => {
+    const id = req.body.id;
+    const occupied = true;
+    try {
+        const result = parkingService.manageParkingSpotOccupancy(id, occupied);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
+app.post("/releaseParkingSpot", (req, res) => {
+    const id = req.body.id;
+    const occupied = false;
+    try {
+        const result = parkingService.manageParkingSpotOccupancy(id, occupied);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
@@ -75,15 +108,33 @@ app.post("/occupancy", (req, res) => {
 });
 
 app.get("/duration/:carId", (req, res) => {
-    const { carId } = req.params;
-    const result = getParkingDuration(carId);
-    res.json(result);
+    try {
+        const carId = req.params.carId;
+        const result = parkingService.getParkingDuration(carId);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
 });
 
-app.post("/start-parking", (req, res) => {
-    const { carId } = req.body;
-    const result = startParking(carId);
-    res.json(result);
+app.get("/getParkingFee/:carId", (req, res) => {
+    try {
+        const carId = req.params.carId;
+        const result = parkingService.getParkingFee(carId);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
+app.get("/payParkingFee/:carId", (req, res) => {
+    try {
+        const carId = req.params.carId;
+        const result = parkingService.payParkingFee(carId);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
 });
 
 app.listen(port, () => {
