@@ -28,7 +28,7 @@ const authenticateToken = async (req, res, next) => {
   };
   
 
-  app.get('/reports/occupacy/:parkingSpaceID', async (req, res) => {
+app.get('/reports/occupacy/:parkingSpaceID', async (req, res) => {
     const { parkingSpaceID } = req.params;
     const result = await reportingService.getOccupancyReport(parkingSpaceID);
     res.status(200).json(result);
@@ -42,11 +42,39 @@ app.get('/reports/duration/:parkingSpaceID', async (req, res) => {
 
 app.get('/reports/defects/:parkingSpaceID', async (req, res) => {
     const { parkingSpaceID } = req.params;
-    const result = await reportingService.getDefectsReport(id);
+    const result = await reportingService.getDefectsReport(parkingSpaceID);
     res.status(200).json(result);
 });
 
+app.get('/reports/revenue/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.getRevenueReport(parkingSpaceID);
+    res.status(200).json(result);
+});
 
+app.get('/reports/occupancy-rate/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.getOccupancyRateReport(parkingSpaceID);
+    res.status(200).json(result);
+});
+
+app.get('/reports/average-parking-time/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.getAverageParkingTimeReport(parkingSpaceID);
+    res.status(200).json(result);
+});
+
+app.get('/reports/peak-hours/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.getPeakHoursReport(parkingSpaceID);
+    res.status(200).json(result);
+});
+
+app.get('/reports/violations/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.getViolationsReport(parkingSpaceID);
+    res.status(200).json(result);
+});
 
 
 app.listen(port, () => {
