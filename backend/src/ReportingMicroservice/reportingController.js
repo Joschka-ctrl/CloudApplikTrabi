@@ -76,6 +76,11 @@ app.get('/reports/violations/:parkingSpaceID', async (req, res) => {
     res.status(200).json(result);
 });
 
+app.get('/reports/fullReport/:parkingSpaceID', async (req, res) => {
+    const { parkingSpaceID } = req.params;
+    const result = await reportingService.buildReportforParkingSpace(parkingSpaceID);
+    res.status(200).json(result);
+});
 
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
