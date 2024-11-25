@@ -1,0 +1,91 @@
+{
+    "info": {
+      "name": "CloudApplikTrabi Reporting API",
+      "_postman_id": "unique-id",
+      "description": "Postman collection to test CloudApplikTrabi Reporting API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Get Occupancy Report",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer <your-token>",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3034/reports/occupacy?parkingSpaceID=123",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "3034",
+            "path": ["reports", "occupacy"],
+            "query": [
+              {
+                "key": "parkingSpaceID",
+                "value": "123"
+              }
+            ]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Duration Report",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer <your-token>",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3034/reports/duration?parkingSpaceID=123",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "3034",
+            "path": ["reports", "duration"],
+            "query": [
+              {
+                "key": "parkingSpaceID",
+                "value": "123"
+              }
+            ]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "Get Defects Report",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Authorization",
+              "value": "Bearer <your-token>",
+              "type": "text"
+            }
+          ],
+          "url": {
+            "raw": "http://localhost:3034/reports/defects?id=123",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "3034",
+            "path": ["reports", "defects"],
+            "query": [
+              {
+                "key": "id",
+                "value": "123"
+              }
+            ]
+          }
+        },
+        "response": []
+      }
+    ]
+  }
