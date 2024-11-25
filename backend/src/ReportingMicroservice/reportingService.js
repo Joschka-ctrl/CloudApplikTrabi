@@ -120,6 +120,29 @@ const getViolationsReport = async (id) => {
     return mockData;
 };
 
+const buildReportforParkingSpace = async (id) => {
+    const occupancyReport = await getOccupancyReport(id);
+    const durationReport = await getDurationReport(id);
+    const defectsReport = await getDefectsReport(id);
+    const revenueReport = await getRevenueReport(id);
+    const occupancyRateReport = await getOccupancyRateReport(id);
+    const averageParkingTimeReport = await getAverageParkingTimeReport(id);
+    const peakHoursReport = await getPeakHoursReport(id);
+    const violationsReport = await getViolationsReport(id);
+    // Combine the reports and return them as a single json object
+    return {
+        id: id,
+        occupancyReport: occupancyReport,
+        durationReport: durationReport,
+        defectsReport: defectsReport,
+        revenueReport: revenueReport,
+        occupancyRateReport: occupancyRateReport,
+        averageParkingTimeReport: averageParkingTimeReport,
+        peakHoursReport: peakHoursReport,
+        violationsReport: violationsReport
+    }
+};
+
 module.exports = {
     getOccupancyReport,
     getDurationReport,
@@ -128,5 +151,6 @@ module.exports = {
     getOccupancyRateReport,
     getAverageParkingTimeReport,
     getPeakHoursReport,
-    getViolationsReport
+    getViolationsReport,
+    buildReportforParkingSpace
 };
