@@ -162,4 +162,4 @@ app.get("/leaveParkhouse/:carId", (req, res) => {
 
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
-  });
+});
