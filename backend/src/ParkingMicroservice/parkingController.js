@@ -27,7 +27,8 @@ const authenticateToken = async (req, res, next) => {
       res.status(401).json({ error: 'Unauthorized' });
     }
   };
-  
+
+// unused
 // Create a new parking spot
 app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
     const { id, occupied } = req.body;
@@ -38,6 +39,8 @@ app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
         res.status(400).send(error.message);
     }
 });
+
+// tested with postman
 // Create a new parking spot
 app.post('/parkingSpots', (req, res) => {
     const { id, occupied } = req.body;
@@ -64,7 +67,8 @@ app.get('/parkingSpots/:id', (req, res) => {
     res.json(spot);
 });
 
-
+// tested with postman
+// in Parkhaus fahren
 app.get("/getTicketNr", (req, res) => {
     try {
         const ticketNr = parkingService.getTicketNumber();
@@ -74,17 +78,16 @@ app.get("/getTicketNr", (req, res) => {
     }
 });
 
+// tested with postman
+// Current occupancy of the parking garage
 app.get("/currentOccupancy", (req, res) => {
     const occupancy = parkingService.getCurrentOccupancy();
     res.json({ occupancy });
 });
 
-app.get("/reserveParkingSpot1", (req, res) => {
-    const result = parkingService.reserveParkingSpot();
-    res.json(result);
-});
 
 //tested with postman
+// Add a car to tone specific parking spot
 app.post("/reserveParkingSpot", (req, res) => {
     const id = req.body.id;
     const occupied = true;
@@ -96,6 +99,8 @@ app.post("/reserveParkingSpot", (req, res) => {
     }
 });
 
+//tested with postman
+// Release a specific parking spot
 app.post("/releaseParkingSpot", (req, res) => {
     const id = req.body.id;
     const occupied = false;
@@ -107,6 +112,8 @@ app.post("/releaseParkingSpot", (req, res) => {
     }
 });
 
+//tested with postman
+// Get the duration of a car's stay in the parking garage
 app.get("/duration/:carId", (req, res) => {
     try {
         const carId = req.params.carId;
@@ -117,6 +124,8 @@ app.get("/duration/:carId", (req, res) => {
     }
 });
 
+// tested with postman
+// Get the parking fee for a car / Ticket number
 app.get("/getParkingFee/:carId", (req, res) => {
     try {
         const carId = req.params.carId;
@@ -127,6 +136,8 @@ app.get("/getParkingFee/:carId", (req, res) => {
     }
 });
 
+// tested with postman
+// Pay the parking fee for a car / Ticket number
 app.get("/payParkingFee/:carId", (req, res) => {
     try {
         const carId = req.params.carId;
@@ -137,6 +148,8 @@ app.get("/payParkingFee/:carId", (req, res) => {
     }
 });
 
+// tested with postman
+// Leave the parking garage
 app.get("/leaveParkhouse/:carId", (req, res) => {
     try {
         const ticketNumber = req.params.carId;

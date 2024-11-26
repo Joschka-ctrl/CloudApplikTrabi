@@ -19,10 +19,8 @@ const createParkingSpot = (id, occupied) => {
     return newSpot;
 };
 
-
-
 let maxCapacity = 3;
-let currentOccupancy = 0;
+let currentOccupancy = 0; // Current number of occupied parking spots within the parking facility
 let carsInParkingFacility = [{ ticketNumber: "1234", parkingStartedAt: Timestamp.now(), payedAt: [], parkingEndedAt: null }];
 
 
