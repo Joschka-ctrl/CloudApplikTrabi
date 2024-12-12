@@ -1,1 +1,18 @@
 backend/src/cloud-eigl-firebase-adminsdk-5gdjf-15af4bd2c6.json
+
+
+# TERRAFORM
+# Ignore everything in the cloud/terraform directory
+cloud/terraform/*
+
+# But do not ignore .tf, .tfvars, and .tfbackend files
+!cloud/terraform/*.tf
+!cloud/terraform/*.tfvars
+!cloud/terraform/*.tfbackend
+
+# Ignore specific files in the terraform directory
+cloud/terraform/terraform.tfstate
+cloud/terraform/terraform.tfstate.backup
+cloud/terraform/.terraform/
+cloud/terraform/.terraform.lock.hcl
+cloud/terraform/.terraform.tfstate.lock.info
