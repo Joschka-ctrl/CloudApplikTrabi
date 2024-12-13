@@ -1,0 +1,94 @@
+name: Build and Deploy to Google Cloud
+
+on:
+  push:
+    branches:
+      - stage
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Authenticate with Google Cloud
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
+
+    - name: Authenticate Docker with Google Cloud
+      run: |
+        gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+     # Terraform: Apply Kubernetes Cluster and Resources
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+        terraform_version: 1.5.7
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: cloud/terraform
+
+      - name: Apply Terraform (Provision Cluster and Resources)
+        run: terraform apply -auto-approve
+        working-directory: cloud/terraform
+
+    # Create api-gateway-ingress
+    - name: Create Kubernetes Ingress
+      run: kubectl apply -f ingress.yaml
+
+    # Wait for Kubernetes Ingress Address
+    - name: Get Kubernetes Ingress Address
+      id: get-ingress
+      run: |
+        while true; do
+          INGRESS_ADDRESS=$(kubectl get ingress api-gateway-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [[ -n "$INGRESS_ADDRESS" ]]; then
+            break
+          fi
+          echo "Waiting for ingress address..."
+          sleep 10
+        done
+        echo "INGRESS_ADDRESS=${INGRESS_ADDRESS}" >> $GITHUB_ENV
+
+    # Build Backend Docker image
+    - name: Build Backend Docker image
+      run: |
+        docker build --build-arg BUCKET_ENV=_stage -t backend-server:1.1.1 -f backend/Dockerfile ./backend
+
+    - name: Tag Backend Docker Image
+      run: |
+        docker tag backend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.1.1
+
+    - name: Push Backend Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.1.1
+
+    # Build Frontend Docker image with Kubernetes Ingress URL
+    - name: Build Frontend Docker image
+      run: |
+        docker build --build-arg REACT_APP_BACKEND_URL=${{ env.INGRESS_ADDRESS }} \
+                     --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+                     -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
+
+    - name: Tag Frontend Docker Image
+      run: |
+        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+
+    - name: Push Frontend Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+        
+
+    # Apply Kubernetes Deployment and Services
+    - name: Deploy Kubernetes Resources
+      run: |
+        kubectl apply -f cloud/yamls/backend-deploy.yaml
+        kubectl apply -f cloud/yamls/backend-service.yaml
+        kubectl apply -f cloud/yamls/frontend-deploy.yaml
+        kubectl apply -f cloud/yamls/frontend-service.yaml

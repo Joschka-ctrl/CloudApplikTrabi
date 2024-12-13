@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend-container
-        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.0.8
+        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
         ports:
         - containerPort: 3000
         env:
