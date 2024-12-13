@@ -1,21 +1,11 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Service
 metadata:
-  name: backend-deployment
-  labels:
-    app: backend
+  name: backend-service
 spec:
-  replicas: 1
   selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: backend-container
-        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.0.0
-        ports:
-        - containerPort: 3015
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3015
