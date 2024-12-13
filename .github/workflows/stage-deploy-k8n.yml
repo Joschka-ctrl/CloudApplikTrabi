@@ -39,6 +39,9 @@ jobs:
       working-directory: cloud/terraform
 
     # Create api-gateway-ingress
+    - name: Get Kubernetes Credentials
+      run: gcloud container clusters get-credentials demo-cluster-cloud --region=europe-west1
+
     - name: Create Kubernetes Ingress
       run: kubectl apply -f cloud/yamls/ingress.yaml
 
