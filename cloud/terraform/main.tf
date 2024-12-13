@@ -12,7 +12,7 @@ provider "kubernetes" {
 }
 
 resource "google_container_cluster" "gke" {
-  name     = "terraform-clustered"
+  name     = "terraform-cluster"
   location = "europe-west1"
 
   deletion_protection = false
