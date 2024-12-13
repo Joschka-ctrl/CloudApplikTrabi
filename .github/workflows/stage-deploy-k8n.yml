@@ -24,11 +24,11 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-    # Terraform: Apply Kubernetes Cluster and Resources
+    # Terraform: Apply Kubernetes Cluster and Resource
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-      terraform_version: 1.5.7
+        terraform_version: 1.5.7
 
     - name: Initialize Terraform
       run: terraform init
