@@ -4,7 +4,6 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
 import {
   Button,
   Col,
@@ -19,29 +18,23 @@ import {
 
 export default function DefectDetail({
   show,
-  defectId,
   onClose,
   editDefect,
   deleteDefect,
+  defect,
 }) {
-  const [defect, setDefect] = useState({ id: "undefined" });
-
   const API_URL =
     process.env.NODE_ENV === "development"
       ? "http://localhost:3015"
       : process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetch(API_URL + "/defects/" + defectId)
-      .then((response) => response.json())
-      .then(setDefect)
-      .catch(console.error);
-      console.log("Fetching Defect Detail");
-  }, [API_URL, defectId, show]);
-
   const callEditDefect = () => {
     editDefect(defect);
   };
+
+  if (!defect) {
+    return null; // Or display a loading indicator
+  }
 
   return (
     <Modal show={show} size="xl" centered backdrop="static">
@@ -62,7 +55,7 @@ export default function DefectDetail({
                     if (window.confirm("Möchten Sie diesen Defekt löschen?")) {
                       console.log("Deleting Defect");
                       onClose();
-                      deleteDefect(defectId);
+                      deleteDefect(defect.id);
                     }
                   }}
                 >
@@ -79,7 +72,7 @@ export default function DefectDetail({
                 </div>
               </Stack>
               <p className="text-muted small mb-0 align-self-end">
-                ID: {defectId}
+                ID: {defect.id}
               </p>
             </div>
           </Stack>
