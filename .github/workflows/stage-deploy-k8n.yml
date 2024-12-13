@@ -34,13 +34,18 @@ jobs:
       run: terraform init
       working-directory: cloud/terraform
 
+    - name: Import Existing Cluster (if needed)
+      run: |
+        terraform import google_container_cluster.terraform-clustered projects/${{ secrets.GCP_PROJECT }}/locations/europe-west1-c/clusters/terraform-clustered
+      working-directory: cloud/terraform
+
     - name: Apply Terraform (Provision Cluster and Resources)
       run: terraform apply -auto-approve
       working-directory: cloud/terraform
 
     # Create api-gateway-ingress
     - name: Create Kubernetes Ingress
-      run: kubectl apply -f ingress.yaml
+      run: kubectl apply -f cloud/yamls/ingress.yaml
 
     # Wait for Kubernetes Ingress Address
     - name: Get Kubernetes Ingress Address
