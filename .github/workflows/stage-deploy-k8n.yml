@@ -1,4 +1,4 @@
-name: Build and Deploy to Google Cloud
+name: Build and Deploy to Kubernetes
 
 on:
   push:
@@ -24,19 +24,19 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-     # Terraform: Apply Kubernetes Cluster and Resources
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-        terraform_version: 1.5.7
+    # Terraform: Apply Kubernetes Cluster and Resources
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+      terraform_version: 1.5.7
 
-      - name: Initialize Terraform
-        run: terraform init
-        working-directory: cloud/terraform
+    - name: Initialize Terraform
+      run: terraform init
+      working-directory: cloud/terraform
 
-      - name: Apply Terraform (Provision Cluster and Resources)
-        run: terraform apply -auto-approve
-        working-directory: cloud/terraform
+    - name: Apply Terraform (Provision Cluster and Resources)
+      run: terraform apply -auto-approve
+      working-directory: cloud/terraform
 
     # Create api-gateway-ingress
     - name: Create Kubernetes Ingress
