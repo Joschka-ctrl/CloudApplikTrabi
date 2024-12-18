@@ -3,7 +3,7 @@ name: Build and Deploy to Kubernetes
 on:
   push:
     branches:
-      - stage
+      - never-run
 
 jobs:
   build-and-deploy:
