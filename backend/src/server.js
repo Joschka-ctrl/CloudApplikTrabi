@@ -5,6 +5,7 @@ const multer = require("multer");
 const { Storage } = require("@google-cloud/storage");
 const admin = require('firebase-admin');
 const app = express();
+const router = express.Router();
 const port = 3015;
 const db = require("./firestore.js"); // Firestore-Datenbank
 
@@ -24,6 +25,8 @@ const bucket = storage.bucket(bucketName);
 
 app.use(express.json());
 app.use(cors());
+
+app.use('/api', router);
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
@@ -47,12 +50,12 @@ const authenticateToken = async (req, res, next) => {
 };
 
 //Health Check
-app.get("/health", (req, res) => {
+router.get("/health", (req, res) => {
   res.status(200).json({ status: "UP" });
 });
 
 // **1. Defect erstellen (geschützte Route)**
-app.post("/defects", authenticateToken, async (req, res) => {
+router.post("/defects", authenticateToken, async (req, res) => {
   try {
     const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
 
@@ -87,7 +90,7 @@ app.post("/defects", authenticateToken, async (req, res) => {
 });
 
 // **2. Alle Defects abrufen**
-app.get("/defects", authenticateToken, async (req, res) => {
+router.get("/defects", authenticateToken, async (req, res) => {
   try {
     const { filterType, filterText } = req.query;
     const allowedFilterFields = ["object", "location", "shortDescription", "detailDescription", "reportingDate", "status"];
@@ -108,7 +111,7 @@ app.get("/defects", authenticateToken, async (req, res) => {
 });
 
 // **3. Einzelnes Defect abrufen**
-app.get("/defects/:id", authenticateToken, async (req, res) => {
+router.get("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);
@@ -122,7 +125,7 @@ app.get("/defects/:id", authenticateToken, async (req, res) => {
 });
 
 // **4. Defect aktualisieren**
-app.put("/defects/:id", authenticateToken, async (req, res) => {
+router.put("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
@@ -162,7 +165,7 @@ app.put("/defects/:id", authenticateToken, async (req, res) => {
 });
 
 // **5. Defect löschen**
-app.delete("/defects/:id", authenticateToken, async (req, res) => {
+router.delete("/defects/:id", authenticateToken, async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);
@@ -178,7 +181,7 @@ app.delete("/defects/:id", authenticateToken, async (req, res) => {
 });
 
 // **6. Bild hochladen**
-app.post("/defects/:id/uploadPicture", authenticateToken, upload.single("picture"), async (req, res) => {
+router.post("/defects/:id/uploadPicture", authenticateToken, upload.single("picture"), async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);
@@ -215,7 +218,7 @@ app.post("/defects/:id/uploadPicture", authenticateToken, upload.single("picture
 });
 
 // **7. Bild abrufen**
-app.get("/image/:fileName", async (req, res) => {
+router.get("/image/:fileName", async (req, res) => {
   const fileName = req.params.fileName;
   const file = bucket.file(fileName);
 
