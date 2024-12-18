@@ -21,7 +21,7 @@ spec:
         - containerPort: 3015
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/health
             port: 3015
           initialDelaySeconds: 5
           periodSeconds: 10

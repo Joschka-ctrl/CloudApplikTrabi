@@ -26,7 +26,12 @@ const bucket = storage.bucket(bucketName);
 app.use(express.json());
 app.use(cors());
 
-app.use('/api', router);
+app.use((req, res, next) => {
+  console.log("Request received to: "  + req.url);
+  next();
+})
+
+app.use('/api', router)
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
