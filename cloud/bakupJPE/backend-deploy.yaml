@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend-container
+        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.1.1
+        ports:
+        - containerPort: 3015
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3015
+          initialDelaySeconds: 5
+          periodSeconds: 10

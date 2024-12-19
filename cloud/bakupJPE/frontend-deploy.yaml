@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend-container
+        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+        ports:
+        - containerPort: 3000
+        env:
+        - name: ENV_VAR_1
+          value: "value1"
+        - name: ENV_VAR_2
+          value: "value2"
