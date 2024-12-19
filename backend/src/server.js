@@ -31,7 +31,9 @@ app.use((req, res, next) => {
   next();
 })
 
+// Use both '/' and '/api/' as base path
 app.use('/api', router)
+app.use('/', router)
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
