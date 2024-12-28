@@ -1,26 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-deployment
+  name: {{ .Release.Name }}-frontend
   labels:
-    app: frontend
+    app: {{ .Release.Name }}-frontend
 spec:
-  replicas: 1
+  replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
-      app: frontend
+      app: {{ .Release.Name }}-frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: {{ .Release.Name }}-frontend
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
     spec:
       containers:
       - name: frontend-container
-        image: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
         ports:
-        - containerPort: 3000
+        - containerPort: {{ .Values.frontend.containerPort }}
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
         env:
-        - name: ENV_VAR_1
-          value: "value1"
-        - name: ENV_VAR_2
-          value: "value2"
+        {{- range $key, $value := .Values.frontend.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}

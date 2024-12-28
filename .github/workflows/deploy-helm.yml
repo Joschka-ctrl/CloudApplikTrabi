@@ -1,0 +1,82 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches:
+      - Helmut
+
+env:
+  PROJECT_ID: trabantparking-stage
+  REGION: europe-west1
+  ARTIFACT_REGISTRY: docker-repo
+  CLUSTER_NAME: terraform-cluster
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
+  
+      - name: Authenticate Docker with Google Cloud
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker $REGION-docker.pkg.dev
+
+      - name: Build and Push Backend Image
+        run: |
+          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/backend-server:${{ github.sha }} ./backend
+          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/backend-server:${{ github.sha }}
+
+      - name: Build and Push Frontend Image
+        run: |
+          docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/frontend-server:${{ github.sha }} ./frontend
+          docker push $REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/frontend-server:${{ github.sha }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.0.0"
+
+      - name: Initialize Terraform
+        run: |
+          cd cloud/terraform
+          terraform init
+
+      - name: Apply Terraform
+        run: |
+          cd cloud/terraform
+          terraform apply -auto-approve
+
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION --project $PROJECT_ID
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.12.0'
+
+      - name: Update Helm Values
+        run: |
+          sed -i "s|tag:.*|tag: \"${{ github.sha }}\"|" cloud/yamls/helm-chart/values.yaml
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install trabant-app ./cloud/yamls/helm-chart \
+            --namespace default \
+            --create-namespace \
+            --set backend.image.tag=${{ github.sha }} \
+            --set frontend.image.tag=${{ github.sha }}
