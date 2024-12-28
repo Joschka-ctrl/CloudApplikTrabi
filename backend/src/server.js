@@ -97,7 +97,7 @@ router.post("/defects", authenticateToken, async (req, res) => {
 });
 
 // **2. Alle Defects abrufen**
-router.get("/defects", async (req, res) => {
+router.get("/defects", authenticateToken, async (req, res) => {
   try {
     const { filterType, filterText } = req.query;
     const allowedFilterFields = ["object", "location", "shortDescription", "detailDescription", "reportingDate", "status"];
