@@ -2,8 +2,6 @@
 var admin = require("firebase-admin");
 
 // Initialisiere Firebase
-admin.initializeApp({
-  credential: admin.credential.applicationDefault()
-});
+admin.initializeApp({});
 
 module.exports = admin.firestore();
