@@ -46,6 +46,10 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
+//Health Check
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP" });
+});
 
 // **1. Defect erstellen (geschützte Route)**
 app.post("/defects", authenticateToken, async (req, res) => {
