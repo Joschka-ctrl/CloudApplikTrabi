@@ -9,11 +9,11 @@ const ChargingStations = () => {
   const [stations, setStations] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null);
-  const { getIdToken } = useAuth();
+  const { user } = useAuth();
 
   const fetchStations = async () => {
     try {
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       const response = await fetch('http://localhost:3016/charging-stations', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -47,7 +47,7 @@ const ChargingStations = () => {
 
   const handleSave = async (stationData) => {
     try {
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       const url = selectedStation
         ? `http://localhost:3016/charging-stations/${selectedStation.id}`
         : 'http://localhost:3016/charging-stations';
@@ -71,7 +71,7 @@ const ChargingStations = () => {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ mt: 8 }}>
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Charging Stations

@@ -15,11 +15,11 @@ import ElectricCarIcon from '@mui/icons-material/ElectricCar';
 import { useAuth } from './AuthProvider';
 
 const ChargingStationTable = ({ stations, onEdit, onRefresh }) => {
-  const { getIdToken } = useAuth();
+  const { user } = useAuth();
 
   const handleStatusChange = async (station) => {
     try {
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       const newStatus = station.status === 'available' ? 'occupied' : 'available';
       
       await fetch(`http://localhost:3016/charging-stations/${station.id}`, {

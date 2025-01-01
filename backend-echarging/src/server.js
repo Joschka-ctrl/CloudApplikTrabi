@@ -4,10 +4,8 @@ const admin = require('firebase-admin');
 const app = express();
 const port = 3016; // Different port from main backend
 
-// Initialize Firebase Admin
-const serviceAccount = require('../serviceAccountKey.json');
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+  credential: admin.credential.applicationDefault(),
 });
 
 const db = admin.firestore();
@@ -93,6 +91,17 @@ app.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
     
     const updated = await stationRef.get();
     res.json({ id: updated.id, ...updated.data() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all charging sessions
+app.get("/charging-sessions", authenticateToken, async (req, res) => {
+  try {
+    const snapshot = await db.collection("charging-sessions").get();
+    const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(sessions);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -27,13 +26,12 @@ app.use(cors());
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!req.headers?.authorization?.startsWith('Bearer ')) {
     console.log('Unauthorized access attempt detected');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = req.headers.authorization.split(' ')[1];
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);

@@ -18,11 +18,11 @@ import { useAuth } from '../components/AuthProvider';
 
 const ChargingSessions = () => {
   const [sessions, setSessions] = useState([]);
-  const { getIdToken } = useAuth();
+  const { user } = useAuth();
 
   const fetchSessions = async () => {
     try {
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       const response = await fetch('http://localhost:3016/charging-sessions', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -44,7 +44,7 @@ const ChargingSessions = () => {
 
   const handleEndSession = async (sessionId) => {
     try {
-      const token = await getIdToken();
+      const token = await user.getIdToken();
       // In a real application, you would get the actual energy consumed
       const energyConsumed = Math.floor(Math.random() * 50) + 10; // Mock value between 10-60 kWh
       
@@ -69,7 +69,7 @@ const ChargingSessions = () => {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ mt: 8 }} >
       <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Charging Sessions
