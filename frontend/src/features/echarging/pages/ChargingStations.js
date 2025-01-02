@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Box } from '@mui/material';
+import { 
+  Container, 
+  Typography, 
+  Button, 
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem 
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ChargingStationTable from '../components/ChargingStationTable';
 import ChargingStationForm from '../components/ChargingStationForm';
@@ -9,18 +18,28 @@ const ChargingStations = () => {
   const [stations, setStations] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedStation, setSelectedStation] = useState(null);
+  const [selectedGarage, setSelectedGarage] = useState('');
+  const [garages, setGarages] = useState([]);
   const { user } = useAuth();
 
   const fetchStations = async () => {
     try {
       const token = await user.getIdToken();
-      const response = await fetch('http://localhost:3016/charging-stations', {
+      const url = selectedGarage 
+        ? `http://localhost:3016/charging-stations?garage=${encodeURIComponent(selectedGarage)}`
+        : 'http://localhost:3016/charging-stations';
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
       setStations(data);
+      
+      // Extract unique garages
+      const uniqueGarages = [...new Set(data.map(station => station.garage))].filter(Boolean);
+      setGarages(uniqueGarages);
     } catch (error) {
       console.error('Error fetching charging stations:', error);
     }
@@ -28,7 +47,11 @@ const ChargingStations = () => {
 
   useEffect(() => {
     fetchStations();
-  }, []);
+  }, [selectedGarage]);
+
+  const handleGarageChange = (event) => {
+    setSelectedGarage(event.target.value);
+  };
 
   const handleAddStation = () => {
     setSelectedStation(null);
@@ -77,6 +100,22 @@ const ChargingStations = () => {
           Charging Stations
         </Typography>
         
+        <FormControl sx={{ minWidth: 200, mb: 2 }}>
+          <InputLabel id="garage-select-label">Garage</InputLabel>
+          <Select
+            labelId="garage-select-label"
+            id="garage-select"
+            value={selectedGarage}
+            label="Garage"
+            onChange={handleGarageChange}
+          >
+            <MenuItem value="">All</MenuItem>
+            {garages.map(garage => (
+              <MenuItem key={garage} value={garage}>{garage}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <Button
           variant="contained"
           color="primary"

@@ -15,7 +15,8 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
     location: '',
     power: '',
     connectorType: '',
-    status: 'available'
+    status: 'available',
+    garage: ''
   });
 
   useEffect(() => {
@@ -24,14 +25,16 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
         location: station.location || '',
         power: station.power || '',
         connectorType: station.connectorType || '',
-        status: station.status || 'available'
+        status: station.status || 'available',
+        garage: station.garage || ''
       });
     } else {
       setFormData({
         location: '',
         power: '',
         connectorType: '',
-        status: 'available'
+        status: 'available',
+        garage: ''
       });
     }
   }, [station]);
@@ -51,7 +54,8 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
       location: '',
       power: '',
       connectorType: '',
-      status: 'available'
+      status: 'available',
+      garage: ''
     });
   };
 
@@ -72,42 +76,50 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <form onSubmit={handleSubmit}>
         <DialogTitle>
-          {station ? 'Edit Charging Station' : 'Add Charging Station'}
+          {station ? 'Edit Charging Station' : 'Add New Charging Station'}
         </DialogTitle>
-        
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
-                name="location"
+                fullWidth
                 label="Location"
+                name="location"
                 value={formData.location}
                 onChange={handleChange}
-                fullWidth
                 required
               />
             </Grid>
-            
             <Grid item xs={12}>
               <TextField
-                name="power"
+                fullWidth
+                label="Garage"
+                name="garage"
+                value={formData.garage}
+                onChange={handleChange}
+                required
+                helperText="Enter the garage name where this station is located"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
                 label="Power (kW)"
+                name="power"
                 type="number"
                 value={formData.power}
                 onChange={handleChange}
-                fullWidth
                 required
               />
             </Grid>
-            
             <Grid item xs={12}>
               <TextField
-                name="connectorType"
-                label="Connector Type"
+                fullWidth
                 select
+                label="Connector Type"
+                name="connectorType"
                 value={formData.connectorType}
                 onChange={handleChange}
-                fullWidth
                 required
               >
                 {connectorTypes.map((type) => (
@@ -117,15 +129,14 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
                 ))}
               </TextField>
             </Grid>
-            
             <Grid item xs={12}>
               <TextField
-                name="status"
-                label="Status"
+                fullWidth
                 select
+                label="Status"
+                name="status"
                 value={formData.status}
                 onChange={handleChange}
-                fullWidth
                 required
               >
                 {statusOptions.map((status) => (
@@ -137,7 +148,6 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
             </Grid>
           </Grid>
         </DialogContent>
-        
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="contained" color="primary">

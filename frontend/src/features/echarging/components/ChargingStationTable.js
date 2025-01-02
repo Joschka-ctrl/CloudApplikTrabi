@@ -56,6 +56,7 @@ const ChargingStationTable = ({ stations, onEdit, onRefresh }) => {
         <TableHead>
           <TableRow>
             <TableCell>Location</TableCell>
+            <TableCell>Garage</TableCell>
             <TableCell>Power (kW)</TableCell>
             <TableCell>Connector Type</TableCell>
             <TableCell>Status</TableCell>
@@ -66,6 +67,7 @@ const ChargingStationTable = ({ stations, onEdit, onRefresh }) => {
           {stations.map((station) => (
             <TableRow key={station.id}>
               <TableCell>{station.location}</TableCell>
+              <TableCell>{station.garage}</TableCell>
               <TableCell>{station.power}</TableCell>
               <TableCell>{station.connectorType}</TableCell>
               <TableCell>

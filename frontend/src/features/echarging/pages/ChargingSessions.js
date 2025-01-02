@@ -11,25 +11,39 @@ import {
   TableRow,
   Paper,
   Button,
-  Chip
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import StopIcon from '@mui/icons-material/Stop';
 import { useAuth } from '../../../components/AuthProvider';
 
 const ChargingSessions = () => {
   const [sessions, setSessions] = useState([]);
+  const [selectedGarage, setSelectedGarage] = useState('');
+  const [garages, setGarages] = useState([]);
   const { user } = useAuth();
 
   const fetchSessions = async () => {
     try {
       const token = await user.getIdToken();
-      const response = await fetch('http://localhost:3016/charging-sessions', {
+      const url = selectedGarage 
+        ? `http://localhost:3016/charging-sessions?garage=${encodeURIComponent(selectedGarage)}`
+        : 'http://localhost:3016/charging-sessions';
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await response.json();
       setSessions(data);
+
+      // Extract unique garages from the sessions
+      const uniqueGarages = [...new Set(data.map(session => session.garage))].filter(Boolean);
+      setGarages(uniqueGarages);
     } catch (error) {
       console.error('Error fetching charging sessions:', error);
     }
@@ -37,10 +51,13 @@ const ChargingSessions = () => {
 
   useEffect(() => {
     fetchSessions();
-    // Set up polling every 30 seconds to update session status
     const interval = setInterval(fetchSessions, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedGarage]); // Re-fetch when garage filter changes
+
+  const handleGarageChange = (event) => {
+    setSelectedGarage(event.target.value);
+  };
 
   const handleEndSession = async (sessionId) => {
     try {
@@ -69,22 +86,37 @@ const ChargingSessions = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 8 }} >
-      <Box sx={{ my: 4 }}>
+    <Container maxWidth="lg">
+      <Box sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Charging Sessions
         </Typography>
-
+        
+        <FormControl sx={{ mb: 3, minWidth: 200 }}>
+          <InputLabel id="garage-select-label">Filter by Garage</InputLabel>
+          <Select
+            labelId="garage-select-label"
+            id="garage-select"
+            value={selectedGarage}
+            label="Filter by Garage"
+            onChange={handleGarageChange}
+          >
+            <MenuItem value="">All Garages</MenuItem>
+            {garages.map((garage) => (
+              <MenuItem key={garage} value={garage}>{garage}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Station Location</TableCell>
-                <TableCell>Start Time</TableCell>
-                <TableCell>End Time</TableCell>
+                <TableCell>Station</TableCell>
+                <TableCell>Garage</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Energy Consumed (kWh)</TableCell>
-                <TableCell>Card-Provider</TableCell>
+                <TableCell>Start Time</TableCell>
+                <TableCell>Energy Consumed</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -92,16 +124,15 @@ const ChargingSessions = () => {
               {sessions.map((session) => (
                 <TableRow key={session.id}>
                   <TableCell>{session.stationId}</TableCell>
-                  <TableCell>{formatDateTime(session.startTime)}</TableCell>
-                  <TableCell>{formatDateTime(session.endTime)}</TableCell>
+                  <TableCell>{session.garage}</TableCell>
                   <TableCell>
                     <Chip
                       label={session.status}
                       color={session.status === 'active' ? 'success' : 'default'}
                     />
                   </TableCell>
+                  <TableCell>{formatDateTime(session.startTime)}</TableCell>
                   <TableCell>{session.energyConsumed || '-'}</TableCell>
-                  <TableCell>{session.chargingCardProvider}</TableCell>
                   <TableCell>
                     {session.status === 'active' && (
                       <Button

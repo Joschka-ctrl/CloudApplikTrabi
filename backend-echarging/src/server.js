@@ -37,11 +37,25 @@ const authenticateToken = async (req, res, next) => {
 // Get all charging stations
 app.get("/charging-stations", authenticateToken, async (req, res) => {
   try {
-    const snapshot = await db.collection("charging-stations").get();
-    const stations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const garageFilter = req.query.garage;
+    let query = db.collection("charging-stations");
+    
+    if (garageFilter) {
+      query = query.where("garage", "==", garageFilter);
+    }
+    
+    const snapshot = await query.get();
+    const stations = [];
+    snapshot.forEach(doc => {
+      stations.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
     res.json(stations);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error getting charging stations:", error);
+    res.status(500).json({ error: "Failed to get charging stations" });
   }
 });
 
@@ -61,37 +75,55 @@ app.get("/charging-stations/:id", authenticateToken, async (req, res) => {
 // Create new charging station
 app.post("/charging-stations", authenticateToken, async (req, res) => {
   try {
-    const { location, power, status, connectorType } = req.body;
+    const { location, power, status, connectorType, garage } = req.body;
+
+    if (!location || !power || !connectorType || !garage) {
+      return res.status(400).json({ 
+        error: "Missing required fields. Location, power, connector type, and garage are required." 
+      });
+    }
+
     const newStation = {
-      location,
-      power,
-      status,
-      connectorType,
+      location: location,
+      power: Number(power),
+      status: status || 'available',
+      connectorType: connectorType,
+      garage: garage,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastModified: admin.firestore.FieldValue.serverTimestamp()
     };
-    
+
     const docRef = await db.collection("charging-stations").add(newStation);
     res.status(201).json({ id: docRef.id, ...newStation });
   } catch (error) {
+    console.error('Error creating charging station:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update charging station status
+// Update charging station
 app.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
   try {
-    const { status } = req.body;
+    const { location, power, status, connectorType, garage } = req.body;
     const stationRef = db.collection("charging-stations").doc(req.params.id);
     
-    await stationRef.update({
-      status,
+    const updateData = {
       lastModified: admin.firestore.FieldValue.serverTimestamp()
-    });
+    };
+
+    // Only include fields that are provided in the request
+    if (location) updateData.location = location;
+    if (power) updateData.power = Number(power);
+    if (status) updateData.status = status;
+    if (connectorType) updateData.connectorType = connectorType;
+    if (garage) updateData.garage = garage;
+    
+    await stationRef.update(updateData);
     
     const updated = await stationRef.get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (error) {
+    console.error('Error updating charging station:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -136,7 +168,8 @@ app.post("/charging-sessions", async (req, res) => {
       startTime: admin.firestore.FieldValue.serverTimestamp(),
       status: 'active',
       endTime: null,
-      energyConsumed: 0
+      energyConsumed: 0,
+      garage: stationData.garage
     };
     
     // Update charging station status to occupied
@@ -221,40 +254,49 @@ app.post("/provider-rates", async (req, res) => {
 // Get billing summary
 app.get("/billing-summary", async (req, res) => {
   try {
+    // Get garage filter from query params
+    const garageFilter = req.query.garage;
+    
     // Get all completed charging sessions
-    const sessionsSnapshot = await db.collection("charging-sessions")
-      .where("status", "==", "completed")
-      .get();
+    let query = db.collection("charging-sessions")
+      .where("status", "==", "completed");
+    
+    if (garageFilter) {
+      query = query.where("garage", "==", garageFilter);
+    }
+    
+    const sessionsSnapshot = await query.get();
     
     // Get all provider rates
     const ratesSnapshot = await db.collection("provider-rates").get();
     const rates = {};
     ratesSnapshot.forEach(doc => {
-      rates[doc.id] = doc.data().ratePerKw;
+      rates[doc.data().provider] = doc.data().ratePerKw;
     });
 
-    // Calculate billing per provider
-    const billing = {};
+    // Process billing data
+    const billingSummary = {};
     sessionsSnapshot.forEach(doc => {
       const session = doc.data();
-      const provider = session.chargingCardProvider || 'ec-card';
-      const rate = rates[provider] || rates['ec-card'] || 0;
-      const amount = (session.energyConsumed || 0) * rate;
+      const provider = session.chargingCardProvider;
+      const rate = rates[provider] || 0;
+      const amount = session.energyConsumed * rate;
 
-      if (!billing[provider]) {
-        billing[provider] = {
+      if (!billingSummary[provider]) {
+        billingSummary[provider] = {
           totalEnergy: 0,
           totalAmount: 0,
-          sessions: 0
+          sessions: 0,
+          garage: session.garage
         };
       }
-      
-      billing[provider].totalEnergy += session.energyConsumed || 0;
-      billing[provider].totalAmount += amount;
-      billing[provider].sessions += 1;
+
+      billingSummary[provider].totalEnergy += session.energyConsumed;
+      billingSummary[provider].totalAmount += amount;
+      billingSummary[provider].sessions += 1;
     });
 
-    res.json(billing);
+    res.json(billingSummary);
   } catch (error) {
     console.error("Error getting billing summary:", error);
     res.status(500).json({ error: "Failed to get billing summary" });
