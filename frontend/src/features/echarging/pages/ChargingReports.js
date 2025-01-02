@@ -329,11 +329,11 @@ const ChargingReports = () => {
           </Paper>
         </Grid>
 
-        {/* Provider Revenue Chart */}
-        <Grid item xs={12}>
+        {/* Total Revenue Chart */}
+        <Grid item xs={12} md={6}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Revenue Comparison
+              Total Revenue by Provider
             </Typography>
             {providerRevenue && (
               <Box sx={{ height: 400 }}>
@@ -347,7 +347,40 @@ const ChargingReports = () => {
                         backgroundColor: 'rgba(255, 99, 132, 0.6)',
                         borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 1,
-                      },
+                      }
+                    ]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: {
+                          display: true,
+                          text: 'Total Revenue (€)'
+                        }
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Average Revenue Chart */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Average Revenue per Session by Provider
+            </Typography>
+            {providerRevenue && (
+              <Box sx={{ height: 400 }}>
+                <Bar
+                  data={{
+                    labels: Object.keys(providerRevenue),
+                    datasets: [
                       {
                         label: 'Average Revenue per Session (€)',
                         data: Object.values(providerRevenue).map(stats => stats.averageRevenuePerSession),
@@ -365,7 +398,7 @@ const ChargingReports = () => {
                         beginAtZero: true,
                         title: {
                           display: true,
-                          text: 'Revenue (€)'
+                          text: 'Average Revenue per Session (€)'
                         }
                       }
                     }
