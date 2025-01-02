@@ -15,6 +15,11 @@ const ChargingReports = () => {
   const [chargingStats, setChargingStats] = useState(null);
   const [utilizationData, setUtilizationData] = useState(null);
   const [providerRevenue, setProviderRevenue] = useState(null);
+  const [loading, setLoading] = useState({
+    stats: false,
+    utilization: false,
+    revenue: false
+  });
   const { user } = useAuth();
 
   const fetchWithAuth = async (url, options = {}) => {
@@ -32,6 +37,7 @@ const ChargingReports = () => {
 
   const fetchChargingStats = async () => {
     try {
+      setLoading(prev => ({ ...prev, stats: true }));
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -45,11 +51,14 @@ const ChargingReports = () => {
       setChargingStats(data);
     } catch (error) {
       console.error('Error fetching charging stats:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, stats: false }));
     }
   };
 
   const fetchUtilizationData = async () => {
     try {
+      setLoading(prev => ({ ...prev, utilization: true }));
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -63,11 +72,14 @@ const ChargingReports = () => {
       setUtilizationData(data);
     } catch (error) {
       console.error('Error fetching utilization data:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, utilization: false }));
     }
   };
 
   const fetchProviderRevenue = async () => {
     try {
+      setLoading(prev => ({ ...prev, revenue: true }));
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -81,6 +93,8 @@ const ChargingReports = () => {
       setProviderRevenue(data);
     } catch (error) {
       console.error('Error fetching provider revenue:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, revenue: false }));
     }
   };
 
@@ -105,14 +119,14 @@ const ChargingReports = () => {
         onGarageChange={setSelectedGarage}
       />
 
-      <StatisticsCards stats={chargingStats} />
+      <StatisticsCards stats={chargingStats} loading={loading.stats} />
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <UtilizationChart utilizationData={utilizationData} />
+          <UtilizationChart utilizationData={utilizationData} loading={loading.utilization} />
         </Grid>
         <Grid item xs={12}>
-          <SessionsChart utilizationData={utilizationData} />
+          <SessionsChart utilizationData={utilizationData} loading={loading.utilization} />
         </Grid>
       </Grid>
 
@@ -122,11 +136,11 @@ const ChargingReports = () => {
             <Typography variant="h6" gutterBottom>
               Card Provider Revenue
             </Typography>
-            <ProviderRevenueCards providerRevenue={providerRevenue} />
+            <ProviderRevenueCards providerRevenue={providerRevenue} loading={loading.revenue} />
           </Paper>
         </Grid>
 
-        <RevenueCharts providerRevenue={providerRevenue} />
+        <RevenueCharts providerRevenue={providerRevenue} loading={loading.revenue} />
       </Grid>
     </Container>
   );

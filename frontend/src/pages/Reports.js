@@ -151,7 +151,11 @@ const Reports = () => {
     <div className="reports-container">
       <h1>Parking Management Reports</h1>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="report tabs">
+        <Tabs value={tabValue} 
+          onChange={handleTabChange} 
+          aria-label="report tabs"
+          variant="scrollable"
+          scrollButtons="auto">
           <Tab label="Parking Reports" />
           <Tab label="E-Charging Reports" />
         </Tabs>

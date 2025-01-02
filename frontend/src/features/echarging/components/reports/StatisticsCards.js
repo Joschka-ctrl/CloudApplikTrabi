@@ -1,7 +1,17 @@
 import React from 'react';
-import { Grid, Card, CardContent, Typography } from '@mui/material';
+import { Grid, Card, CardContent, Typography, CircularProgress, Box } from '@mui/material';
 
-const StatisticsCards = ({ stats }) => {
+const StatisticsCards = ({ stats, loading }) => {
+  if (loading) {
+    return (
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Grid>
+      </Grid>
+    );
+  }
+
   if (!stats) return null;
 
   return (
