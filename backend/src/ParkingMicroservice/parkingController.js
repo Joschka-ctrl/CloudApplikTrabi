@@ -212,7 +212,7 @@ app.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
         return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
     }
     const stats = await parkingService.getParkingStats(tenantId, facilityId, startDate, endDate);
-    res.json({ dailyUsage: stats });
+    res.json( stats );
     
 });
 

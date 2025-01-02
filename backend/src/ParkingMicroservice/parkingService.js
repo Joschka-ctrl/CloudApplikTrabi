@@ -2,18 +2,14 @@ const { Timestamp } = require('@google-cloud/firestore');
 const { v4: uuidv4 } = require('uuid');
 const admin = require('firebase-admin');
 
-
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
 
 const db = admin.firestore();
 
-
-
 // Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
-
 
 const newParkingFacility = async (newFacility) => {
     newFacility.id = uuidv4();
@@ -330,8 +326,6 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
                 spotFound = true;
             }
         });
-
-
         if (!spotFound) {
             console.error(`Parking spot with ID ${spotID} not found`);
         }
@@ -477,7 +471,6 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
     }
 };
 
-
 // funktionen für Reports
 const getFacilitiesOfTenant = async (tenantID) => {
     const snapshot = await db.collection("parking-facility")
@@ -500,9 +493,7 @@ const getFacilitiesOfTenant = async (tenantID) => {
             city: facilityData.city,
             postalCode: facilityData.postalCode,
             country: facilityData.country,
-
         };
-
         facilities.push(facilityDataToReturn);
     });
 
@@ -545,7 +536,6 @@ const calculateParkingStats = (facility, startDate, endDate) => {
                     exits: 0
                 };
             }
-
             dailyStats[dateKey].totalVehicles += 1;
             dailyStats[dateKey].entries += 1;
 
@@ -592,14 +582,12 @@ const getFloorStats = async (tenantId, facilityId, startDate, endDate) => {
                 averageOccupancyTime,
             };
         });
-
         return floorStats;
     } catch (error) {
         console.error('Fehler beim Abrufen der Floor-Stats:', error);
         throw new Error('Fehler beim Abrufen der Daten');
     }
 };
-
 
 const calculateAverageParkingDuration = (cars, startDate, endDate) => {
     const start = new Date(startDate);
@@ -638,15 +626,13 @@ const calculateAverageParkingDuration = (cars, startDate, endDate) => {
     return relevantCars.length ? totalOccupancyTime / relevantCars.length / (60 * 1000) : 0;
 };
 
-
-
 // Funktion zur Erstellung von Parkplatzdauer-Statistiken
 const getParkingDurationStats = async (tenantId, facilityId, startDate, endDate) => {
     console.log('Get Parking Duration Stats');
     try {
         const facility = await getFacilityData(facilityId, tenantId);
         const averageDuration = calculateAverageParkingDuration(facility.carsInParkingFacility, startDate, endDate);
-console.log(averageDuration);
+        console.log(averageDuration);
         // Dauerunterteilungen
         const durationBreakdown = {
             shortTerm: facility.carsInParkingFacility.filter(car => {
@@ -715,11 +701,6 @@ const getRevenueStats = async (tenantId, facilityId, startDate, endDate) => {
         dailyRevenue
     };
 };
-
-
-
-
-
 
 module.exports = {
     newParkingFacility,
