@@ -84,6 +84,7 @@ const ChargingSessions = () => {
                 <TableCell>End Time</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Energy Consumed (kWh)</TableCell>
+                <TableCell>Card-Provider</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -100,6 +101,7 @@ const ChargingSessions = () => {
                     />
                   </TableCell>
                   <TableCell>{session.energyConsumed || '-'}</TableCell>
+                  <TableCell>{session.chargingCardProvider}</TableCell>
                   <TableCell>
                     {session.status === 'active' && (
                       <Button

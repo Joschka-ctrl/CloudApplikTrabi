@@ -121,6 +121,13 @@ app.post("/charging-sessions", async (req, res) => {
       energyConsumed: 0
     };
     
+    // Update charging station status to occupied
+    const stationRef = db.collection("charging-stations").doc(stationId);
+    await stationRef.update({
+      status: 'occupied',
+      lastModified: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
     const docRef = await db.collection("charging-sessions").add(session);
     res.status(201).json({ id: docRef.id, ...session });
   } catch (error) {
