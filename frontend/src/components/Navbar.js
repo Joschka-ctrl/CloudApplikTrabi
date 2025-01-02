@@ -19,6 +19,10 @@ const Navbar = () => {
             </li>
             <div className="VerticalDivider" />
             <li className="NavbarItem r">
+              <Link to="/reports">Reports</Link>
+            </li>
+            <div className="VerticalDivider" />
+            <li className="NavbarItem r">
               <Link to="/e-charging">E-Charging</Link>
             </li>
             <div className="VerticalDivider" />

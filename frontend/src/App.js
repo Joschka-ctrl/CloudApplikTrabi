@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import ECharging from "./pages/ECharging";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Reports from "./pages/Reports";
 
 const App = () => {
   return (
@@ -37,6 +38,14 @@ const App = () => {
               />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </header>
         </AuthProvider>
