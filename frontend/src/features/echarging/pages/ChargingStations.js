@@ -99,8 +99,8 @@ const ChargingStations = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Charging Stations
         </Typography>
-        
-        <FormControl sx={{ minWidth: 200, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 2, mb: 3 }}>
+        <FormControl sx={{ minWidth: 200 }}>
           <InputLabel id="garage-select-label">Garage</InputLabel>
           <Select
             labelId="garage-select-label"
@@ -121,10 +121,10 @@ const ChargingStations = () => {
           color="primary"
           startIcon={<AddIcon />}
           onClick={handleAddStation}
-          sx={{ mb: 3 }}
         >
           Add Charging Station
         </Button>
+        </Box>
 
         <ChargingStationTable
           stations={stations}
