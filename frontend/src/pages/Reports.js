@@ -1,116 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bar, Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
-import './Reports.css'; // Importing the CSS file for styling
+import './Reports.css';
+import { useAuth } from '../components/AuthProvider';
 
 const Reports = () => {
-  // -----------------------------------------------
-  // 1) Sample parking places
-  // -----------------------------------------------
-  const parkingPlaces = [
-    { id: 'A', name: 'Parking A' },
-    { id: 'B', name: 'Parking B' },
-    { id: 'C', name: 'Parking C' },
-  ];
-
-  // -----------------------------------------------
-  // 2) State for filters
-  // -----------------------------------------------
-  const [selectedParkingPlace, setSelectedParkingPlace] = useState(parkingPlaces[0].id);
+  // State for filters and data
+  const [parkingPlaces, setParkingPlaces] = useState([]);
+  const [selectedParkingPlace, setSelectedParkingPlace] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [minUsage, setMinUsage] = useState('');
   const [maxUsage, setMaxUsage] = useState('');
+  const [dailyUsageData, setDailyUsageData] = useState(null);
+  const [occupancyData, setOccupancyData] = useState(null);
+  const [metrics, setMetrics] = useState({ totalParkedVehicles: 0, averageDuration: 'N/A' });
+  const { user } = useAuth();
 
-  // -----------------------------------------------
-  // 3) Raw data (simulated)
-  // -----------------------------------------------
-  // Normally you would load this from an API,
-  // and/or have different data per parking place.
-  const rawDailyUsageData = {
-    A: [30, 50, 70, 40, 90, 60, 80],
-    B: [20, 40, 60, 30, 80, 50, 70],
-    C: [10, 30, 40, 20, 60, 40, 50],
-  };
-
-  // Occupancy by floors, each key is a parking place
-  const rawOccupancyData = {
-    A: [60, 80, 50, 40], // Floors 1,2,3,4
-    B: [40, 70, 45, 30],
-    C: [50, 60, 40, 20],
-  };
-
-  // -----------------------------------------------
-  // 4) Helper function to apply date and usage filters
-  //    In reality, you might filter by timestamps or
-  //    fetch new data from the server with these filters
-  // -----------------------------------------------
-  const applyFiltersToData = (dataset) => {
-    // For demonstration, we only show how you *could* filter.
-    // We'll do a trivial usage filter here.
-
-    let filteredData = dataset;
-
-    if (minUsage) {
-      filteredData = filteredData.map((val) => (val >= minUsage ? val : 0));
+  const fetchWithAuth = async (url, options = {}) => {
+    if (user) {
+      const token = await user.getIdToken(); // Fetch the token from the user object
+      const headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      };
+      return fetch(url, { ...options, headers });
+    } else {
+      throw new Error("User is not authenticated");
     }
+  };
 
-    if (maxUsage) {
-      filteredData = filteredData.map((val) => (val <= maxUsage ? val : 0));
+  // Fetch parking places on component mount
+  useEffect(() => {
+    fetchParkingPlaces();
+  }, []);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    if (selectedParkingPlace) {
+      fetchDailyUsage();
+      fetchFloorOccupancy();
+      fetchMetrics();
     }
+  }, [selectedParkingPlace, startDate, endDate, minUsage, maxUsage]);
 
-    // Date range filtering is not explicitly shown here since
-    // these arrays don't have date labels. In a real app,
-    // you would filter out data points whose date is outside
-    // [startDate, endDate].
-
-    return filteredData;
+  const fetchParkingPlaces = async () => {
+    try {
+      const response = await fetchWithAuth('http://localhost:3004/api/reports/parking-places');
+      const data = await response.json();
+      setParkingPlaces(data);
+      if (data.length > 0) {
+        setSelectedParkingPlace(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching parking places:', error);
+    }
   };
 
-  // -----------------------------------------------
-  // 5) Build the chart data using currently selected parking
-  //    place and filters
-  // -----------------------------------------------
-  const parkingData = {
-    labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-    datasets: [
-      {
-        label: 'Parking Usage',
-        data: applyFiltersToData(rawDailyUsageData[selectedParkingPlace]),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-      },
-    ],
+  const fetchDailyUsage = async () => {
+    try {
+      const params = new URLSearchParams({
+        parkingId: selectedParkingPlace,
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+        ...(minUsage && { minUsage }),
+        ...(maxUsage && { maxUsage })
+      });
+
+      const response = await fetchWithAuth(`http://localhost:3004/api/reports/daily-usage?${params}`);
+      const data = await response.json();
+      
+      setDailyUsageData({
+        labels: data.labels,
+        datasets: [{
+          label: 'Parking Usage',
+          data: data.data,
+          backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        }],
+      });
+    } catch (error) {
+      console.error('Error fetching daily usage:', error);
+    }
   };
 
-  // Occupancy (e.g., floors 1,2,3,4)
-  const floors = ['1st Floor', '2nd Floor', '3rd Floor', '4th Floor'];
-  const occupancyData = {
-    labels: floors,
-    datasets: [
-      {
-        label: 'Occupancy',
-        data: applyFiltersToData(rawOccupancyData[selectedParkingPlace]),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-      },
-    ],
+  const fetchFloorOccupancy = async () => {
+    try {
+      const params = new URLSearchParams({
+        parkingId: selectedParkingPlace
+      });
+
+      const response = await fetchWithAuth(`http://localhost:3004/api/reports/floor-occupancy?${params}`);
+      const data = await response.json();
+      
+      setOccupancyData({
+        labels: data.labels,
+        datasets: [{
+          label: 'Occupancy',
+          data: data.data,
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+        }],
+      });
+    } catch (error) {
+      console.error('Error fetching floor occupancy:', error);
+    }
   };
 
-  // -----------------------------------------------
-  // 6) Metrics could also vary by parking place.
-  //    For demonstration, let's calculate total parked vehicles
-  //    as the sum of the daily usage array (unfiltered).
-  // -----------------------------------------------
-  const totalParkedVehicles = rawDailyUsageData[selectedParkingPlace].reduce((sum, val) => sum + val, 0);
-  const averageDuration = '2 hours 30 minutes'; // Placeholder
+  const fetchMetrics = async () => {
+    try {
+      const params = new URLSearchParams({
+        parkingId: selectedParkingPlace,
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate })
+      });
 
-  // -----------------------------------------------
-  // 7) UI for filters and charts
-  // -----------------------------------------------
+      const response = await fetchWithAuth(`http://localhost:3004/api/reports/metrics?${params}`);
+      const data = await response.json();
+      setMetrics(data);
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+    }
+  };
+
   return (
     <div className="reports-container">
       <h1>Parking Management Reports</h1>
 
-      {/* ---- Filter Controls ---- */}
+      {/* Filter Controls */}
       <div className="filters-container">
         <div className="filter-item">
           <label htmlFor="parkingPlaceSelect">Parking Place:</label>
@@ -170,24 +185,24 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* ---- Charts and Metrics ---- */}
+      {/* Charts and Metrics */}
       <div className="grid-container">
         <div className="grid-item metrics-grid">
           <div className="metric">
             <h2>Key Metrics</h2>
-            <p>Total Parked Vehicles: {totalParkedVehicles}</p>
-            <p>Average Duration: {averageDuration}</p>
+            <p>Total Parked Vehicles: {metrics.totalParkedVehicles}</p>
+            <p>Average Duration: {metrics.averageDuration}</p>
           </div>
         </div>
 
         <div className="grid-item chart">
           <h2>Daily Parking Usage</h2>
-          <Bar data={parkingData} />
+          {dailyUsageData && <Bar data={dailyUsageData} />}
         </div>
 
         <div className="grid-item chart">
           <h2>Occupancy by Floor</h2>
-          <Pie data={occupancyData} />
+          {occupancyData && <Pie data={occupancyData} />}
         </div>
       </div>
     </div>
