@@ -39,6 +39,8 @@ const Reports = () => {
   const [tabValue, setTabValue] = useState(0);
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3004';
+
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
       const token = await user.getIdToken(); // Fetch the token from the user object
@@ -68,7 +70,7 @@ const Reports = () => {
 
   const fetchParkingPlaces = async () => {
     try {
-      const response = await fetchWithAuth('http://localhost:3004/api/reports/parking-places');
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-places`);
       const data = await response.json();
       setParkingPlaces(data);
       if (data.length > 0) {
@@ -89,7 +91,7 @@ const Reports = () => {
         ...(maxUsage && { maxUsage })
       });
 
-      const response = await fetchWithAuth(`http://localhost:3004/api/reports/daily-usage?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/daily-usage?${params}`);
       const data = await response.json();
       
       setDailyUsageData({
@@ -111,7 +113,7 @@ const Reports = () => {
         parkingId: selectedParkingPlace
       });
 
-      const response = await fetchWithAuth(`http://localhost:3004/api/reports/floor-occupancy?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-occupancy?${params}`);
       const data = await response.json();
       
       setOccupancyData({
@@ -135,7 +137,7 @@ const Reports = () => {
         ...(endDate && { endDate })
       });
 
-      const response = await fetchWithAuth(`http://localhost:3004/api/reports/metrics?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/metrics?${params}`);
       const data = await response.json();
       setMetrics(data);
     } catch (error) {

@@ -22,12 +22,14 @@ const ChargingStations = () => {
   const [garages, setGarages] = useState([]);
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3016';
+
   const fetchStations = async () => {
     try {
       const token = await user.getIdToken();
       const url = selectedGarage 
-        ? `http://localhost:3016/charging-stations?garage=${encodeURIComponent(selectedGarage)}`
-        : 'http://localhost:3016/charging-stations';
+        ? `${HOST_URL}/charging-stations?garage=${encodeURIComponent(selectedGarage)}`
+        : `${HOST_URL}/charging-stations`;
       
       const response = await fetch(url, {
         headers: {
@@ -72,8 +74,8 @@ const ChargingStations = () => {
     try {
       const token = await user.getIdToken();
       const url = selectedStation
-        ? `http://localhost:3016/charging-stations/${selectedStation.id}`
-        : 'http://localhost:3016/charging-stations';
+        ? `${HOST_URL}/charging-stations/${selectedStation.id}`
+        : `${HOST_URL}/charging-stations`;
       
       const method = selectedStation ? 'PATCH' : 'POST';
       

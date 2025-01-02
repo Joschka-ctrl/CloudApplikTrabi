@@ -17,12 +17,14 @@ import { useAuth } from '../../../components/AuthProvider';
 const ChargingStationTable = ({ stations, onEdit, onRefresh }) => {
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3016';
+
   const handleStatusChange = async (station) => {
     try {
       const token = await user.getIdToken();
       const newStatus = station.status === 'available' ? 'occupied' : 'available';
       
-      await fetch(`http://localhost:3016/charging-stations/${station.id}`, {
+      await fetch(`${HOST_URL}/charging-stations/${station.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

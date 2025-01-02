@@ -23,6 +23,8 @@ const ChargingReports = () => {
   });
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3004';
+
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
       const token = await user.getIdToken();
@@ -46,7 +48,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `http://localhost:3004/api/reports/echarging/stats?${params}`
+        `${HOST_URL}/api/reports/echarging/stats?${params}`
       );
       const data = await response.json();
       setChargingStats(data);
@@ -67,7 +69,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `http://localhost:3004/api/reports/echarging/utilization?${params}`
+        `${HOST_URL}/api/reports/echarging/utilization?${params}`
       );
       const data = await response.json();
       setUtilizationData(data);
@@ -88,7 +90,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `http://localhost:3004/api/reports/echarging/card-provider-revenue?${params}`
+        `${HOST_URL}/api/reports/echarging/card-provider-revenue?${params}`
       );
       const data = await response.json();
       setProviderRevenue(data);

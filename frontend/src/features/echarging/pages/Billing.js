@@ -13,6 +13,8 @@ const Billing = () => {
   const [totalStats, setTotalStats] = useState({ energy: 0, revenue: 0, sessions: 0 });
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3016';
+
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
       const token = await user.getIdToken(); // Fetch the token from the user object
@@ -28,7 +30,7 @@ const Billing = () => {
 
   const fetchProviderRates = async () => {
     try {
-      const response = await fetchWithAuth('http://localhost:3016/provider-rates');
+      const response = await fetchWithAuth(`${HOST_URL}/provider-rates`);
       const data = await response.json();
       setProviderRates(data);
     } catch (error) {
@@ -38,7 +40,7 @@ const Billing = () => {
 
   const fetchBillingSummary = async () => {
     try {
-      const response = await fetchWithAuth('http://localhost:3016/billing-summary');
+      const response = await fetchWithAuth(`${HOST_URL}/billing-summary`);
       const data = await response.json();
       setBillingSummary(data);
       
@@ -63,7 +65,7 @@ const Billing = () => {
   const handleSubmitRate = async (e) => {
     e.preventDefault();
     try {
-      await fetchWithAuth('http://localhost:3016/provider-rates', {
+      await fetchWithAuth(`${HOST_URL}/provider-rates`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
