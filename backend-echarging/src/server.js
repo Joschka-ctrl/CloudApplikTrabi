@@ -418,7 +418,7 @@ app.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res
     const providerRatesSnapshot = await db.collection("provider-rates").get();
     const providerRates = {};
     providerRatesSnapshot.forEach(doc => {
-      providerRates[doc.id] = doc.data().ratePerKwh || 0;
+      providerRates[doc.id] = doc.data().ratePerKw || 0;
     });
     
     // Then get charging sessions
@@ -443,8 +443,8 @@ app.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res
       const session = doc.data();
       const provider = session.chargingCardProvider || 'Unknown';
       const energyConsumed = session.energyConsumed || 0;
-      const ratePerKwh = providerRates[provider] || 0;
-      const revenue = energyConsumed * ratePerKwh;
+      const ratePerKw = providerRates[provider] || 0;
+      const revenue = energyConsumed * ratePerKw;
       
       if (!providerStats[provider]) {
         providerStats[provider] = {
@@ -452,13 +452,14 @@ app.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res
           totalSessions: 0,
           totalEnergy: 0,
           averageRevenuePerSession: 0,
-          ratePerKwh: ratePerKwh
+          ratePerKw: 0
         };
       }
       
       providerStats[provider].totalRevenue += revenue;
       providerStats[provider].totalSessions += 1;
       providerStats[provider].totalEnergy += energyConsumed;
+      providerStats[provider].ratePerKw = ratePerKw;
     });
     
     // Calculate averages

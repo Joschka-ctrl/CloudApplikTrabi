@@ -312,7 +312,7 @@ const ChargingReports = () => {
                           Rate per kWh
                         </Typography>
                         <Typography variant="h6">
-                          €{stats.ratePerKwh.toFixed(2)}
+                          €{stats.ratePerKw.toFixed(2)}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
                           Average Revenue/Session
