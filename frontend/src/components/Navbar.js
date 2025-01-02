@@ -19,11 +19,7 @@ const Navbar = () => {
             </li>
             <div className="VerticalDivider" />
             <li className="NavbarItem r">
-              <Link to="/charging-stations">Charging Stations</Link>
-            </li>
-            <div className="VerticalDivider" />
-            <li className="NavbarItem r">
-              <Link to="/charging-sessions">Charging Sessions</Link>
+              <Link to="/e-charging">E-Charging</Link>
             </li>
             <div className="VerticalDivider" />
             <li className="NavbarItem r" style={{ cursor: "pointer", color: "white" }} onClick={onLogout}>

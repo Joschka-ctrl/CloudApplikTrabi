@@ -6,8 +6,7 @@ import ContactSection from "./pages/Contact";
 import Defects from "./pages/Defects";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ChargingStations from "./pages/ChargingStations";
-import ChargingSessions from "./pages/ChargingSessions";
+import ECharging from "./pages/ECharging";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -29,18 +28,10 @@ const App = () => {
                 }
               />
               <Route
-                path="/charging-stations"
+                path="/e-charging"
                 element={
                   <ProtectedRoute>
-                    <ChargingStations />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/charging-sessions"
-                element={
-                  <ProtectedRoute>
-                    <ChargingSessions />
+                    <ECharging />
                   </ProtectedRoute>
                 }
               />
