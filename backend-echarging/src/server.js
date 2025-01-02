@@ -303,6 +303,177 @@ app.get("/billing-summary", async (req, res) => {
   }
 });
 
+// Get charging statistics for reporting
+app.get("/api/reports/charging-stats", authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    let query = db.collection("charging-sessions");
+    
+    if (garage) {
+      query = query.where("garage", "==", garage);
+    }
+    
+    if (startDate) {
+      query = query.where("startTime", ">=", new Date(startDate));
+    }
+    
+    if (endDate) {
+      query = query.where("endTime", "<=", new Date(endDate));
+    }
+    
+    const snapshot = await query.get();
+    const stats = {
+      totalSessions: 0,
+      totalDuration: 0,
+      totalEnergy: 0,
+      averageSessionDuration: 0,
+      averageEnergyPerSession: 0
+    };
+    
+    snapshot.forEach(doc => {
+      const session = doc.data();
+      stats.totalSessions++;
+      stats.totalDuration += (session.endTime - session.startTime) / (1000 * 60 * 60); // Convert to hours
+      stats.totalEnergy += session.energyConsumed || 0;
+    });
+    
+    if (stats.totalSessions > 0) {
+      stats.averageSessionDuration = stats.totalDuration / stats.totalSessions;
+      stats.averageEnergyPerSession = stats.totalEnergy / stats.totalSessions;
+    }
+    
+    res.json(stats);
+  } catch (error) {
+    console.error("Error getting charging statistics:", error);
+    res.status(500).json({ error: "Failed to get charging statistics" });
+  }
+});
+
+// Get station utilization data
+app.get("/api/reports/station-utilization", authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    
+    // First get all stations
+    let stationsQuery = db.collection("charging-stations");
+    if (garage) {
+      stationsQuery = stationsQuery.where("garage", "==", garage);
+    }
+    const stationsSnapshot = await stationsQuery.get();
+    
+    // Then get sessions for each station
+    const utilizationData = [];
+    const startDateTime = startDate ? new Date(startDate) : new Date(0);
+    const endDateTime = endDate ? new Date(endDate) : new Date();
+    
+    for (const stationDoc of stationsSnapshot.docs) {
+      // Get all sessions for this station
+      let sessionsQuery = db.collection("charging-sessions")
+        .where("stationId", "==", stationDoc.id);
+      
+      const sessionsSnapshot = await sessionsQuery.get();
+      
+      const stationData = {
+        stationId: stationDoc.id,
+        location: stationDoc.data().location,
+        totalSessions: 0,
+        totalHoursUsed: 0,
+        utilization: 0
+      };
+      
+      // Filter sessions by date in memory
+      sessionsSnapshot.forEach(sessionDoc => {
+        const session = sessionDoc.data();
+        const sessionStart = session.startTime.toDate();
+        const sessionEnd = session.endTime.toDate();
+        
+        // Check if session falls within the date range
+        if (sessionStart >= startDateTime && sessionEnd <= endDateTime) {
+          stationData.totalSessions++;
+          const duration = (sessionEnd - sessionStart) / (1000 * 60 * 60); // Convert to hours
+          stationData.totalHoursUsed += duration;
+        }
+      });
+      
+      // Calculate utilization percentage
+      const totalPossibleHours = (endDateTime - startDateTime) / (1000 * 60 * 60);
+      stationData.utilization = (stationData.totalHoursUsed / totalPossibleHours) * 100;
+      
+      utilizationData.push(stationData);
+    }
+    
+    res.json(utilizationData);
+  } catch (error) {
+    console.error("Error getting station utilization:", error);
+    res.status(500).json({ error: "Failed to get station utilization data" });
+  }
+});
+
+// Get card provider revenue statistics
+app.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    
+    // First get all provider rates
+    const providerRatesSnapshot = await db.collection("provider-rates").get();
+    const providerRates = {};
+    providerRatesSnapshot.forEach(doc => {
+      providerRates[doc.id] = doc.data().ratePerKwh || 0;
+    });
+    
+    // Then get charging sessions
+    let query = db.collection("charging-sessions");
+    
+    if (garage) {
+      query = query.where("garage", "==", garage);
+    }
+    
+    if (startDate) {
+      query = query.where("startTime", ">=", new Date(startDate));
+    }
+    
+    if (endDate) {
+      query = query.where("endTime", "<=", new Date(endDate));
+    }
+    
+    const snapshot = await query.get();
+    const providerStats = {};
+    
+    snapshot.forEach(doc => {
+      const session = doc.data();
+      const provider = session.chargingCardProvider || 'Unknown';
+      const energyConsumed = session.energyConsumed || 0;
+      const ratePerKwh = providerRates[provider] || 0;
+      const revenue = energyConsumed * ratePerKwh;
+      
+      if (!providerStats[provider]) {
+        providerStats[provider] = {
+          totalRevenue: 0,
+          totalSessions: 0,
+          totalEnergy: 0,
+          averageRevenuePerSession: 0,
+          ratePerKwh: ratePerKwh
+        };
+      }
+      
+      providerStats[provider].totalRevenue += revenue;
+      providerStats[provider].totalSessions += 1;
+      providerStats[provider].totalEnergy += energyConsumed;
+    });
+    
+    // Calculate averages
+    Object.keys(providerStats).forEach(provider => {
+      const stats = providerStats[provider];
+      stats.averageRevenuePerSession = stats.totalRevenue / stats.totalSessions;
+    });
+    
+    res.json(providerStats);
+  } catch (error) {
+    console.error("Error getting card provider revenue:", error);
+    res.status(500).json({ error: "Failed to get card provider revenue data" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`E-Charging microservice running on port ${port}`);
 });

@@ -11,6 +11,7 @@ admin.initializeApp({
 const db = admin.firestore();
 const app = express();
 const PARKING_SERVICE_URL = 'http://localhost:3033';
+const ECHARGING_SERVICE_URL = 'http://localhost:3016';
 
 // Middleware
 app.use(cors());
@@ -45,6 +46,19 @@ const parkingServiceRequest = async (endpoint, token) => {
     return response.data;
   } catch (error) {
     console.error(`Error calling parking service: ${error.message}`);
+    throw error;
+  }
+};
+
+// Helper function to make authenticated requests to e-charging service
+const eChargingServiceRequest = async (endpoint, token) => {
+  try {
+    const response = await axios.get(`${ECHARGING_SERVICE_URL}${endpoint}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error calling e-charging service: ${error.message}`);
     throw error;
   }
 };
@@ -203,6 +217,78 @@ app.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching parking places:', error);
     res.status(500).json({ error: 'Failed to fetch parking places' });
+  }
+});
+
+// Get e-charging statistics
+app.get('/api/reports/echarging/stats', authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+    if (garage) queryParams.append('garage', garage);
+
+    const stats = await eChargingServiceRequest(
+      `/api/reports/charging-stats?${queryParams.toString()}`,
+      token
+    );
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching e-charging statistics:', error);
+    res.status(500).json({ error: 'Failed to fetch e-charging statistics' });
+  }
+});
+
+// Get station utilization data
+app.get('/api/reports/echarging/utilization', authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+    if (garage) queryParams.append('garage', garage);
+
+    const utilizationData = await eChargingServiceRequest(
+      `/api/reports/station-utilization?${queryParams.toString()}`,
+      token
+    );
+
+    res.json(utilizationData);
+  } catch (error) {
+    console.error('Error fetching station utilization:', error);
+    res.status(500).json({ error: 'Failed to fetch station utilization data' });
+  }
+});
+
+// Get card provider revenue data
+app.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
+  try {
+    const { startDate, endDate, garage } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+    if (garage) queryParams.append('garage', garage);
+
+    const providerStats = await eChargingServiceRequest(
+      `/api/reports/card-provider-revenue?${queryParams.toString()}`,
+      token
+    );
+
+    res.json(providerStats);
+  } catch (error) {
+    console.error('Error fetching card provider revenue:', error);
+    res.status(500).json({ error: 'Failed to fetch card provider revenue data' });
   }
 });
 

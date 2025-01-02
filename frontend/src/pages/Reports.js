@@ -3,9 +3,30 @@ import { Bar, Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './Reports.css';
 import { useAuth } from '../components/AuthProvider';
+import ChargingReports from '../features/echarging/pages/ChargingReports';
+import { Tabs, Tab, Box } from '@mui/material';
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 const Reports = () => {
-  // State for filters and data
   const [parkingPlaces, setParkingPlaces] = useState([]);
   const [selectedParkingPlace, setSelectedParkingPlace] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -15,6 +36,7 @@ const Reports = () => {
   const [dailyUsageData, setDailyUsageData] = useState(null);
   const [occupancyData, setOccupancyData] = useState(null);
   const [metrics, setMetrics] = useState({ totalParkedVehicles: 0, averageDuration: 'N/A' });
+  const [tabValue, setTabValue] = useState(0);
   const { user } = useAuth();
 
   const fetchWithAuth = async (url, options = {}) => {
@@ -121,90 +143,105 @@ const Reports = () => {
     }
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+  };
+
   return (
     <div className="reports-container">
       <h1>Parking Management Reports</h1>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label="report tabs">
+          <Tab label="Parking Reports" />
+          <Tab label="E-Charging Reports" />
+        </Tabs>
+      </Box>
 
-      {/* Filter Controls */}
-      <div className="filters-container">
-        <div className="filter-item">
-          <label htmlFor="parkingPlaceSelect">Parking Place:</label>
-          <select
-            id="parkingPlaceSelect"
-            value={selectedParkingPlace}
-            onChange={(e) => setSelectedParkingPlace(e.target.value)}
-          >
-            {parkingPlaces.map((place) => (
-              <option key={place.id} value={place.id}>
-                {place.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <TabPanel value={tabValue} index={0}>
+        <div className="filters-container">
+          <div className="filter-item">
+            <label htmlFor="parkingPlaceSelect">Parking Place:</label>
+            <select
+              id="parkingPlaceSelect"
+              value={selectedParkingPlace}
+              onChange={(e) => setSelectedParkingPlace(e.target.value)}
+            >
+              <option value="">Select Parking Place</option>
+              {parkingPlaces.map((place) => (
+                <option key={place.id} value={place.id}>
+                  {place.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="filter-item">
-          <label htmlFor="startDate">Start Date:</label>
-          <input
-            type="date"
-            id="startDate"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
+          <div className="filter-item">
+            <label htmlFor="startDate">Start Date:</label>
+            <input
+              type="date"
+              id="startDate"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
 
-        <div className="filter-item">
-          <label htmlFor="endDate">End Date:</label>
-          <input
-            type="date"
-            id="endDate"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
+          <div className="filter-item">
+            <label htmlFor="endDate">End Date:</label>
+            <input
+              type="date"
+              id="endDate"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
 
-        <div className="filter-item">
-          <label htmlFor="minUsage">Min Usage:</label>
-          <input
-            type="number"
-            id="minUsage"
-            value={minUsage}
-            onChange={(e) => setMinUsage(e.target.value)}
-            placeholder="e.g. 30"
-          />
-        </div>
+          <div className="filter-item">
+            <label htmlFor="minUsage">Min Usage:</label>
+            <input
+              type="number"
+              id="minUsage"
+              value={minUsage}
+              onChange={(e) => setMinUsage(e.target.value)}
+              placeholder="e.g. 30"
+            />
+          </div>
 
-        <div className="filter-item">
-          <label htmlFor="maxUsage">Max Usage:</label>
-          <input
-            type="number"
-            id="maxUsage"
-            value={maxUsage}
-            onChange={(e) => setMaxUsage(e.target.value)}
-            placeholder="e.g. 80"
-          />
-        </div>
-      </div>
-
-      {/* Charts and Metrics */}
-      <div className="grid-container">
-        <div className="grid-item metrics-grid">
-          <div className="metric">
-            <h2>Key Metrics</h2>
-            <p>Total Parked Vehicles: {metrics.totalParkedVehicles}</p>
-            <p>Average Duration: {metrics.averageDuration}</p>
+          <div className="filter-item">
+            <label htmlFor="maxUsage">Max Usage:</label>
+            <input
+              type="number"
+              id="maxUsage"
+              value={maxUsage}
+              onChange={(e) => setMaxUsage(e.target.value)}
+              placeholder="e.g. 80"
+            />
           </div>
         </div>
 
-        <div className="grid-item chart">
-          <h2>Daily Parking Usage</h2>
-          {dailyUsageData && <Bar data={dailyUsageData} />}
-        </div>
+        <div className="grid-container">
+          <div className="grid-item metrics-grid">
+            <div className="metric">
+              <h2>Key Metrics</h2>
+              <p>Total Parked Vehicles: {metrics.totalParkedVehicles}</p>
+              <p>Average Duration: {metrics.averageDuration}</p>
+            </div>
+          </div>
 
-        <div className="grid-item chart">
-          <h2>Occupancy by Floor</h2>
-          {occupancyData && <Pie data={occupancyData} />}
+          <div className="grid-item chart">
+            <h2>Daily Parking Usage</h2>
+            {dailyUsageData && <Bar data={dailyUsageData} />}
+          </div>
+
+          <div className="grid-item chart">
+            <h2>Occupancy by Floor</h2>
+            {occupancyData && <Pie data={occupancyData} />}
+          </div>
         </div>
-      </div>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        <ChargingReports />
+      </TabPanel>
     </div>
   );
 };
