@@ -1,0 +1,227 @@
+{
+	"info": {
+		"_postman_id": "f606231d-7efe-45f2-8230-7ea1698af744",
+		"name": "CloudApplikTrabi Reporting API",
+		"description": "Postman collection to test CloudApplikTrabi Reporting API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18605279"
+	},
+	"item": [
+		{
+			"name": "Get Occupancy Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/occupacy/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"occupacy",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Duration Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/duration/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"duration",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Defects Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/defects/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"defects",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Revenue Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/revenue/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"revenue",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Occupancy Rate Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/occupancy-rate/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"occupancy-rate",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Average Parking Time Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/average-parking-time/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"average-parking-time",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Peak Hours Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/peak-hours/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"peak-hours",
+						"123"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Violations Report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer <your-token>",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:3034/reports/violations/123",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3034",
+					"path": [
+						"reports",
+						"violations",
+						"123"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

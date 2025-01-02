@@ -1,18 +1,15 @@
 {
-  "name": "backend",
+  "name": "backend-echarging",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "E-Charging management microservice for parking garages",
+  "main": "src/server.js",
   "scripts": {
+    "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@google-cloud/firestore": "^7.10.0",
     "@google-cloud/storage": "^7.13.0",
-    "backend": "file:",
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "firebase-admin": "^12.6.0",
