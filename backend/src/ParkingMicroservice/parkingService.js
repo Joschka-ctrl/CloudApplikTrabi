@@ -1,13 +1,115 @@
 const { Timestamp } = require('@google-cloud/firestore');
 const { v4: uuidv4 } = require('uuid');
+const admin = require('firebase-admin');
+
+
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
+  
+  const db = admin.firestore();
+
+
+
+// Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
 
-const getAllParkingSpots = () => {
-    return parkingSpots;
-};
+// Parkhaus
+let parkingFacility = [
+    {
+        id: "1",
+        tenantId: "1",
+        name: "ParkhausBismark",
+        parkingSpacesOnFloor: [
+            {
+                maxCapacity: 2,
+                spots: [
+                    { id: "1", occupied: false },
+                    { id: "2", occupied: true }
+                ]
+            }
+        ]
+    }
+];
 
-const getParkingSpotById = (id) => {
-    return parkingSpots.find(s => s.id === id);
+const  newParkingFacility = async (newFacility) => {
+    const docRef = await db.collection("parking-facility").add(newFacility);
+   return docRef;
+}
+
+
+const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
+    try {
+        // Query the Firestore collection "parking-facility" for documents where tenantId matches
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        // Check if there are matching documents
+        if (snapshot.empty) {
+            console.log('No matching parking facilities found.');
+            return [];
+        }
+
+        // Extract parking spots from the retrieved documents
+        const parkingSpots = [];
+        snapshot.forEach(doc => {
+            const facilityData = doc.data();
+            facilityData.parkingSpacesOnFloor.forEach(floor => {
+                parkingSpots.push(...floor.spots);
+            });
+        });
+console.log(parkingSpots);
+        return parkingSpots;
+    } catch (error) {
+        console.error('Error fetching parking spots:', error);
+        throw new Error('Failed to fetch parking spots.');
+    }
+};
+  
+
+
+const getParkingSpotById1 = (id) => {
+    return paparkingSpots.spots.find(s => s.id === id);
+};
+const getParkingSpotById = async (facilityID, tenantID, spotID) => {
+    try {
+        // Query the Firestore collection "parking-facility" for the specific facility and tenant
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        // Check if there are matching documents
+        if (snapshot.empty) {
+            console.log(`No matching facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            return null;
+        }
+
+        // Extract the parking spot by ID
+        let parkingSpot = null;
+        snapshot.forEach(doc => {
+            const facilityData = doc.data();
+            console.log(facilityData);
+            for (const floor of facilityData.parkingSpacesOnFloor) {
+                const spot = floor.spots.find(s => s.id === spotID);
+                if (spot) {
+                    parkingSpot = spot;
+                    break;
+                }
+            }
+        });
+
+        if (!parkingSpot) {
+            console.log(`No parking spot found with ID: ${spotID} in facility: ${facilityID}`);
+        }
+
+        return parkingSpot;
+    } catch (error) {
+        console.error('Error fetching parking spot:', error);
+        throw new Error('Failed to fetch parking spot.');
+    }
 };
 
 const createParkingSpot = (id, occupied) => {
@@ -24,7 +126,7 @@ let currentOccupancy = 0; // Current number of occupied parking spots within the
 let carsInParkingFacility = [{ ticketNumber: "1234", parkingStartedAt: Timestamp.now(), payedAt: [], parkingEndedAt: null }];
 
 
-const addCarToParkingFacility = (ticketNumber) => {
+const addCarToParkingFacility1 = (ticketNumber) => {
     if (carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
         throw new Error('Car with this ticket number already exists');
     }
@@ -32,6 +134,55 @@ const addCarToParkingFacility = (ticketNumber) => {
     carsInParkingFacility.push(newCar);
     console.log(newCar.payedAt.length);
     return newCar;
+};
+
+const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
+    try {
+        // Fetch the parking facility document
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        // Loop through the matching documents (should typically be one)
+        let addedCar = null;
+        snapshot.forEach(async (doc) => {
+            const facilityData = doc.data();
+
+            // Check if the ticket number already exists
+            if (facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
+                throw new Error('Car with this ticket number already exists');
+            }
+
+            // Create the new car object
+            const newCar = { 
+                ticketNumber, 
+                parkingStartedAt: Timestamp.now(), 
+                parkingEndedAt: null, 
+                payedAt: [] 
+            };
+
+            // Add the new car to the carsInParkingFacility array
+            facilityData.carsInParkingFacility.push(newCar);
+
+            // Update the Firestore document
+            await db.collection("parking-facility").doc(doc.id).update({
+                carsInParkingFacility: facilityData.carsInParkingFacility
+            });
+
+            addedCar = newCar; // Store the newly added car
+        });
+
+        console.log('Car successfully added to parking facility:', addedCar);
+        return addedCar;
+    } catch (error) {
+        console.error('Error adding car to parking facility:', error);
+        throw new Error('Failed to add car to parking facility.');
+    }
 };
 
 const updateCarParkingEndedAt = (ticketNumber, parkingEndedAt) => {
@@ -63,18 +214,58 @@ const updateCarPayedAt = (ticketNumber, payedAt) => {
  * @property {string} [ticketNumber] - The generated ticket number if there is available space. --> kann als id für das Auto genutzt werden
  * @property {string} [error] - An error message if the parking lot is at maximum capacity.
  */
-const getTicketNumber = () => {
-    // Check parking occupancy
-    if (currentOccupancy < maxCapacity) {
-        currentOccupancy++;
-        const ticketNumber = uuidv4();
-        addCarToParkingFacility(ticketNumber);
-        return { ticketNumber };
-    } else {
-        console.error('Parking lot is at maximum capacity');
-        return { error: 'Parking lot is at maximum capacity' };
+const getTicketNumber = async (tenantID, facilityID) => {
+    try {
+        // Fetch the parking facility document
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        // Loop through the matching documents (should typically be one)
+        let updatedOccupancy = null;
+        snapshot.forEach(async (doc) => {
+            const facilityData = doc.data();
+            console.log(facilityData);
+            const { currentOccupancy, maxCapacity } = facilityData;
+
+            console.log(`Current occupancy: ${currentOccupancy}, Max capacity: ${maxCapacity}`);
+
+            // Check if currentOccupancy is less than maxCapacity
+            if (currentOccupancy < maxCapacity) {
+                const newOccupancy = currentOccupancy + 1;
+
+                // Update Firestore with the new occupancy
+                await db.collection("parking-facility").doc(doc.id).update({
+                    currentOccupancy: newOccupancy
+                });
+
+                updatedOccupancy = newOccupancy;
+                console.log(`Occupancy updated to: ${newOccupancy}`);
+
+                // add car to parking facility
+                const ticketNumber = uuidv4();
+                await addCarToParkingFacility(facilityID, tenantID, ticketNumber);
+                return { ticketNumber };
+
+            } else {
+                throw new Error('Parking facility is at maximum capacity.');
+            }
+        });
+
+      return "Fehler: max acapacity";
+    } catch (error) {
+        console.error('Error updating occupancy:', error);
+        throw new Error('Failed to update occupancy.');
     }
 };
+
+
+
 
 const getCurrentOccupancy = () => {
     return currentOccupancy;
@@ -200,7 +391,8 @@ const leaveParkhouse = (ticketNumber) => {
 }
 
 module.exports = {
-    getAllParkingSpots,
+    newParkingFacility,
+    getAllParkingSpotsOfFacility,
     getParkingSpotById,
     createParkingSpot,
     getTicketNumber,

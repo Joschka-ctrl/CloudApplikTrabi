@@ -5,6 +5,8 @@ const admin = require('firebase-admin');
 const app = express();
 const port = 3033;
 
+
+  
 app.use(express.json());
 
 // Middleware zur Authentifizierung
@@ -54,24 +56,39 @@ app.post('/parkingSpots', (req, res) => {
 
 // tested with postman
 // Get all parking spots
-app.get('/parkingSpots', (req, res) => {
-    const spots = parkingService.getAllParkingSpots();
-    res.json(spots);
+app.get('/parkingSpots/:facilityid/:tenantid', async (req, res) => {
+    try {
+        // Extract path parameters
+        const { facilityid, tenantid } = req.params;
+        
+        // Call the service function
+        const spots = await parkingService.getAllParkingSpotsOfFacility(facilityid, tenantid);
+        
+        res.json(spots);
+    } catch (error) {
+        console.error('Error fetching parking spots:', error);
+        res.status(500).json({ message: 'Failed to fetch parking spots.' });
+    }
 });
+
 
 // tested with postman
 // Get a specific parking spot
-app.get('/parkingSpots/:id', (req, res) => {
-    const spot = parkingService.getParkingSpotById(parseInt(req.params.id));
+app.get('/parkingSpot/:id/:facilityid/:tenantid', async (req, res) => {
+
+    const { id, facilityid, tenantid } = req.params;
+    const spot = await parkingService.getParkingSpotById(facilityid,tenantid,id);
     if (!spot) return res.status(404).send('Parking spot not found');
     res.json(spot);
 });
+
+
 
 // tested with postman
 // in Parkhaus fahren
 app.get("/getTicketNr", (req, res) => {
     try {
-        const ticketNr = parkingService.getTicketNumber();
+        const ticketNr = parkingService.getTicketNumber("1","3");
         res.json({ ticketNr });
     } catch (error) {
         res.status(500).send(error.message);
@@ -155,6 +172,17 @@ app.get("/leaveParkhouse/:carId", (req, res) => {
         const ticketNumber = req.params.carId;
         const result = parkingService.leaveParkhouse(ticketNumber);
         res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
+app.post ('/newParkingFacility', (req, res) => {
+    const facility = req.body;
+    try {
+        const newFacility = parkingService.newParkingFacility(facility);
+        // { id: docRef.id, ...newFacility }
+        res.status(201).json(newFacility);
     } catch (error) {
         res.status(400).send(error.message);
     }
