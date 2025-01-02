@@ -8,57 +8,83 @@ import {
   TableRow,
   Paper,
   IconButton,
-  Tooltip,
+  Chip
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import ElectricCarIcon from '@mui/icons-material/ElectricCar';
+import { useAuth } from '../../../components/AuthProvider';
 
-const ChargingStationTable = ({ stations, onEdit, onDelete }) => {
+const ChargingStationTable = ({ stations, onEdit, onRefresh }) => {
+  const { user } = useAuth();
+
+  const handleStatusChange = async (station) => {
+    try {
+      const token = await user.getIdToken();
+      const newStatus = station.status === 'available' ? 'occupied' : 'available';
+      
+      await fetch(`http://localhost:3016/charging-stations/${station.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      onRefresh();
+    } catch (error) {
+      console.error('Error updating station status:', error);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'available':
+        return 'success';
+      case 'occupied':
+        return 'error';
+      case 'maintenance':
+        return 'warning';
+      default:
+        return 'default';
+    }
+  };
+
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="charging stations table">
+      <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Station ID</TableCell>
             <TableCell>Location</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Power Output (kW)</TableCell>
+            <TableCell>Power (kW)</TableCell>
             <TableCell>Connector Type</TableCell>
+            <TableCell>Status</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {stations.map((station) => (
-            <TableRow
-              key={station.id}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                {station.id}
-              </TableCell>
+            <TableRow key={station.id}>
               <TableCell>{station.location}</TableCell>
-              <TableCell>{station.status}</TableCell>
-              <TableCell>{station.powerOutput}</TableCell>
+              <TableCell>{station.power}</TableCell>
               <TableCell>{station.connectorType}</TableCell>
               <TableCell>
-                <Tooltip title="Edit">
-                  <IconButton
-                    onClick={() => onEdit(station)}
-                    color="primary"
-                    aria-label="edit"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <IconButton
-                    onClick={() => onDelete(station.id)}
-                    color="error"
-                    aria-label="delete"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Tooltip>
+                <Chip
+                  label={station.status}
+                  color={getStatusColor(station.status)}
+                  onClick={() => handleStatusChange(station)}
+                />
+              </TableCell>
+              <TableCell>
+                <IconButton onClick={() => onEdit(station)} color="primary">
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handleStatusChange(station)}
+                  color={station.status === 'available' ? 'success' : 'error'}
+                >
+                  <ElectricCarIcon />
+                </IconButton>
               </TableCell>
             </TableRow>
           ))}
