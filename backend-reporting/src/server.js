@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const admin = require('firebase-admin');
 const moment = require('moment');
+const axios = require('axios');
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -9,6 +10,7 @@ admin.initializeApp({
 
 const db = admin.firestore();
 const app = express();
+const PARKING_SERVICE_URL = 'http://localhost:3033';
 
 // Middleware
 app.use(cors());
@@ -25,12 +27,25 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = decodedToken; // Benutzerdaten für spätere Verwendung verfügbar
+    req.user = decodedToken;
     console.log('Token of user ' + decodedToken.uid + ' verified successfully');
     next();
   } catch (error) {
     console.error('Token verification failed:', error.message);
     res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+
+// Helper function to make authenticated requests to parking service
+const parkingServiceRequest = async (endpoint, token) => {
+  try {
+    const response = await axios.get(`${PARKING_SERVICE_URL}${endpoint}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error calling parking service: ${error.message}`);
+    throw error;
   }
 };
 
@@ -74,22 +89,37 @@ app.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
 // Get floor occupancy data
 app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
   try {
-    const { parkingId } = req.query;
-    
-    const snapshot = await db.collection('floor-occupancy')
-      .where('parkingId', '==', parkingId)
-      .orderBy('floor')
-      .get();
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || 'default';
 
+    // Get parking spots data
+    const spotsData = await parkingServiceRequest(
+      `/parkingSpots/${tenantId}/${facilityId}`,
+      req.headers.authorization.split(' ')[1]
+    );
+
+    // Group spots by floor and calculate occupancy
+    const floorOccupancy = spotsData.reduce((acc, spot) => {
+      const floor = spot.floor || '1';
+      if (!acc[floor]) {
+        acc[floor] = { total: 0, occupied: 0 };
+      }
+      acc[floor].total++;
+      if (spot.occupied) {
+        acc[floor].occupied++;
+      }
+      return acc;
+    }, {});
+
+    // Format data for frontend
     const occupancyData = {
       labels: [],
       data: []
     };
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      occupancyData.labels.push(`${data.floor} Floor`);
-      occupancyData.data.push(data.occupancy);
+    Object.entries(floorOccupancy).forEach(([floor, data]) => {
+      occupancyData.labels.push(`Floor ${floor}`);
+      occupancyData.data.push((data.occupied / data.total) * 100);
     });
 
     res.json(occupancyData);
@@ -102,36 +132,50 @@ app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
 // Get parking metrics
 app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
   try {
-    const { parkingId, startDate, endDate } = req.query;
-    
-    let query = db.collection('parking-usage')
-      .where('parkingId', '==', parkingId);
-    
-    if (startDate) {
-      query = query.where('date', '>=', moment(startDate).startOf('day').toDate());
-    }
-    if (endDate) {
-      query = query.where('date', '<=', moment(endDate).endOf('day').toDate());
-    }
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || 'default';
 
-    const snapshot = await query.get();
-    let totalVehicles = 0;
+    // Get current occupancy and spots data
+    const occupancyData = await parkingServiceRequest(
+      `/currentOccupancy/${tenantId}/${facilityId}`,
+      req.headers.authorization.split(' ')[1]
+    );
+    
+    const spotsData = await parkingServiceRequest(
+      `/parkingSpots/${tenantId}/${facilityId}`,
+      req.headers.authorization.split(' ')[1]
+    );
+
+    // Calculate metrics
+    const occupiedSpots = spotsData.filter(spot => spot.occupied);
+    const totalParkedVehicles = occupiedSpots.length;
+
+    // Get average duration for currently parked vehicles
     let totalDuration = 0;
-    let count = 0;
+    let validDurations = 0;
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      totalVehicles += data.totalVehicles || 0;
-      if (data.averageDuration) {
-        totalDuration += data.averageDuration;
-        count++;
+    for (const spot of occupiedSpots) {
+      if (spot.carId) {
+        try {
+          const durationData = await parkingServiceRequest(
+            `/duration/${tenantId}/${facilityId}/${spot.carId}`,
+            req.headers.authorization.split(' ')[1]
+          );
+          if (durationData.duration) {
+            totalDuration += durationData.duration;
+            validDurations++;
+          }
+        } catch (error) {
+          console.error(`Error fetching duration for car ${spot.carId}:`, error);
+        }
       }
-    });
+    }
 
-    const averageDuration = count > 0 ? moment.duration(totalDuration / count, 'minutes') : 0;
+    const averageDuration = validDurations > 0 ? 
+      moment.duration(totalDuration / validDurations, 'minutes') : null;
 
     res.json({
-      totalParkedVehicles: totalVehicles,
+      totalParkedVehicles,
       averageDuration: averageDuration ? 
         `${Math.floor(averageDuration.asHours())} hours ${averageDuration.minutes()} minutes` : 
         'N/A'
