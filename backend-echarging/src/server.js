@@ -111,6 +111,20 @@ app.get("/charging-sessions", authenticateToken, async (req, res) => {
 app.post("/charging-sessions", async (req, res) => {
   try {
     const { stationId, userId, chargingCardProvider } = req.body;
+
+    // Check station status first
+    const stationRef = db.collection("charging-stations").doc(stationId);
+    const stationDoc = await stationRef.get();
+    
+    if (!stationDoc.exists) {
+      return res.status(404).json({ error: "Charging station not found" });
+    }
+
+    const stationData = stationDoc.data();
+    if (stationData.status === 'maintenance') {
+      return res.status(400).json({ error: "Cannot start charging session. Station is under maintenance." });
+    }
+
     const session = {
       stationId: String(stationId),
       userId: String(userId),
@@ -122,7 +136,6 @@ app.post("/charging-sessions", async (req, res) => {
     };
     
     // Update charging station status to occupied
-    const stationRef = db.collection("charging-stations").doc(stationId);
     await stationRef.update({
       status: 'occupied',
       lastModified: admin.firestore.FieldValue.serverTimestamp()
