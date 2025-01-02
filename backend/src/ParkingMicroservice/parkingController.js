@@ -139,9 +139,7 @@ app.post("/releaseParkingSpot", (req, res) => {
 // Get the duration of a car's stay in the parking garage
 app.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
-     
         const { carId, facilityid, tenantid } = req.params;
-
         const result = await parkingService.getParkingDuration(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {
@@ -151,10 +149,10 @@ app.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
 
 // tested with postman
 // Get the parking fee for a car / Ticket number
-app.get("/getParkingFee/:carId", (req, res) => {
+app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
-        const carId = req.params.carId;
-        const result = parkingService.getParkingFee(carId);
+        const { carId, facilityid, tenantid } = req.params;
+        const result = await parkingService.getParkingFee(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
@@ -163,10 +161,10 @@ app.get("/getParkingFee/:carId", (req, res) => {
 
 // tested with postman
 // Pay the parking fee for a car / Ticket number
-app.get("/payParkingFee/:carId", (req, res) => {
+app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
-        const carId = req.params.carId;
-        const result = parkingService.payParkingFee(carId);
+        const { carId, facilityid, tenantid } = req.params;
+        const result = await parkingService.payParkingFee(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
@@ -175,10 +173,10 @@ app.get("/payParkingFee/:carId", (req, res) => {
 
 // tested with postman
 // Leave the parking garage
-app.get("/leaveParkhouse/:carId", (req, res) => {
+app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
-        const ticketNumber = req.params.carId;
-        const result = parkingService.leaveParkhouse(ticketNumber);
+        const { carId, facilityid, tenantid } = req.params;
+        const result = parkingService.leaveParkhouse(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
