@@ -477,6 +477,38 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
     }
 };
 
+
+// funktionen für Reports
+const getFacilitiesOfTenant = async (tenantID) => {
+    const snapshot = await db.collection("parking-facility")
+        .where("tenantId", "==", tenantID)
+        .get();
+
+    if (snapshot.empty) {
+        console.error(`No facilities found for tenant with ID: ${tenantID}`);
+    }
+
+    const facilities = [];
+    snapshot.forEach(doc => {
+        const facilityData = doc.data();
+        const facilityDataToReturn = {
+            id: facilityData.id,
+            name: facilityData.name,
+            maxCapacity: facilityData.maxCapacity,
+            floors: facilityData.parkingSpacesOnFloor.length,
+            street: facilityData.street,
+            city: facilityData.city,
+            postalCode: facilityData.postalCode,
+            country: facilityData.country,
+            
+        };
+
+        facilities.push(facilityDataToReturn);
+    });
+
+    return facilities;
+};
+
 module.exports = {
     newParkingFacility,
     getAllParkingSpotsOfFacility,
@@ -488,5 +520,6 @@ module.exports = {
     manageParkingSpotOccupancy,
     getParkingFee,
     payParkingFee,
-    leaveParkhouse
+    leaveParkhouse,
+    getFacilitiesOfTenant
 };

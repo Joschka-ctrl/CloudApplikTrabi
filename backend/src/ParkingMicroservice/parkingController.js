@@ -194,6 +194,13 @@ app.post('/newParkingFacility', async (req, res) => {
     }
 });
 
+// Ruten für reporting
+app.get('/facilities/:tenantId', async (req, res) => {
+    const { tenantId } = req.params;
+    const facilities = await parkingService.getFacilitiesOfTenant(tenantId);
+    res.json(facilities);
+});
+
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
 });
