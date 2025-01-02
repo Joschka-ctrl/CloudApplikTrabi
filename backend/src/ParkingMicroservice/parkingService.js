@@ -41,7 +41,6 @@ const getFacilityData = async (facilityID, tenantID) => {
     if (snapshot.empty) {
         console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
     }
-
     const doc = snapshot.docs[0];
     const facilityData = doc.data();
     return facilityData;
@@ -92,11 +91,6 @@ const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
     }
 };
 
-
-
-const getParkingSpotById1 = (id) => {
-    return paparkingSpots.spots.find(s => s.id === id);
-};
 const getParkingSpotById = async (facilityID, tenantID, spotID) => {
     try {
         // Query the Firestore collection "parking-facility" for the specific facility and tenant
@@ -148,17 +142,6 @@ const createParkingSpot = (id, occupied) => {
 let maxCapacity = 3;
 let currentOccupancy = 0; // Current number of occupied parking spots within the parking facility
 let carsInParkingFacility = [{ ticketNumber: "1234", parkingStartedAt: Timestamp.now(), payedAt: [], parkingEndedAt: null }];
-
-
-const addCarToParkingFacility1 = (ticketNumber) => {
-    if (carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
-        console.error('Car with this ticket number already exists');
-    }
-    const newCar = { ticketNumber, parkingStartedAt: Timestamp.now(), parkingEndedAt: null, payedAt: [] };
-    carsInParkingFacility.push(newCar);
-    console.log(newCar.payedAt.length);
-    return newCar;
-};
 
 const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
     try {
@@ -249,11 +232,6 @@ const updateCarPayedAt = async (ticketNumber, payedAt, facilityID, tenantID) => 
     return car;
 };
 
-
-
-
-
-
 /**
  * Generates a ticket number if the parking lot is not at maximum capacity.
  * 
@@ -308,10 +286,6 @@ const getTicketNumber = async (tenantID, facilityID) => {
     }
 };
 
-
-
-
-
 const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
         const facilityData = getFacilityData(facilityID, tenantID);
@@ -329,7 +303,6 @@ const getCurrentOccupancy = async (tenantID, facilityID) => {
 const checkParkingFacilityOccupancy = () => {
     return currentOccupancy < maxCapacity;
 };
-
 
 /**
  * Manages the occupancy status of a parking spot.
@@ -376,7 +349,6 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         console.error('Failed to update parking spot occupancy.');
     }
 };
-
 
 const getCarFromParkingFacility = async (ticketNumber, facilityData) => {
 
@@ -468,7 +440,6 @@ const payParkingFee = async (ticketNumber, tenantID, facilityID) => {
 const mockPaymentService = (fee) => {
     return true;
 };
-
 
 const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
     try {
