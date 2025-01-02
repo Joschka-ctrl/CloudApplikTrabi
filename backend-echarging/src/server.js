@@ -125,6 +125,10 @@ app.post("/charging-sessions", async (req, res) => {
       return res.status(400).json({ error: "Cannot start charging session. Station is under maintenance." });
     }
 
+    if (stationData.status === 'occupied') {
+      return res.status(400).json({ error: "Cannot start charging session. Station is already occupied." });
+    }
+
     const session = {
       stationId: String(stationId),
       userId: String(userId),
