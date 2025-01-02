@@ -145,6 +145,10 @@ const ChargingReports = () => {
         <Grid item xs={12}>
           <RevenueCharts providerRevenue={providerRevenue} loading={loading.revenue} />
         </Grid>
+
+        <Grid item xs={12}>
+          <ProviderRevenueCards providerRevenue={providerRevenue} />
+        </Grid>
       </Grid>
     </Container>
   );
