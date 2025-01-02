@@ -141,12 +141,27 @@ app.patch("/charging-sessions/:id/end", async (req, res) => {
     const { energyConsumed } = req.body;
     const sessionRef = db.collection("charging-sessions").doc(req.params.id);
     
+    // Get the session to find the station ID
+    const sessionDoc = await sessionRef.get();
+    if (!sessionDoc.exists) {
+      return res.status(404).json({ error: "Charging session not found" });
+    }
+    const sessionData = sessionDoc.data();
+    
+    // Update the charging station status to available
+    const stationRef = db.collection("charging-stations").doc(sessionData.stationId);
+    await stationRef.update({
+      status: 'available',
+      lastModified: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Update the charging session
     await sessionRef.update({
       endTime: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'completed',
-      energyConsumed
+      energyConsumed: energyConsumed,
+      status: 'completed'
     });
-    
+
     const updated = await sessionRef.get();
     res.json({ id: updated.id, ...updated.data() });
   } catch (error) {
