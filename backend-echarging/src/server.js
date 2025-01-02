@@ -108,12 +108,13 @@ app.get("/charging-sessions", authenticateToken, async (req, res) => {
 });
 
 // Start charging session
-app.post("/charging-sessions", authenticateToken, async (req, res) => {
+app.post("/charging-sessions", async (req, res) => {
   try {
-    const { stationId, userId } = req.body;
+    const { stationId, userId, chargingCardProvider } = req.body;
     const session = {
-      stationId,
-      userId,
+      stationId: String(stationId),
+      userId: String(userId),
+      chargingCardProvider: String(chargingCardProvider || 'ec-card'),
       startTime: admin.firestore.FieldValue.serverTimestamp(),
       status: 'active',
       endTime: null,
@@ -128,7 +129,7 @@ app.post("/charging-sessions", authenticateToken, async (req, res) => {
 });
 
 // End charging session
-app.patch("/charging-sessions/:id/end", authenticateToken, async (req, res) => {
+app.patch("/charging-sessions/:id/end", async (req, res) => {
   try {
     const { energyConsumed } = req.body;
     const sessionRef = db.collection("charging-sessions").doc(req.params.id);
@@ -143,6 +144,81 @@ app.patch("/charging-sessions/:id/end", authenticateToken, async (req, res) => {
     res.json({ id: updated.id, ...updated.data() });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Get provider rates
+app.get("/provider-rates", async (req, res) => {
+  try {
+    const ratesSnapshot = await db.collection("provider-rates").get();
+    const rates = [];
+    ratesSnapshot.forEach(doc => {
+      rates.push({ id: doc.id, ...doc.data() });
+    });
+    res.json(rates);
+  } catch (error) {
+    console.error("Error getting provider rates:", error);
+    res.status(500).json({ error: "Failed to get provider rates" });
+  }
+});
+
+// Update or create provider rate
+app.post("/provider-rates", async (req, res) => {
+  try {
+    const { provider, ratePerKw } = req.body;
+    const rateRef = db.collection("provider-rates").doc(provider);
+    await rateRef.set({
+      provider,
+      ratePerKw: Number(ratePerKw),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error updating provider rate:", error);
+    res.status(500).json({ error: "Failed to update provider rate" });
+  }
+});
+
+// Get billing summary
+app.get("/billing-summary", async (req, res) => {
+  try {
+    // Get all completed charging sessions
+    const sessionsSnapshot = await db.collection("charging-sessions")
+      .where("status", "==", "completed")
+      .get();
+    
+    // Get all provider rates
+    const ratesSnapshot = await db.collection("provider-rates").get();
+    const rates = {};
+    ratesSnapshot.forEach(doc => {
+      rates[doc.id] = doc.data().ratePerKw;
+    });
+
+    // Calculate billing per provider
+    const billing = {};
+    sessionsSnapshot.forEach(doc => {
+      const session = doc.data();
+      const provider = session.chargingCardProvider || 'ec-card';
+      const rate = rates[provider] || rates['ec-card'] || 0;
+      const amount = (session.energyConsumed || 0) * rate;
+
+      if (!billing[provider]) {
+        billing[provider] = {
+          totalEnergy: 0,
+          totalAmount: 0,
+          sessions: 0
+        };
+      }
+      
+      billing[provider].totalEnergy += session.energyConsumed || 0;
+      billing[provider].totalAmount += amount;
+      billing[provider].sessions += 1;
+    });
+
+    res.json(billing);
+  } catch (error) {
+    console.error("Error getting billing summary:", error);
+    res.status(500).json({ error: "Failed to get billing summary" });
   }
 });
 

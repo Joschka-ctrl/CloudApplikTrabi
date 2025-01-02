@@ -6,7 +6,7 @@ import ContactSection from "./pages/Contact";
 import Defects from "./pages/Defects";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ECharging from "./pages/ECharging";
+import ECharging from "./features/echarging/pages/ECharging";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Reports from "./pages/Reports";
