@@ -18,9 +18,10 @@ const SessionsChart = ({ utilizationData, loading }) => {
 
   return (
     <Paper sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Total Sessions by Station
-      </Typography>
+      <div id="sessions-chart">
+        <Typography variant="h6" gutterBottom>
+          Daily Sessions
+        </Typography>
       <Box sx={{ height: 400, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {loading ? (
           <CircularProgress />
@@ -45,6 +46,7 @@ const SessionsChart = ({ utilizationData, loading }) => {
           <Typography color="textSecondary">No data available</Typography>
         )}
       </Box>
+      </div>
     </Paper>
   );
 };

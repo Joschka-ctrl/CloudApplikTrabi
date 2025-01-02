@@ -25,71 +25,73 @@ const RevenueCharts = ({ providerRevenue, loading }) => {
   );
 
   return (
-    <>
-      <Grid item xs={12} md={6}>
-        <ChartContainer title="Total Revenue by Provider">
-          <Bar
-            data={{
-              labels,
-              datasets: [
-                {
-                  label: 'Total Revenue (€)',
-                  data: totalRevenueData,
-                  backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                  borderColor: 'rgba(255, 99, 132, 1)',
-                  borderWidth: 1,
-                }
-              ]
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Total Revenue (€)'
+    <Paper sx={{ p: 2 }} id="revenue-chart">
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <ChartContainer title="Total Revenue by Provider">
+            <Bar
+              data={{
+                labels,
+                datasets: [
+                  {
+                    label: 'Total Revenue (€)',
+                    data: totalRevenueData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: 'Total Revenue (€)'
+                    }
                   }
                 }
-              }
-            }}
-          />
-        </ChartContainer>
-      </Grid>
+              }}
+            />
+          </ChartContainer>
+        </Grid>
 
-      <Grid item xs={12} md={6}>
-        <ChartContainer title="Average Revenue per Session by Provider">
-          <Bar
-            data={{
-              labels,
-              datasets: [
-                {
-                  label: 'Average Revenue per Session (€)',
-                  data: avgRevenueData,
-                  backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                  borderColor: 'rgba(54, 162, 235, 1)',
-                  borderWidth: 1,
-                }
-              ]
-            }}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Average Revenue per Session (€)'
+        <Grid item xs={12} md={6}>
+          <ChartContainer title="Average Revenue per Session by Provider">
+            <Bar
+              data={{
+                labels,
+                datasets: [
+                  {
+                    label: 'Average Revenue per Session (€)',
+                    data: avgRevenueData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    title: {
+                      display: true,
+                      text: 'Average Revenue per Session (€)'
+                    }
                   }
                 }
-              }
-            }}
-          />
-        </ChartContainer>
+              }}
+            />
+          </ChartContainer>
+        </Grid>
       </Grid>
-    </>
+    </Paper>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Grid, Paper, Typography } from '@mui/material';
+import { Container, Grid, Paper, Typography, Box } from '@mui/material';
 import { useAuth } from '../../../components/AuthProvider';
 import ReportFilters from '../components/reports/ReportFilters';
 import StatisticsCards from '../components/reports/StatisticsCards';
@@ -7,6 +7,7 @@ import UtilizationChart from '../components/reports/UtilizationChart';
 import SessionsChart from '../components/reports/SessionsChart';
 import ProviderRevenueCards from '../components/reports/ProviderRevenueCards';
 import RevenueCharts from '../components/reports/RevenueCharts';
+import ExportPDFButton from '../components/reports/ExportPDFButton';
 
 const ChargingReports = () => {
   const [startDate, setStartDate] = useState('');
@@ -106,9 +107,18 @@ const ChargingReports = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        E-Charging Reports
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          E-Charging Reports
+        </Typography>
+        <ExportPDFButton 
+          stats={chargingStats}
+          utilizationData={utilizationData}
+          providerRevenue={providerRevenue}
+          dateRange={{ startDate, endDate }}
+          selectedGarage={selectedGarage}
+        />
+      </Box>
 
       <ReportFilters
         startDate={startDate}
@@ -119,28 +129,22 @@ const ChargingReports = () => {
         onGarageChange={setSelectedGarage}
       />
 
-      <StatisticsCards stats={chargingStats} loading={loading.stats} />
-
       <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <StatisticsCards stats={chargingStats} loading={loading.stats} />
+        </Grid>
+
         <Grid item xs={12}>
           <UtilizationChart utilizationData={utilizationData} loading={loading.utilization} />
         </Grid>
+
         <Grid item xs={12}>
           <SessionsChart utilizationData={utilizationData} loading={loading.utilization} />
         </Grid>
-      </Grid>
 
-      <Grid container spacing={3} sx={{ mt: 4 }}>
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Card Provider Revenue
-            </Typography>
-            <ProviderRevenueCards providerRevenue={providerRevenue} loading={loading.revenue} />
-          </Paper>
+          <RevenueCharts providerRevenue={providerRevenue} loading={loading.revenue} />
         </Grid>
-
-        <RevenueCharts providerRevenue={providerRevenue} loading={loading.revenue} />
       </Grid>
     </Container>
   );
