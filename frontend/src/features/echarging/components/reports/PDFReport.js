@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Page, Text, View, Document, StyleSheet, PDFViewer, Image } from '@react-pdf/renderer';
 import html2canvas from 'html2canvas';
 
@@ -91,31 +91,41 @@ const PDFReport = ({
   utilizationData, 
   providerRevenue,
   dateRange,
-  selectedGarage
+  selectedGarage,
+  onPDFLoaded
 }) => {
-  const [chartImages, setChartImages] = React.useState({
+  const [chartImages, setChartImages] = useState({
     utilization: null,
     sessions: null,
     revenue: null
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const captureCharts = async () => {
-      const [utilizationChart, sessionsChart, revenueChart] = await Promise.all([
-        captureChart('utilization-chart'),
-        captureChart('sessions-chart'),
-        captureChart('revenue-chart')
-      ]);
+      try {
+        const [utilizationChart, sessionsChart, revenueChart] = await Promise.all([
+          captureChart('utilization-chart'),
+          captureChart('sessions-chart'),
+          captureChart('revenue-chart')
+        ]);
 
-      setChartImages({
-        utilization: utilizationChart,
-        sessions: sessionsChart,
-        revenue: revenueChart
-      });
+        setChartImages({
+          utilization: utilizationChart,
+          sessions: sessionsChart,
+          revenue: revenueChart
+        });
+
+        // Notify parent that PDF is ready to be shown
+        onPDFLoaded?.();
+      } catch (error) {
+        console.error('Error capturing charts:', error);
+        // Still notify parent to prevent infinite loading state
+        onPDFLoaded?.();
+      }
     };
 
     captureCharts();
-  }, []);
+  }, [onPDFLoaded]);
 
   return (
     <PDFViewer style={{ width: '100%', height: '600px' }}>
