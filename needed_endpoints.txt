@@ -1,0 +1,74 @@
+PARKING MICROSERVICE ENDPOINTS NEEDED FOR REPORTING
+==============================================
+
+1. GET /facilities/:tenantId
+   Description: Get list of all parking facilities for a tenant
+   Response: {
+     facilities: [
+       {
+         id: string,
+         name: string,
+         totalSpots: number,
+         floors: number,
+         location: string
+       }
+     ]
+   }
+
+2. GET /parkingStats/usage/:tenantId/:facilityId
+   Description: Get historical parking usage data
+   Query Params: startDate, endDate
+   Response: {
+     dailyUsage: [
+       {
+         date: string,
+         totalVehicles: number,
+         occupancyPercentage: number,
+         entries: number,
+         exits: number
+       }
+     ]
+   }
+
+3. GET /parkingStats/floors/:tenantId/:facilityId
+   Description: Get floor-wise occupancy statistics
+   Query Params: startDate, endDate
+   Response: {
+     floorStats: [
+       {
+         floor: number,
+         totalSpots: number,
+         occupiedSpots: number,
+         occupancyPercentage: number,
+         averageOccupancyTime: number
+       }
+     ]
+   }
+
+4. GET /parkingStats/duration/:tenantId/:facilityId
+   Description: Get parking duration statistics
+   Query Params: startDate, endDate
+   Response: {
+     averageDuration: number,  // in minutes
+     totalVehicles: number,
+     durationBreakdown: {
+       shortTerm: number,    // < 2 hours
+       mediumTerm: number,   // 2-6 hours
+       longTerm: number      // > 6 hours
+     }
+   }
+
+5. GET /parkingStats/revenue/:tenantId/:facilityId
+   Description: Get revenue statistics
+   Query Params: startDate, endDate
+   Response: {
+     totalRevenue: number,
+     dailyRevenue: [
+       {
+         date: string,
+         amount: number,
+         transactions: number
+       }
+     ]
+   }
+

@@ -26,12 +26,14 @@ const ChargingSessions = () => {
   const [garages, setGarages] = useState([]);
   const { user } = useAuth();
 
+  const HOST_URL = 'http://localhost:3016';
+
   const fetchSessions = async () => {
     try {
       const token = await user.getIdToken();
       const url = selectedGarage 
-        ? `http://localhost:3016/charging-sessions?garage=${encodeURIComponent(selectedGarage)}`
-        : 'http://localhost:3016/charging-sessions';
+        ? `${HOST_URL}/charging-sessions?garage=${encodeURIComponent(selectedGarage)}`
+        : `${HOST_URL}/charging-sessions`;
       
       const response = await fetch(url, {
         headers: {
@@ -65,7 +67,7 @@ const ChargingSessions = () => {
       // In a real application, you would get the actual energy consumed
       const energyConsumed = Math.floor(Math.random() * 50) + 10; // Mock value between 10-60 kWh
       
-      await fetch(`http://localhost:3016/charging-sessions/${sessionId}/end`, {
+      await fetch(`${HOST_URL}/charging-sessions/${sessionId}/end`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +84,18 @@ const ChargingSessions = () => {
 
   const formatDateTime = (timestamp) => {
     if (!timestamp) return '-';
-    return new Date(timestamp).toLocaleString();
+    // Convert Firebase Timestamp to JavaScript Date
+    if (timestamp._seconds) {
+      const milliseconds = timestamp._seconds * 1000 + Math.floor(timestamp._nanoseconds / 1000000);
+      return new Date(milliseconds).toLocaleString('de-DE', {
+        dateStyle: 'medium',
+        timeStyle: 'medium'
+      });
+    }
+    return new Date(timestamp).toLocaleString('de-DE', {
+      dateStyle: 'medium',
+      timeStyle: 'medium'
+    });
   };
 
   return (
@@ -116,6 +129,7 @@ const ChargingSessions = () => {
                 <TableCell>Garage</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Start Time</TableCell>
+                <TableCell>End Time</TableCell>
                 <TableCell>Energy Consumed</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -132,6 +146,7 @@ const ChargingSessions = () => {
                     />
                   </TableCell>
                   <TableCell>{formatDateTime(session.startTime)}</TableCell>
+                  <TableCell>{formatDateTime(session.endTime)}</TableCell>
                   <TableCell>{session.energyConsumed || '-'}</TableCell>
                   <TableCell>
                     {session.status === 'active' && (
