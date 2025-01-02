@@ -194,6 +194,91 @@ app.post('/newParkingFacility', async (req, res) => {
     }
 });
 
+// Ruten für reporting
+app.get('/facilities/:tenantId', async (req, res) => {
+    const { tenantId } = req.params;
+    const facilities = await parkingService.getFacilitiesOfTenant(tenantId);
+    res.json(facilities);
+});
+
+app.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
+    const { tenantId, facilityId } = req.params;
+   
+
+    const { startDate, endDate } = req.query;
+    console.log('Query Params:', { startDate, endDate });
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
+    }
+    const stats = await parkingService.getParkingStats(tenantId, facilityId, startDate, endDate);
+    res.json( stats );
+    
+});
+
+app.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
+    const { tenantId, facilityId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    console.log('Query Params:', { startDate, endDate });
+
+    // Validierung der Query-Parameter
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
+    }
+
+    try {
+        // Service-Aufruf zur Berechnung der Stockwerk-Statistiken
+        const floorStats = await parkingService.getFloorStats(tenantId, facilityId, startDate, endDate);
+
+        res.json({ floorStats });
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Stockwerk-Statistiken:', error);
+        res.status(500).json({ error: 'Interner Serverfehler.' });
+    }
+});
+
+
+app.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
+    const { tenantId, facilityId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
+    }
+
+    try {
+        const stats = await parkingService.getParkingDurationStats(tenantId, facilityId, startDate, endDate);
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: 'Fehler beim Abrufen der Parkplatzdauer-Statistiken.' });
+    }
+});
+
+app.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
+    const { tenantId, facilityId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    console.log('Query Params:', { startDate, endDate });
+
+    // Validierung der Query-Parameter
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
+    }
+
+    try {
+        // Service-Aufruf zur Berechnung der Umsatz-Statistiken
+        const revenueStats = await parkingService.getRevenueStats(tenantId, facilityId, startDate, endDate);
+
+        res.json(revenueStats);
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Umsatz-Statistiken:', error);
+        res.status(500).json({ error: 'Interner Serverfehler.' });
+    }
+});
+
+
+
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
 });
