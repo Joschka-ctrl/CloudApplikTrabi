@@ -176,17 +176,17 @@ app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
 app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
-        const result = parkingService.leaveParkhouse(carId, tenantid, facilityid);
+        const result = await parkingService.leaveParkhouse(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
     }
 });
 
-app.post('/newParkingFacility', (req, res) => {
+app.post('/newParkingFacility', async (req, res) => {
     const facility = req.body;
     try {
-        const newFacility = parkingService.newParkingFacility(facility);
+        const newFacility = await parkingService.newParkingFacility(facility);
         // { id: docRef.id, ...newFacility }
         res.status(201).json(newFacility);
     } catch (error) {

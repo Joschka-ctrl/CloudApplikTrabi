@@ -16,7 +16,10 @@ let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
 
 
 const newParkingFacility = async (newFacility) => {
-    const docRef = await db.collection("parking-facility").add(newFacility);
+    newFacility.id = uuidv4();
+    const docRef = await db.collection("parking-facility").add(newFacility); 
+
+    docRef.FacilityID = newFacility.id;
     return docRef;
 }
 
@@ -203,32 +206,28 @@ const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
     }
 };
 
-const updateCarParkingEndedAt = (ticketNumber, parkingEndedAt) => {
-    const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
-    if (!car || car.parkingEndedAt) {
-        console.error('Car with this ticket number not found or already left the parking facility');
-        return null;
-    }
-    car.parkingEndedAt = parkingEndedAt;
-    return car;
-};
+const updateCarParkingEndedAt = async (ticketNumber, parkingEndedAt, facility, docID) => {
+    try {
 
-const updateCarPayedAt1 = async (ticketNumber, payedAt, facility) => {
-    // facility = await getFacilityData(facilityID, tenantID); // bekommt das facility object
-    const car = await getCarFromParkingFacility(ticketNumber, facility); // bekommt das car object
-    if (!car || car.parkingEndedAt) {
-        console.error('Car with this ticket number not found or already left the parking facility');
-    }
-    car.payedAt.push(payedAt);
-    console.log("car.payedAt");
-    console.log(car.payedAt);
-    // update car in parking facility in DB 
+        const carIndex = facility.carsInParkingFacility.findIndex(c => c.ticketNumber === ticketNumber);
 
-    await db.collection("parking-facility").doc(facility.id).update({
-        carsInParkingFacility: facility.carsInParkingFacility
-    });
-    console.log(car.payedAt.length);
-    return car;
+        if (carIndex === -1 || facility.carsInParkingFacility[carIndex].parkingEndedAt) {
+            throw new Error('Car with this ticket number not found or already left the parking facility.');
+        }
+
+        // Update the car's parkingEndedAt field
+        facility.carsInParkingFacility[carIndex].parkingEndedAt = parkingEndedAt;
+
+        // Save the updated facility data back to Firestore
+        await db.collection("parking-facility").doc(docID).update({
+            carsInParkingFacility: facility.carsInParkingFacility
+        });
+
+        return facility.carsInParkingFacility[carIndex];
+    } catch (error) {
+        console.error('Error updating car parking ended at:', error);
+        throw new Error('Failed to update car parking ended at.');
+    }
 };
 
 const updateCarPayedAt = async (ticketNumber, payedAt, facilityID, tenantID) => {
@@ -340,18 +339,7 @@ const checkParkingFacilityOccupancy = () => {
  * @returns {Object} An object containing the success status, the parking spot ID, and the new status.
  * @throws {Error} If the parking spot is not found or if the parking spot is already in the desired status.
  */
-const manageParkingSpotOccupancy1 = (id, newStatus) => {
-    const spot = parkingSpots.find(s => s.id === id);
-    if (!spot) {
-        console.error('Parking spot not found');
-    }
-    if (spot.occupied === newStatus) {
-        console.error(`Parking spot ${id} is already ${newStatus ? 'occupied' : 'free'}`);
-    }
-    spot.occupied = newStatus;
-    console.log(`Changing occupancy of spot ${id} to: ${newStatus}`);
-    return { success: true, id, status: newStatus };
-};
+
 const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatus) => {
     console.log("Manage Parking Spot Occupancy");
     try {
@@ -481,20 +469,42 @@ const mockPaymentService = (fee) => {
     return true;
 };
 
+
 const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
-    const facility = await getFacilityData(facilityID, tenantID);
-    const car = await getCarFromParkingFacility(ticketNumber, facility);
-    if (!car || car.parkingEndedAt) {
-        console.error('Car with this ticket number not found or already left the parking facility');
+    try {
+        // Fetch the facility data using the facilityID and tenantID
+        const facility = await getFacilityData(facilityID, tenantID);
+        
+        // Get the car details from the parking facility
+        const car = await getCarFromParkingFacility(ticketNumber, facility);
+        
+        if (!car || car.parkingEndedAt) {
+            throw new Error('Car with this ticket number not found or already left the parking facility.');
+        }
+        
+        // Check if the car has a payment made and if the parking duration is 0
+        if (car.payedAt.length > 0 && await getParkingDuration(ticketNumber, facility) == 0) {
+            // Decrease the current occupancy count
+            let currentOccupancy = facility.currentOccupancy - 1;
+
+            const doc = await getDoc(facilityID, tenantID);
+            // Update the occupancy count in Firestore
+            await db.collection("parking-facility").doc(doc.id).update({
+                currentOccupancy: currentOccupancy
+            });
+
+            // Update the car's parkingEndedAt timestamp
+            await updateCarParkingEndedAt(ticketNumber, Timestamp.now(), facility, doc.id);
+
+            return { success: true, ticketNumber };
+        } else {
+            return { error: 'open Payment' };
+        }
+    } catch (error) {
+        console.error('Error leaving parking facility:', error);
+        throw new Error('Failed to leave parking facility.');
     }
-    if (car.payedAt.length > 0 && getParkingDuration(ticketNumber) == 0) {
-        currentOccupancy--; // update occupancy of parking facility
-        updateCarParkingEndedAt(ticketNumber, Timestamp.now()); // update car in parking facility
-        return { success: true, ticketNumber };
-    } else {
-        return { error: 'open Payment' };
-    }
-}
+};
 
 module.exports = {
     newParkingFacility,
