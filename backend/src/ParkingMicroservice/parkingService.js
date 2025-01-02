@@ -5,9 +5,9 @@ const admin = require('firebase-admin');
 
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
-  });
-  
-  const db = admin.firestore();
+});
+
+const db = admin.firestore();
 
 
 
@@ -32,9 +32,9 @@ let parkingFacility = [
     }
 ];
 
-const  newParkingFacility = async (newFacility) => {
+const newParkingFacility = async (newFacility) => {
     const docRef = await db.collection("parking-facility").add(newFacility);
-   return docRef;
+    return docRef;
 }
 
 
@@ -60,14 +60,14 @@ const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
                 parkingSpots.push(...floor.spots);
             });
         });
-console.log(parkingSpots);
+        console.log(parkingSpots);
         return parkingSpots;
     } catch (error) {
         console.error('Error fetching parking spots:', error);
-        throw new Error('Failed to fetch parking spots.');
+        console.error('Failed to fetch parking spots.');
     }
 };
-  
+
 
 
 const getParkingSpotById1 = (id) => {
@@ -108,13 +108,13 @@ const getParkingSpotById = async (facilityID, tenantID, spotID) => {
         return parkingSpot;
     } catch (error) {
         console.error('Error fetching parking spot:', error);
-        throw new Error('Failed to fetch parking spot.');
+        console.error('Failed to fetch parking spot.');
     }
 };
 
 const createParkingSpot = (id, occupied) => {
     if (parkingSpots.find(s => s.id === id)) {
-        throw new Error('Parking spot with this ID already exists');
+        console.error('Parking spot with this ID already exists');
     }
     const newSpot = { id, occupied };
     parkingSpots.push(newSpot);
@@ -128,7 +128,7 @@ let carsInParkingFacility = [{ ticketNumber: "1234", parkingStartedAt: Timestamp
 
 const addCarToParkingFacility1 = (ticketNumber) => {
     if (carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
-        throw new Error('Car with this ticket number already exists');
+        console.error('Car with this ticket number already exists');
     }
     const newCar = { ticketNumber, parkingStartedAt: Timestamp.now(), parkingEndedAt: null, payedAt: [] };
     carsInParkingFacility.push(newCar);
@@ -145,50 +145,47 @@ const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
             .get();
 
         if (snapshot.empty) {
-            throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
         }
 
         // Loop through the matching documents (should typically be one)
         let addedCar = null;
-        snapshot.forEach(async (doc) => {
-            const facilityData = doc.data();
+        const doc = snapshot.docs[0];
+        const facilityData = doc.data();
 
-            // Check if the ticket number already exists
-            if (facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
-                throw new Error('Car with this ticket number already exists');
-            }
+        // Check if the ticket number already exists
+        if (facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber)) {
+            console.error('Car with this ticket number already exists');
+        }
 
-            // Create the new car object
-            const newCar = { 
-                ticketNumber, 
-                parkingStartedAt: Timestamp.now(), 
-                parkingEndedAt: null, 
-                payedAt: [] 
-            };
+        // Create the new car object
+        const newCar = {
+            ticketNumber,
+            parkingStartedAt: Timestamp.now(),
+            parkingEndedAt: null,
+            payedAt: []
+        };
 
-            // Add the new car to the carsInParkingFacility array
-            facilityData.carsInParkingFacility.push(newCar);
+        // Add the new car to the carsInParkingFacility array
+        facilityData.carsInParkingFacility.push(newCar);
 
-            // Update the Firestore document
-            await db.collection("parking-facility").doc(doc.id).update({
-                carsInParkingFacility: facilityData.carsInParkingFacility
-            });
-
-            addedCar = newCar; // Store the newly added car
+        // Update the Firestore document
+        await db.collection("parking-facility").doc(doc.id).update({
+            carsInParkingFacility: facilityData.carsInParkingFacility
         });
 
-        console.log('Car successfully added to parking facility:', addedCar);
+        console.log('Car successfully added to parking facility');
         return addedCar;
     } catch (error) {
         console.error('Error adding car to parking facility:', error);
-        throw new Error('Failed to add car to parking facility.');
+        console.error('Failed to add car to parking facility.');
     }
 };
 
 const updateCarParkingEndedAt = (ticketNumber, parkingEndedAt) => {
     const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car || car.parkingEndedAt) {
-        throw new Error('Car with this ticket number not found or already left the parking facility');
+        console.error('Car with this ticket number not found or already left the parking facility');
     }
     car.parkingEndedAt = parkingEndedAt;
     return car;
@@ -197,7 +194,7 @@ const updateCarParkingEndedAt = (ticketNumber, parkingEndedAt) => {
 const updateCarPayedAt = (ticketNumber, payedAt) => {
     const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car || car.parkingEndedAt) {
-        throw new Error('Car with this ticket number not found or already left the parking facility');
+        console.error('Car with this ticket number not found or already left the parking facility');
     }
     car.payedAt.push(payedAt);
     console.log(car.payedAt.length);
@@ -223,52 +220,72 @@ const getTicketNumber = async (tenantID, facilityID) => {
             .get();
 
         if (snapshot.empty) {
-            throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
         }
 
-        // Loop through the matching documents (should typically be one)
-        let updatedOccupancy = null;
-        snapshot.forEach(async (doc) => {
-            const facilityData = doc.data();
-            console.log(facilityData);
-            const { currentOccupancy, maxCapacity } = facilityData;
+        // Access the first document (assuming only one document matches)
+        const doc = snapshot.docs[0];
+        const facilityData = doc.data();
 
-            console.log(`Current occupancy: ${currentOccupancy}, Max capacity: ${maxCapacity}`);
+        console.log(facilityData);
+        const { currentOccupancy, maxCapacity } = facilityData;
 
-            // Check if currentOccupancy is less than maxCapacity
-            if (currentOccupancy < maxCapacity) {
-                const newOccupancy = currentOccupancy + 1;
+        console.log(`Current occupancy: ${currentOccupancy}, Max capacity: ${maxCapacity}`);
 
-                // Update Firestore with the new occupancy
-                await db.collection("parking-facility").doc(doc.id).update({
-                    currentOccupancy: newOccupancy
-                });
+        // Check if currentOccupancy is less than maxCapacity
+        if (currentOccupancy < maxCapacity) {
+            const newOccupancy = currentOccupancy + 1;
 
-                updatedOccupancy = newOccupancy;
-                console.log(`Occupancy updated to: ${newOccupancy}`);
+            // Update Firestore with the new occupancy
+            await db.collection("parking-facility").doc(doc.id).update({
+                currentOccupancy: newOccupancy
+            });
 
-                // add car to parking facility
-                const ticketNumber = uuidv4();
-                await addCarToParkingFacility(facilityID, tenantID, ticketNumber);
-                return { ticketNumber };
+            console.log(`Occupancy updated to: ${newOccupancy}`);
 
-            } else {
-                throw new Error('Parking facility is at maximum capacity.');
-            }
-        });
+            // Add car to parking facility
+            const ticketNumber = uuidv4();
+            await addCarToParkingFacility(facilityID, tenantID, ticketNumber);
+            console.log(`Car with ticket number ${ticketNumber} added to parking facility`);
 
-      return "Fehler: max acapacity";
+            return { ticketNumber };
+        } else {
+            console.error('Parking facility is at maximum capacity.');
+        }
     } catch (error) {
         console.error('Error updating occupancy:', error);
-        throw new Error('Failed to update occupancy.');
+        console.error('Failed to update occupancy.');
     }
 };
 
 
 
 
-const getCurrentOccupancy = () => {
-    return currentOccupancy;
+
+const getCurrentOccupancy = async (tenantID, facilityID) => {
+    try {
+        // Fetch the parking facility document
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        // Access the first document (assuming only one document matches)
+        const doc = snapshot.docs[0];
+        const facilityData = doc.data();
+
+        console.log(facilityData);
+        const { currentOccupancy, maxCapacity } = facilityData;
+        return currentOccupancy;
+    }
+    catch (error) {
+        console.error('Error fetching current occupancy:', error);
+        console.error('Failed to fetch current occupancy.');
+    }
 };
 
 const checkParkingFacilityOccupancy = () => {
@@ -284,18 +301,63 @@ const checkParkingFacilityOccupancy = () => {
  * @returns {Object} An object containing the success status, the parking spot ID, and the new status.
  * @throws {Error} If the parking spot is not found or if the parking spot is already in the desired status.
  */
-const manageParkingSpotOccupancy = (id, newStatus) => {
+const manageParkingSpotOccupancy1 = (id, newStatus) => {
     const spot = parkingSpots.find(s => s.id === id);
     if (!spot) {
-        throw new Error('Parking spot not found');
+        console.error('Parking spot not found');
     }
     if (spot.occupied === newStatus) {
-        throw new Error(`Parking spot ${id} is already ${newStatus ? 'occupied' : 'free'}`);
+        console.error(`Parking spot ${id} is already ${newStatus ? 'occupied' : 'free'}`);
     }
     spot.occupied = newStatus;
     console.log(`Changing occupancy of spot ${id} to: ${newStatus}`);
     return { success: true, id, status: newStatus };
 };
+const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatus) => {
+    try {
+        // Fetch the parking facility document
+        const snapshot = await db.collection("parking-facility")
+            .where("id", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        const doc = snapshot.docs[0];
+        const facilityData = doc.data();
+
+        // Locate the parking spot
+        let spotFound = false;
+        facilityData.parkingSpacesOnFloor.forEach(floor => {
+            const spot = floor.spots.find(s => s.id === spotID);
+            if (spot) {
+                if (spot.occupied === newStatus) {
+                    console.error(`Parking spot ${spotID} is already ${newStatus ? 'occupied' : 'free'}`);
+                }
+                spot.occupied = newStatus;
+                spotFound = true;
+            }
+        });
+
+        if (!spotFound) {
+            console.error(`Parking spot with ID ${spotID} not found`);
+        }
+
+        // Update Firestore with the new occupancy status
+        await db.collection("parking-facility").doc(doc.id).update({
+            parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor
+        });
+
+        console.log(`Successfully updated parking spot ${spotID} to status: ${newStatus}`);
+        return { success: true, spotID, status: newStatus };
+    } catch (error) {
+        console.error('Error managing parking spot occupancy:', error);
+        console.error('Failed to update parking spot occupancy.');
+    }
+};
+
 
 
 let allowedDurationAfterPaymentinMinutes = 0.5
@@ -306,11 +368,29 @@ let allowedDurationAfterPaymentinMinutes = 0.5
  * @returns {string} The parking duration in the format "Xd Xh Xm Xs".
  * @throws {Error} If a car with the given ticket number is not found.
  */
-const getParkingDuration = (ticketNumber) => {
-    const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
+const getParkingDuration = async (ticketNumber, tenantID, facilityID) => {
+    // Fetch the parking facility document
+    console.log("ticketNumber: " + ticketNumber);   
+    console.log("tenantID: " + tenantID);
+    console.log("facilityID: " + facilityID);   
+    const snapshot = await db.collection("parking-facility")
+        .where("id", "==", facilityID)
+        .where("tenantId", "==", tenantID)
+        .get();
+
+   
+console.log(snapshot);
+    const doc = snapshot.docs[0];
+    console.log(doc);
+    const facilityData = doc.data();
+console.log(facilityData);
+    // Find the car in the carsInParkingFacility array
+    const car = facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
+console.log(car);
     if (!car) {
-        throw new Error('Car with this ticket number not found');
+        throw new Error(`Car with ticket number ${ticketNumber} not found in facility ${facilityID}`);
     }
+
     let durationMillis;
 
     if (car.parkingEndedAt) {
@@ -321,7 +401,7 @@ const getParkingDuration = (ticketNumber) => {
         console.log("1 + " + durationMillis);
         let wholeTime = Date.now() - car.parkingStartedAt.toDate().getTime();
         console.log("vs the whole Time: " + wholeTime);
-    } else if (car.payedAt.length > 0  && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) < getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
+    } else if (car.payedAt.length > 0 && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) < getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
         durationMillis = 0;
         console.log("2 + " + durationMillis);
     } else {
@@ -350,7 +430,7 @@ const getPricingFromPropertyServiceMock = () => {
 const getParkingFee = (ticketNumber) => {
     const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car || car.parkingEndedAt) {
-        throw new Error('Car with this ticket number not found or already left the parking facility');
+        console.error('Car with this ticket number not found or already left the parking facility');
     }
     const parkingDuration = getParkingDuration(ticketNumber);
     const pricing = getPricingFromPropertyServiceMock();
@@ -362,7 +442,7 @@ const payParkingFee = (ticketNumber) => {
     const fee = getParkingFee(ticketNumber);
     const duration = getParkingDuration(ticketNumber);
     // Call payment service to process payment
-    
+
 
     let success = mockPaymentService(fee) && duration > 0;
     if (success) {
@@ -379,9 +459,9 @@ const mockPaymentService = (fee) => {
 const leaveParkhouse = (ticketNumber) => {
     const car = carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car || car.parkingEndedAt) {
-        throw new Error('Car with this ticket number not found or already left the parking facility');
+        console.error('Car with this ticket number not found or already left the parking facility');
     }
-    if (car.payedAt.length > 0  && getParkingDuration(ticketNumber) == 0) {
+    if (car.payedAt.length > 0 && getParkingDuration(ticketNumber) == 0) {
         currentOccupancy--;
         updateCarParkingEndedAt(ticketNumber, Timestamp.now());
         return { success: true, ticketNumber };
