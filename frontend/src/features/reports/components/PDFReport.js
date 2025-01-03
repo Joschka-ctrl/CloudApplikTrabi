@@ -164,7 +164,7 @@ const PDFReport = ({
             <div id="pdf-daily-usage-chart" style={{ width: '800px', height: '400px', backgroundColor: '#ffffff', marginBottom: '20px' }}>
               {dailyUsageData && <PDFDailyUsageChart data={dailyUsageData} />}
             </div>
-            <div id="pdf-duration-chart" style={{ width: '800px', height: '400px', backgroundColor: '#ffffff', marginBottom: '20px' }}>
+            <div id="pdf-parking-duration-chart" style={{ width: '800px', height: '400px', backgroundColor: '#ffffff', marginBottom: '20px' }}>
               {durationStats && <PDFDurationChart data={durationStats} />}
             </div>
             <div id="pdf-revenue-chart" style={{ width: '800px', height: '400px', backgroundColor: '#ffffff', marginBottom: '20px' }}>
@@ -217,7 +217,7 @@ const PDFReport = ({
         };
 
         const dailyUsageImage = dailyUsageData ? await captureChart('pdf-daily-usage-chart') : null;
-        const durationImage = durationStats ? await captureChart('pdf-duration-chart') : null;
+        const durationImage = durationStats ? await captureChart('pdf-parking-duration-chart') : null;
         const revenueImage = revenueStats ? await captureChart('pdf-revenue-chart') : null;
         const floorOccupancyImage = floorStats?.occupancyData ? await captureChart('pdf-floor-occupancy-chart') : null;
         const floorUsageImage = floorStats?.usageData ? await captureChart('pdf-floor-usage-chart') : null;

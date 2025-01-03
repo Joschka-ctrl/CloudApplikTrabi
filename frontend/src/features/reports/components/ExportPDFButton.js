@@ -4,6 +4,30 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import CloseIcon from '@mui/icons-material/Close';
 import PDFReport from './PDFReport';
 
+const transformFloorStats = (floorStats) => {
+  if (!floorStats?.floorStats) return null;
+  
+  return {
+    occupancyData: {
+      labels: floorStats.floorStats.map(floor => `Floor ${floor.floor}`),
+      data: floorStats.floorStats.map(floor => floor.occupiedSpots)
+    },
+    usageData: {
+      labels: floorStats.floorStats.map(floor => `Floor ${floor.floor}`),
+      data: floorStats.floorStats.map(floor => floor.averageOccupancyRate)
+    }
+  };
+};
+
+const transformDurationStats = (durationStats) => {
+  if (!durationStats) return null;
+  
+  return {
+    labels: durationStats.labels,
+    data: durationStats.data
+  };
+};
+
 const ExportPDFButton = ({ 
   metrics,
   dailyUsageData,
@@ -28,6 +52,9 @@ const ExportPDFButton = ({
   const handlePDFLoaded = () => {
     setIsLoading(false);
   };
+
+  const transformedFloorStats = transformFloorStats(floorStats);
+  const transformedDurationStats = transformDurationStats(durationStats);
 
   return (
     <>
@@ -83,9 +110,9 @@ const ExportPDFButton = ({
               <PDFReport
                 metrics={metrics}
                 dailyUsageData={dailyUsageData}
-                durationStats={durationStats}
+                durationStats={transformedDurationStats}
                 revenueStats={revenueStats}
-                floorStats={floorStats}
+                floorStats={transformedFloorStats}
                 selectedParkingPlace={selectedParkingPlace}
                 dateRange={dateRange}
                 onPDFLoaded={handlePDFLoaded}
