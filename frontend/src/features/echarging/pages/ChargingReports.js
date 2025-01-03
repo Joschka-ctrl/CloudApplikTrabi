@@ -23,7 +23,7 @@ const ChargingReports = () => {
   });
   const { user } = useAuth();
 
-  const HOST_URL = 'http://localhost:3004';
+  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {

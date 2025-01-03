@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const admin = require('firebase-admin');
 const app = express();
+const router = express.Router();
 const port = 3016; // Different port from main backend
 
 admin.initializeApp({
@@ -12,6 +13,9 @@ const db = admin.firestore();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/echarging', router)
+app.use('/', router)
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {

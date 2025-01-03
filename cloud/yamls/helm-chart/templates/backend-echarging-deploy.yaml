@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-echarging
+  labels:
+    app: backend-echarging
+spec:
+  replicas: {{ .Values.backend-echarging.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend-echarging
+  template:
+    metadata:
+      labels:
+        app: backend-echarging
+    spec:
+      containers:
+      - name: backend-echarging
+        image: "{{ .Values.backend-echarging.image.repository }}:{{ .Values.backend-echarging.image.tag }}"
+        imagePullPolicy: {{ .Values.backend-echarging.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend-echarging.containerPort }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.backend-echarging.readinessProbe.path }}
+            port: {{ .Values.backend-echarging.containerPort }}
+          initialDelaySeconds: {{ .Values.backend-echarging.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backend-echarging.readinessProbe.periodSeconds }}

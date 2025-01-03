@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-backend-echarging
+spec:
+  type: {{ .Values.backend-echarging.service.type }}
+  ports:
+    - port: {{ .Values.backend-echarging.service.port }}
+      targetPort: {{ .Values.backend-echarging.service.targetPort }}
+      protocol: TCP
+  selector:
+    app: backend-echarging

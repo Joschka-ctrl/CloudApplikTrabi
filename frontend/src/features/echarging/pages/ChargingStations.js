@@ -22,7 +22,7 @@ const ChargingStations = () => {
   const [garages, setGarages] = useState([]);
   const { user } = useAuth();
 
-  const HOST_URL = 'http://localhost:3016';
+  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
   const fetchStations = async () => {
     try {

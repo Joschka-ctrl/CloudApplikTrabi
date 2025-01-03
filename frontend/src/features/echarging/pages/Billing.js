@@ -13,7 +13,7 @@ const Billing = () => {
   const [totalStats, setTotalStats] = useState({ energy: 0, revenue: 0, sessions: 0 });
   const { user } = useAuth();
 
-  const HOST_URL = 'http://localhost:3016';
+  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
