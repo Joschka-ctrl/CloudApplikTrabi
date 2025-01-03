@@ -284,7 +284,7 @@ const getTicketNumber = async (tenantID, facilityID) => {
 
 const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
-        const facilityData = getFacilityData(facilityID, tenantID);
+        const facilityData = await getFacilityData(facilityID, tenantID);
 
         console.log(facilityData);
         const { currentOccupancy } = facilityData;
@@ -320,7 +320,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
             const spot = floor.spots.find(s => s.id === spotID);
             if (spot) {
                 if (spot.occupied === newStatus) {
-                    console.error(`Parking spot ${spotID} is already ${newStatus ? 'occupied' : 'free'}`);
+                    throw new Error(`Parking spot ${spotID} is already ${newStatus ? 'occupied' : 'free'}`);
                 }
                 spot.occupied = newStatus;
                 spotFound = true;
@@ -328,6 +328,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         });
         if (!spotFound) {
             console.error(`Parking spot with ID ${spotID} not found`);
+            return { success: false, message: `Parking spot with ID ${spotID} not found` };
         }
         const doc = await getDoc(facilityID, tenantID);
         console.log(doc.id);
@@ -340,7 +341,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         return { success: true, spotID, status: newStatus };
     } catch (error) {
         console.error('Error managing parking spot occupancy:', error);
-        console.error('Failed to update parking spot occupancy.');
+        return { success: false, message: 'Failed to update parking spot occupancy.', error: error.message };
     }
 };
 
@@ -352,6 +353,17 @@ const getCarFromParkingFacility = async (ticketNumber, facilityData) => {
         throw new Error(`Car with ticket number ${ticketNumber} not found in facility ${facilityID}`);
     }
     return car;
+};
+
+const getParkingDurationREST = async (ticketNumber, tenantID, facilityID) => {
+    try {
+        const facility = await getFacilityData(facilityID, tenantID);
+        const minutes = await getParkingDuration(ticketNumber, facility);
+        return minutes;
+    } catch (error) {
+        console.error('Error fetching parking duration:', error);
+        console.error('Failed to fetch parking duration.');
+    }
 };
 
 let allowedDurationAfterPaymentinMinutes = 0.5
@@ -400,7 +412,16 @@ const getPricingFromPropertyServiceMock = () => {
     // Call property service to get pricing
     return 0.2; // Mock pricing value : 20 ct pro minute
 };
-
+const getParkingFeeRest = async (ticketNumber, tenantID, facilityID) => {
+    try {
+        const facility = await getFacilityData(facilityID, tenantID);
+        const fee = await getParkingFee(ticketNumber, facility);
+        return fee;
+    } catch (error) {
+        console.error('Error fetching parking fee:', error);
+        console.error('Failed to fetch parking fee.');
+    }
+};
 const getParkingFee = async (ticketNumber, facility) => {
     const car = await getCarFromParkingFacility(ticketNumber, facility);
     if (!car || car.parkingEndedAt) {
@@ -709,9 +730,9 @@ module.exports = {
     createParkingSpot,
     getTicketNumber,
     getCurrentOccupancy,
-    getParkingDuration,
+    getParkingDurationREST,
     manageParkingSpotOccupancy,
-    getParkingFee,
+    getParkingFeeRest,
     payParkingFee,
     leaveParkhouse,
     getFacilitiesOfTenant,
