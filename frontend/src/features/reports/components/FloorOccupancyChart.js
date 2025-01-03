@@ -1,56 +1,99 @@
 import React from 'react';
-import { Pie } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 
-const FloorOccupancyChart = ({ data, floorStats, selectedParkingPlace, startDate, endDate }) => {
-  if (!data || !floorStats) return null;
+const FloorOccupancyChart = ({ floorStats, selectedParkingPlace, startDate, endDate }) => {
+  if (!floorStats) return null;
+
+  const chartData = {
+    labels: floorStats.floorStats.map(floor => `Floor ${floor.floor}`),
+    datasets: [
+      {
+        label: 'Occupied Spots',
+        data: floorStats.floorStats.map(floor => floor.occupiedSpots),
+        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+      },
+      {
+        label: 'Available Spots',
+        data: floorStats.floorStats.map(floor => floor.totalSpots - floor.occupiedSpots),
+        backgroundColor: 'rgba(200, 200, 200, 0.8)',
+        borderColor: 'rgba(200, 200, 200, 1)',
+        borderWidth: 1,
+      }
+    ]
+  };
+
+  const options = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 750 },
+    layout: {
+      padding: {
+        bottom: 20 // Add padding at the bottom for the legend
+      }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Number of Spots'
+        },
+        ticks: {
+          stepSize: 1
+        }
+      },
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Floor'
+        },
+        reverse: true
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          boxWidth: 15,
+          padding: 15
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const floor = floorStats.floorStats[context.dataIndex];
+            const datasetLabel = context.dataset.label;
+            const value = context.raw;
+            
+            if (datasetLabel === 'Occupied Spots') {
+              return `Occupied: ${value} spots (${floor.occupancyPercentage}%)`;
+            }
+            return `Available: ${value} spots`;
+          }
+        }
+      }
+    }
+  };
 
   return (
-    <div className="grid-item chart">
-      <h2>Occupancy by Floor</h2>
-      <Pie 
-        key={`occupancy-${selectedParkingPlace}-${startDate}-${endDate}`}
-        data={data}
-        options={{
-          responsive: true,
-          animation: { duration: 750 },
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                generateLabels: (chart) => {
-                  const chartData = chart.data;
-                  if (chartData.labels.length && chartData.datasets.length) {
-                    return chartData.labels.filter((_, i) => i % 2 === 0).map((label, i) => ({
-                      text: label,
-                      fillStyle: chartData.datasets[0].backgroundColor[i * 2],
-                      hidden: false,
-                      index: i
-                    }));
-                  }
-                  return [];
-                }
-              }
-            },
-            tooltip: {
-              callbacks: {
-                label: (context) => {
-                  const floorData = floorStats.floorStats[Math.floor(context.dataIndex / 2)];
-                  if (context.dataIndex % 2 === 0) {
-                    return [
-                      `Occupied: ${floorData.occupancyPercentage}%`,
-                      `Spots: ${floorData.occupiedSpots}/${floorData.totalSpots}`
-                    ];
-                  }
-                  return [
-                    `Available: ${100 - floorData.occupancyPercentage}%`,
-                    `Spots: ${floorData.totalSpots - floorData.occupiedSpots}/${floorData.totalSpots}`
-                  ];
-                }
-              }
-            }
-          }
-        }}
-      />
+    <div className="grid-item chart" style={{ 
+      height: '400px',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '16px'
+    }}>
+      <h2 style={{ marginBottom: '16px' }}>Occupancy by Floor</h2>
+      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+        <Bar 
+          key={`occupancy-${selectedParkingPlace}-${startDate}-${endDate}`}
+          data={chartData}
+          options={options}
+        />
+      </div>
     </div>
   );
 };
