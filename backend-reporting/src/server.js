@@ -3,6 +3,7 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 const moment = require('moment');
 const axios = require('axios');
+require('dotenv').config();
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
@@ -10,8 +11,9 @@ admin.initializeApp({
 
 const db = admin.firestore();
 const app = express();
-const PARKING_SERVICE_URL = 'http://localhost:3033';
-const ECHARGING_SERVICE_URL = 'http://localhost:3016';
+const router = express.Router();
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
 // Middleware
 app.use(cors());
@@ -40,6 +42,7 @@ const authenticateToken = async (req, res, next) => {
 // Helper function to make authenticated requests to parking service
 const parkingServiceRequest = async (endpoint, token) => {
   try {
+    console.log(`Calling parking service: ${PARKING_SERVICE_URL}${endpoint}`);
     const response = await axios.get(`${PARKING_SERVICE_URL}${endpoint}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -63,8 +66,12 @@ const eChargingServiceRequest = async (endpoint, token) => {
   }
 };
 
+// Use router with base path
+app.use('/api/reporting', router);
+app.use('/', router);
+
 // Get daily parking usage data
-app.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
+router.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -89,7 +96,7 @@ app.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
 });
 
 // Get floor occupancy data
-app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
+router.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -132,7 +139,7 @@ app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
 });
 
 // Get parking metrics
-app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
+router.get('/api/reports/metrics', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -191,7 +198,7 @@ app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
 });
 
 // Get list of parking places (facilities)
-app.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
+router.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
   try {
     const tenantId = req.user.tenant_id || '1';
     const facilities = await parkingServiceRequest(
@@ -206,7 +213,7 @@ app.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
 });
 
 // Get e-charging statistics
-app.get('/api/reports/echarging/stats', authenticateToken, async (req, res) => {
+router.get('/api/reports/echarging/stats', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -230,7 +237,7 @@ app.get('/api/reports/echarging/stats', authenticateToken, async (req, res) => {
 });
 
 // Get station utilization data
-app.get('/api/reports/echarging/utilization', authenticateToken, async (req, res) => {
+router.get('/api/reports/echarging/utilization', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -254,7 +261,7 @@ app.get('/api/reports/echarging/utilization', authenticateToken, async (req, res
 });
 
 // Get card provider revenue data
-app.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
+router.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -278,7 +285,7 @@ app.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async
 });
 
 // Get parking duration statistics
-app.get('/api/reports/parking-duration', authenticateToken, async (req, res) => {
+router.get('/api/reports/parking-duration', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -297,7 +304,7 @@ app.get('/api/reports/parking-duration', authenticateToken, async (req, res) => 
 });
 
 // Get revenue statistics
-app.get('/api/reports/parking-revenue', authenticateToken, async (req, res) => {
+router.get('/api/reports/parking-revenue', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -316,7 +323,7 @@ app.get('/api/reports/parking-revenue', authenticateToken, async (req, res) => {
 });
 
 // Get floor statistics
-app.get('/api/reports/floor-stats', authenticateToken, async (req, res) => {
+router.get('/api/reports/floor-stats', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';

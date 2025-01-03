@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-reporting
+  labels:
+    app: backend-reporting
+spec:
+  replicas: {{ .Values.backend-reporting.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend-reporting
+  template:
+    metadata:
+      labels:
+        app: backend-reporting
+    spec:
+      containers:
+      - name: backend-reporting
+        image: "{{ .Values.backend-reporting.image.repository }}:{{ .Values.backend-reporting.image.tag }}"
+        imagePullPolicy: {{ .Values.backend-reporting.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backend-reporting.containerPort }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.backend-reporting.readinessProbe.path }}
+            port: {{ .Values.backend-reporting.containerPort }}
+          initialDelaySeconds: {{ .Values.backend-reporting.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backend-reporting.readinessProbe.periodSeconds }}

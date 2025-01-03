@@ -30,6 +30,22 @@ backend-echarging:
     port: 80
     targetPort: 3016
 
+backend-reporting:
+  replicaCount: 1
+  image:
+    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  containerPort: 3004
+  readinessProbe:
+    path: /api/reporting/health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3004
+
 frontend:
   replicaCount: 1
   image:
