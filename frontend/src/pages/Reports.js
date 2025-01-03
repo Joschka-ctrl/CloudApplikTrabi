@@ -12,6 +12,7 @@ import FloorOccupancyChart from '../features/reports/components/FloorOccupancyCh
 import ParkingDurationChart from '../features/reports/components/ParkingDurationChart';
 import DailyRevenueChart from '../features/reports/components/DailyRevenueChart';
 import FloorUsagePatternChart from '../features/reports/components/FloorUsagePatternChart';
+import ExportPDFButton from '../features/reports/components/ExportPDFButton';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -276,19 +277,30 @@ const Reports = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-        <FilterPanel 
-          parkingPlaces={parkingPlaces}
-          selectedParkingPlace={selectedParkingPlace}
-          startDate={startDate}
-          endDate={endDate}
-          minUsage={minUsage}
-          maxUsage={maxUsage}
-          onParkingPlaceChange={setSelectedParkingPlace}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-          onMinUsageChange={setMinUsage}
-          onMaxUsageChange={setMaxUsage}
-        />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <FilterPanel 
+            parkingPlaces={parkingPlaces}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+            minUsage={minUsage}
+            maxUsage={maxUsage}
+            onParkingPlaceChange={setSelectedParkingPlace}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onMinUsageChange={setMinUsage}
+            onMaxUsageChange={setMaxUsage}
+          />
+          <ExportPDFButton
+            metrics={metrics}
+            dailyUsageData={dailyUsageData}
+            durationStats={durationStats}
+            revenueStats={revenueStats}
+            floorStats={floorStats}
+            selectedParkingPlace={selectedParkingPlace}
+            dateRange={{ startDate, endDate }}
+          />
+        </Box>
 
         <div className="grid-container">
           <MetricsPanel metrics={metrics} revenueStats={revenueStats} />

@@ -85,7 +85,9 @@ const FloorOccupancyChart = ({ floorStats, selectedParkingPlace, startDate, endD
       display: 'flex',
       flexDirection: 'column',
       padding: '16px'
-    }}>
+    }}
+    id='floor-occupancy-chart'
+    >
       <h2 style={{ marginBottom: '16px' }}>Occupancy by Floor</h2>
       <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
         <Bar 

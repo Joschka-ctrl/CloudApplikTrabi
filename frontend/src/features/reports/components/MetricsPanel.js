@@ -2,7 +2,7 @@ import React from 'react';
 
 const MetricsPanel = ({ metrics, revenueStats }) => {
   return (
-    <div className="grid-item metrics-grid">
+    <div className="grid-item metrics-grid" id='pdf-metrics-grid'>
       <div className="metric">
         <h2>Key Metrics</h2>
         <p>Total Parked Vehicles: {metrics?.totalParkedVehicles || 0}</p>

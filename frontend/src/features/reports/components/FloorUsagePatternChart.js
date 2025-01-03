@@ -5,7 +5,7 @@ const FloorUsagePatternChart = ({ floorStats, selectedParkingPlace, startDate, e
   if (!floorStats) return null;
 
   return (
-    <div className="grid-item chart">
+    <div className="grid-item chart" id='pdf-floor-usage-pattern-chart'>
       <h2>Floor Usage Patterns</h2>
       <Bar
         key={`floor-patterns-${selectedParkingPlace}-${startDate}-${endDate}`}

@@ -5,7 +5,7 @@ const ParkingDurationChart = ({ durationStats, selectedParkingPlace, startDate, 
   if (!durationStats) return null;
 
   return (
-    <div className="grid-item chart">
+    <div className="grid-item chart" id='pdf-parking-duration-chart'>
       <h2>Parking Duration Distribution</h2>
       <Bar
         key={`duration-${selectedParkingPlace}-${startDate}-${endDate}`}

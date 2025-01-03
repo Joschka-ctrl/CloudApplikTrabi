@@ -5,7 +5,7 @@ const DailyRevenueChart = ({ revenueStats, selectedParkingPlace, startDate, endD
   if (!revenueStats) return null;
 
   return (
-    <div className="grid-item chart">
+    <div className="grid-item chart" id='pdf-revenue-chart'>
       <h2>Daily Revenue</h2>
       <Line
         key={`revenue-${selectedParkingPlace}-${startDate}-${endDate}`}

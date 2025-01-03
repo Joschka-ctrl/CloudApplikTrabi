@@ -5,7 +5,7 @@ const DailyUsageChart = ({ data, selectedParkingPlace, startDate, endDate, minUs
   if (!data) return null;
 
   return (
-    <div className="grid-item chart">
+    <div className="grid-item chart" id='pdf-daily-usage-chart'>
       <h2>Daily Parking Usage</h2>
       <Bar 
         key={`daily-${selectedParkingPlace}-${startDate}-${endDate}-${minUsage}-${maxUsage}`}
