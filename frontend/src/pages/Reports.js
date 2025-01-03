@@ -5,6 +5,13 @@ import './Reports.css';
 import { useAuth } from '../components/AuthProvider';
 import ChargingReports from '../features/echarging/pages/ChargingReports';
 import { Tabs, Tab, Box } from '@mui/material';
+import FilterPanel from '../features/reports/components/FilterPanel';
+import MetricsPanel from '../features/reports/components/MetricsPanel';
+import DailyUsageChart from '../features/reports/components/DailyUsageChart';
+import FloorOccupancyChart from '../features/reports/components/FloorOccupancyChart';
+import ParkingDurationChart from '../features/reports/components/ParkingDurationChart';
+import DailyRevenueChart from '../features/reports/components/DailyRevenueChart';
+import FloorUsagePatternChart from '../features/reports/components/FloorUsagePatternChart';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -269,256 +276,60 @@ const Reports = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-        <div className="filters-container">
-          <div className="filter-item">
-            <label htmlFor="parkingPlaceSelect">Parking Place:</label>
-            <select
-              id="parkingPlaceSelect"
-              value={selectedParkingPlace}
-              onChange={(e) => setSelectedParkingPlace(e.target.value)}
-            >
-              <option value="">Select Parking Place</option>
-              {parkingPlaces.map((place) => (
-                <option key={place.id} value={place.id}>
-                  {place.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-item">
-            <label htmlFor="startDate">Start Date:</label>
-            <input
-              type="date"
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-
-          <div className="filter-item">
-            <label htmlFor="endDate">End Date:</label>
-            <input
-              type="date"
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-
-          <div className="filter-item">
-            <label htmlFor="minUsage">Min Usage:</label>
-            <input
-              type="number"
-              id="minUsage"
-              value={minUsage}
-              onChange={(e) => setMinUsage(e.target.value)}
-              placeholder="e.g. 30"
-            />
-          </div>
-
-          <div className="filter-item">
-            <label htmlFor="maxUsage">Max Usage:</label>
-            <input
-              type="number"
-              id="maxUsage"
-              value={maxUsage}
-              onChange={(e) => setMaxUsage(e.target.value)}
-              placeholder="e.g. 80"
-            />
-          </div>
-        </div>
+        <FilterPanel 
+          parkingPlaces={parkingPlaces}
+          selectedParkingPlace={selectedParkingPlace}
+          startDate={startDate}
+          endDate={endDate}
+          minUsage={minUsage}
+          maxUsage={maxUsage}
+          onParkingPlaceChange={setSelectedParkingPlace}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onMinUsageChange={setMinUsage}
+          onMaxUsageChange={setMaxUsage}
+        />
 
         <div className="grid-container">
-          <div className="grid-item metrics-grid">
-            <div className="metric">
-              <h2>Key Metrics</h2>
-              <p>Total Parked Vehicles: {metrics?.totalParkedVehicles || 0}</p>
-              <p>Average Duration: {metrics?.averageDuration || 'N/A'}</p>
-              {revenueStats && (
-                <>
-                  <p>Total Revenue: €{revenueStats.totalRevenue?.toFixed(2) || '0.00'}</p>
-                  <p>Average Revenue per Vehicle: €{revenueStats.averageRevenuePerVehicle?.toFixed(2) || '0.00'}</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="grid-item chart">
-            <h2>Daily Parking Usage</h2>
-            {dailyUsageData && (
-              <Bar 
-                key={`daily-${selectedParkingPlace}-${startDate}-${endDate}-${minUsage}-${maxUsage}`}
-                data={dailyUsageData}
-                options={{
-                  responsive: true,
-                  animation: { duration: 750 },
-                  scales: {
-                    y: { beginAtZero: true }
-                  }
-                }}
-              />
-            )}
-          </div>
-
-          <div className="grid-item chart">
-            <h2>Occupancy by Floor</h2>
-            {occupancyData && floorStats && (
-              <Pie 
-                key={`occupancy-${selectedParkingPlace}-${startDate}-${endDate}`}
-                data={occupancyData}
-                options={{
-                  responsive: true,
-                  animation: { duration: 750 },
-                  plugins: {
-                    legend: {
-                      position: 'bottom',
-                      labels: {
-                        generateLabels: (chart) => {
-                          const data = chart.data;
-                          if (data.labels.length && data.datasets.length) {
-                            return data.labels.filter((_, i) => i % 2 === 0).map((label, i) => ({
-                              text: label,
-                              fillStyle: data.datasets[0].backgroundColor[i * 2],
-                              hidden: false,
-                              index: i
-                            }));
-                          }
-                          return [];
-                        }
-                      }
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: (context) => {
-                          const floorData = floorStats.floorStats[Math.floor(context.dataIndex / 2)];
-                          if (context.dataIndex % 2 === 0) {
-                            return [
-                              `Occupied: ${floorData.occupancyPercentage}%`,
-                              `Spots: ${floorData.occupiedSpots}/${floorData.totalSpots}`
-                            ];
-                          }
-                          return [
-                            `Available: ${100 - floorData.occupancyPercentage}%`,
-                            `Spots: ${floorData.totalSpots - floorData.occupiedSpots}/${floorData.totalSpots}`
-                          ];
-                        }
-                      }
-                    }
-                  }
-                }}
-              />
-            )}
-          </div>
-
-          {durationStats && (
-            <div className="grid-item chart">
-              <h2>Parking Duration Distribution</h2>
-              <Bar
-                key={`duration-${selectedParkingPlace}-${startDate}-${endDate}`}
-                data={{
-                  labels: durationStats.labels,
-                  datasets: [{
-                    label: 'Number of Vehicles',
-                    data: durationStats.data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                  }]
-                }}
-                options={{
-                  responsive: true,
-                  animation: { duration: 750 },
-                  scales: {
-                    y: { 
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: 'Number of Vehicles'
-                      }
-                    },
-                    x: {
-                      title: {
-                        display: true,
-                        text: 'Duration (hours)'
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {revenueStats && (
-            <div className="grid-item chart">
-              <h2>Daily Revenue</h2>
-              <Line
-                key={`revenue-${selectedParkingPlace}-${startDate}-${endDate}`}
-                data={{
-                  labels: revenueStats.dailyRevenue?.map(d => d.date) || [],
-                  datasets: [{
-                    label: 'Revenue (€)',
-                    data: revenueStats.dailyRevenue?.map(d => d.amount) || [],
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.4
-                  }]
-                }}
-                options={{
-                  responsive: true,
-                  animation: { duration: 750 },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      title: {
-                        display: true,
-                        text: 'Revenue (€)'
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {floorStats && (
-            <div className="grid-item chart">
-              <h2>Floor Usage Patterns</h2>
-              <Bar
-                key={`floor-patterns-${selectedParkingPlace}-${startDate}-${endDate}`}
-                data={{
-                  labels: floorStats.floorStats?.map(f => `Floor ${f.floor}`),
-                  datasets: [{
-                    label: 'Average Occupancy Rate',
-                    data: floorStats.floorStats?.map(f => f.averageOccupancyRate),
-                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                    borderColor: 'rgba(153, 102, 255, 1)',
-                    borderWidth: 1
-                  }, {
-                    label: 'Peak Occupancy Rate',
-                    data: floorStats.floorStats?.map(f => f.peakOccupancyRate),
-                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
-                    borderColor: 'rgba(255, 159, 64, 1)',
-                    borderWidth: 1
-                  }]
-                }}
-                options={{
-                  responsive: true,
-                  animation: { duration: 750 },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      title: {
-                        display: true,
-                        text: 'Occupancy Rate (%)'
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          )}
+          <MetricsPanel metrics={metrics} revenueStats={revenueStats} />
+          
+          <DailyUsageChart 
+            data={dailyUsageData}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+            minUsage={minUsage}
+            maxUsage={maxUsage}
+          />
+          
+          <FloorOccupancyChart 
+            data={occupancyData}
+            floorStats={floorStats}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+          />
+          
+          <ParkingDurationChart 
+            durationStats={durationStats}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+          />
+          
+          <DailyRevenueChart 
+            revenueStats={revenueStats}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+          />
+          
+          <FloorUsagePatternChart 
+            floorStats={floorStats}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+          />
         </div>
       </TabPanel>
 
