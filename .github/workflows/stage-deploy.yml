@@ -79,3 +79,30 @@ jobs:
           --port=3000 \
           --memory=1Gi \
           --set-env-vars REACT_APP_API_URL=${{ env.REACT_APP_API_URL }}
+
+
+    # build backend-echarging image
+    - name: Build backend-echarging Docker image
+      run: |
+        docker build -t backend-echarging-server:1.1.1 -f backend-echarging/Dockerfile ./backend-echarging
+
+    - name: Tag backend-echarging Docker Image
+      run: |
+        docker tag backend-echarging-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
+
+    - name: Push backend-echarging Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
+
+    # build backend-reporting image
+    - name: Build backend-reporting Docker image
+      run: |
+        docker build -t backend-reporting-server:1.1.1 -f backend-reporting/Dockerfile ./backend-reporting
+
+    - name: Tag backend-reporting Docker Image
+      run: |
+        docker tag backend-reporting-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
+
+    - name: Push backend-reporting Docker image
+      run: |
+        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
