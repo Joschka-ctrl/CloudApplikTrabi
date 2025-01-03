@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bar, Pie } from 'react-chartjs-2';
+import { Bar, Pie, Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './Reports.css';
 import { useAuth } from '../components/AuthProvider';
@@ -36,6 +36,9 @@ const Reports = () => {
   const [dailyUsageData, setDailyUsageData] = useState(null);
   const [occupancyData, setOccupancyData] = useState(null);
   const [metrics, setMetrics] = useState({ totalParkedVehicles: 0, averageDuration: 'N/A' });
+  const [durationStats, setDurationStats] = useState(null);
+  const [revenueStats, setRevenueStats] = useState(null);
+  const [floorStats, setFloorStats] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const { user } = useAuth();
 
@@ -61,11 +64,36 @@ const Reports = () => {
 
   // Fetch data when filters change
   useEffect(() => {
-    if (selectedParkingPlace) {
-      fetchDailyUsage();
-      fetchFloorOccupancy();
-      fetchMetrics();
-    }
+    const fetchData = async () => {
+      if (!selectedParkingPlace) return;
+      
+      // Validate date range
+      if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+        console.error('Start date cannot be after end date');
+        return;
+      }
+
+      // Validate usage range
+      if (minUsage && maxUsage && Number(minUsage) > Number(maxUsage)) {
+        console.error('Min usage cannot be greater than max usage');
+        return;
+      }
+
+      try {
+        await Promise.all([
+          fetchDailyUsage(),
+          fetchFloorOccupancy(),
+          fetchMetrics(),
+          fetchDurationStats(),
+          fetchRevenueStats(),
+          fetchFloorStats()
+        ]);
+      } catch (error) {
+        console.error('Error fetching report data:', error);
+      }
+    };
+
+    fetchData();
   }, [selectedParkingPlace, startDate, endDate, minUsage, maxUsage]);
 
   const fetchParkingPlaces = async () => {
@@ -83,65 +111,142 @@ const Reports = () => {
 
   const fetchDailyUsage = async () => {
     try {
-      const params = new URLSearchParams({
-        parkingId: selectedParkingPlace,
-        ...(startDate && { startDate }),
-        ...(endDate && { endDate }),
-        ...(minUsage && { minUsage }),
-        ...(maxUsage && { maxUsage })
-      });
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      if (minUsage) params.append('minUsage', minUsage);
+      if (maxUsage) params.append('maxUsage', maxUsage);
 
       const response = await fetchWithAuth(`${HOST_URL}/api/reports/daily-usage?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch daily usage data');
+      
       const data = await response.json();
       
-      setDailyUsageData({
+      const chartData = {
         labels: data.labels,
         datasets: [{
           label: 'Parking Usage',
           data: data.data,
           backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        }],
-      });
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        }]
+      };
+      
+      setDailyUsageData(chartData);
     } catch (error) {
       console.error('Error fetching daily usage:', error);
+      setDailyUsageData(null);
     }
   };
 
   const fetchFloorOccupancy = async () => {
     try {
-      const params = new URLSearchParams({
-        parkingId: selectedParkingPlace
-      });
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-occupancy?${params}`);
-      const data = await response.json();
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-stats?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch floor occupancy data');
       
-      setOccupancyData({
-        labels: data.labels,
+      const data = await response.json();
+      setFloorStats(data);
+      
+      // Transform floor stats into pie chart data
+      const floorData = data.floorStats || [];
+      const chartData = {
+        labels: floorData.map(floor => 
+          `Floor ${floor.floor} (${floor.occupancyPercentage}% Occupied, ${floor.occupiedSpots}/${floor.totalSpots} spots)`
+        ),
         datasets: [{
-          label: 'Occupancy',
-          data: data.data,
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
-        }],
-      });
+          data: floorData.map(floor => [
+            floor.occupancyPercentage,
+            100 - floor.occupancyPercentage
+          ]).flat(),
+          backgroundColor: floorData.map(() => ['#FF6384', '#e9ecef']).flat(),
+          borderColor: floorData.map(() => ['#FF6384', '#e9ecef']).flat(),
+          borderWidth: 1
+        }]
+      };
+      
+      setOccupancyData(chartData);
     } catch (error) {
       console.error('Error fetching floor occupancy:', error);
+      setOccupancyData(null);
+      setFloorStats(null);
     }
   };
 
   const fetchMetrics = async () => {
     try {
-      const params = new URLSearchParams({
-        parkingId: selectedParkingPlace,
-        ...(startDate && { startDate }),
-        ...(endDate && { endDate })
-      });
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
 
       const response = await fetchWithAuth(`${HOST_URL}/api/reports/metrics?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch metrics data');
+      
       const data = await response.json();
       setMetrics(data);
     } catch (error) {
       console.error('Error fetching metrics:', error);
+    }
+  };
+
+  const fetchDurationStats = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-duration?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch duration stats');
+      
+      const data = await response.json();
+      setDurationStats(data);
+    } catch (error) {
+      console.error('Error fetching duration stats:', error);
+      setDurationStats(null);
+    }
+  };
+
+  const fetchRevenueStats = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-revenue?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch revenue stats');
+      
+      const data = await response.json();
+      setRevenueStats(data);
+    } catch (error) {
+      console.error('Error fetching revenue stats:', error);
+      setRevenueStats(null);
+    }
+  };
+
+  const fetchFloorStats = async () => {
+    try {
+      const params = new URLSearchParams();
+      params.append('parkingId', selectedParkingPlace);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+
+      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-stats?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch floor stats');
+      
+      const data = await response.json();
+      setFloorStats(data);
+    } catch (error) {
+      console.error('Error fetching floor stats:', error);
+      setFloorStats(null);
     }
   };
 
@@ -228,20 +333,192 @@ const Reports = () => {
           <div className="grid-item metrics-grid">
             <div className="metric">
               <h2>Key Metrics</h2>
-              <p>Total Parked Vehicles: {metrics.totalParkedVehicles}</p>
-              <p>Average Duration: {metrics.averageDuration}</p>
+              <p>Total Parked Vehicles: {metrics?.totalParkedVehicles || 0}</p>
+              <p>Average Duration: {metrics?.averageDuration || 'N/A'}</p>
+              {revenueStats && (
+                <>
+                  <p>Total Revenue: €{revenueStats.totalRevenue?.toFixed(2) || '0.00'}</p>
+                  <p>Average Revenue per Vehicle: €{revenueStats.averageRevenuePerVehicle?.toFixed(2) || '0.00'}</p>
+                </>
+              )}
             </div>
           </div>
 
           <div className="grid-item chart">
             <h2>Daily Parking Usage</h2>
-            {dailyUsageData && <Bar data={dailyUsageData} />}
+            {dailyUsageData && (
+              <Bar 
+                key={`daily-${selectedParkingPlace}-${startDate}-${endDate}-${minUsage}-${maxUsage}`}
+                data={dailyUsageData}
+                options={{
+                  responsive: true,
+                  animation: { duration: 750 },
+                  scales: {
+                    y: { beginAtZero: true }
+                  }
+                }}
+              />
+            )}
           </div>
 
           <div className="grid-item chart">
             <h2>Occupancy by Floor</h2>
-            {occupancyData && <Pie data={occupancyData} />}
+            {occupancyData && floorStats && (
+              <Pie 
+                key={`occupancy-${selectedParkingPlace}-${startDate}-${endDate}`}
+                data={occupancyData}
+                options={{
+                  responsive: true,
+                  animation: { duration: 750 },
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        generateLabels: (chart) => {
+                          const data = chart.data;
+                          if (data.labels.length && data.datasets.length) {
+                            return data.labels.filter((_, i) => i % 2 === 0).map((label, i) => ({
+                              text: label,
+                              fillStyle: data.datasets[0].backgroundColor[i * 2],
+                              hidden: false,
+                              index: i
+                            }));
+                          }
+                          return [];
+                        }
+                      }
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => {
+                          const floorData = floorStats.floorStats[Math.floor(context.dataIndex / 2)];
+                          if (context.dataIndex % 2 === 0) {
+                            return [
+                              `Occupied: ${floorData.occupancyPercentage}%`,
+                              `Spots: ${floorData.occupiedSpots}/${floorData.totalSpots}`
+                            ];
+                          }
+                          return [
+                            `Available: ${100 - floorData.occupancyPercentage}%`,
+                            `Spots: ${floorData.totalSpots - floorData.occupiedSpots}/${floorData.totalSpots}`
+                          ];
+                        }
+                      }
+                    }
+                  }
+                }}
+              />
+            )}
           </div>
+
+          {durationStats && (
+            <div className="grid-item chart">
+              <h2>Parking Duration Distribution</h2>
+              <Bar
+                key={`duration-${selectedParkingPlace}-${startDate}-${endDate}`}
+                data={{
+                  labels: durationStats.labels,
+                  datasets: [{
+                    label: 'Number of Vehicles',
+                    data: durationStats.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  animation: { duration: 750 },
+                  scales: {
+                    y: { 
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: 'Number of Vehicles'
+                      }
+                    },
+                    x: {
+                      title: {
+                        display: true,
+                        text: 'Duration (hours)'
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {revenueStats && (
+            <div className="grid-item chart">
+              <h2>Daily Revenue</h2>
+              <Line
+                key={`revenue-${selectedParkingPlace}-${startDate}-${endDate}`}
+                data={{
+                  labels: revenueStats.dailyRevenue?.map(d => d.date) || [],
+                  datasets: [{
+                    label: 'Revenue (€)',
+                    data: revenueStats.dailyRevenue?.map(d => d.amount) || [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  animation: { duration: 750 },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      title: {
+                        display: true,
+                        text: 'Revenue (€)'
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {floorStats && (
+            <div className="grid-item chart">
+              <h2>Floor Usage Patterns</h2>
+              <Bar
+                key={`floor-patterns-${selectedParkingPlace}-${startDate}-${endDate}`}
+                data={{
+                  labels: floorStats.floorStats?.map(f => `Floor ${f.floor}`),
+                  datasets: [{
+                    label: 'Average Occupancy Rate',
+                    data: floorStats.floorStats?.map(f => f.averageOccupancyRate),
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                  }, {
+                    label: 'Peak Occupancy Rate',
+                    data: floorStats.floorStats?.map(f => f.peakOccupancyRate),
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                  }]
+                }}
+                options={{
+                  responsive: true,
+                  animation: { duration: 750 },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      title: {
+                        display: true,
+                        text: 'Occupancy Rate (%)'
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          )}
         </div>
       </TabPanel>
 

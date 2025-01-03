@@ -66,34 +66,22 @@ const eChargingServiceRequest = async (endpoint, token) => {
 // Get daily parking usage data
 app.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
   try {
-    const { parkingId, startDate, endDate, minUsage, maxUsage } = req.query;
-    
-    let query = db.collection('parking-usage')
-      .where('parkingId', '==', parkingId);
-    
-    if (startDate) {
-      query = query.where('date', '>=', moment(startDate).startOf('day').toDate());
-    }
-    if (endDate) {
-      query = query.where('date', '<=', moment(endDate).endOf('day').toDate());
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || '1';
+    let startDate = req.query.startDate;
+    let endDate = req.query.endDate;
+
+    if (!startDate || !endDate) {
+      startDate = moment().subtract(7, 'days').format('YYYY-MM-DD');
+      endDate = moment().format('YYYY-MM-DD');
     }
 
-    const snapshot = await query.get();
-    let dailyData = {
-      labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-      data: Array(7).fill(0)
-    };
+    const usageData = await parkingServiceRequest(
+      `/parkingStats/usage/${tenantId}/${facilityId}?startDate=${startDate}&endDate=${endDate}`,
+      req.headers.authorization.split(' ')[1]
+    );
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if ((!minUsage || data.usage >= parseInt(minUsage)) && 
-          (!maxUsage || data.usage <= parseInt(maxUsage))) {
-        const dayIndex = moment(data.date.toDate()).day();
-        dailyData.data[dayIndex] = data.usage;
-      }
-    });
-
-    res.json(dailyData);
+    res.json(usageData);
   } catch (error) {
     console.error('Error fetching daily usage:', error);
     res.status(500).json({ error: 'Failed to fetch daily usage data' });
@@ -104,9 +92,9 @@ app.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
 app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || 'default';
+    const tenantId = req.user.tenant_id || '1';
 
-    // Get parking spots data
+    // Get all parking spots
     const spotsData = await parkingServiceRequest(
       `/parkingSpots/${tenantId}/${facilityId}`,
       req.headers.authorization.split(' ')[1]
@@ -147,24 +135,25 @@ app.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
 app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || 'default';
+    const tenantId = req.user.tenant_id || '1';
 
-    // Get current occupancy and spots data
-    const occupancyData = await parkingServiceRequest(
-      `/currentOccupancy/${tenantId}/${facilityId}`,
-      req.headers.authorization.split(' ')[1]
-    );
-    
-    const spotsData = await parkingServiceRequest(
-      `/parkingSpots/${tenantId}/${facilityId}`,
-      req.headers.authorization.split(' ')[1]
-    );
+    // Get all parking spots and current occupancy
+    const [spotsData, occupancyData] = await Promise.all([
+      parkingServiceRequest(
+        `/parkingSpots/${tenantId}/${facilityId}`,
+        req.headers.authorization.split(' ')[1]
+      ),
+      parkingServiceRequest(
+        `/currentOccupancy/${tenantId}/${facilityId}`,
+        req.headers.authorization.split(' ')[1]
+      )
+    ]);
 
-    // Calculate metrics
+    // Calculate total parked vehicles
     const occupiedSpots = spotsData.filter(spot => spot.occupied);
     const totalParkedVehicles = occupiedSpots.length;
 
-    // Get average duration for currently parked vehicles
+    // Calculate average duration for currently parked vehicles
     let totalDuration = 0;
     let validDurations = 0;
 
@@ -175,7 +164,7 @@ app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
             `/duration/${tenantId}/${facilityId}/${spot.carId}`,
             req.headers.authorization.split(' ')[1]
           );
-          if (durationData.duration) {
+          if (durationData && durationData.duration) {
             totalDuration += durationData.duration;
             validDurations++;
           }
@@ -192,7 +181,8 @@ app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
       totalParkedVehicles,
       averageDuration: averageDuration ? 
         `${Math.floor(averageDuration.asHours())} hours ${averageDuration.minutes()} minutes` : 
-        'N/A'
+        'N/A',
+      currentOccupancy: occupancyData.occupancy || 0
     });
   } catch (error) {
     console.error('Error fetching metrics:', error);
@@ -200,20 +190,15 @@ app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
   }
 });
 
-// Get list of parking places
+// Get list of parking places (facilities)
 app.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
   try {
-    const snapshot = await db.collection('parking-places').get();
-    const parkingPlaces = [];
-
-    snapshot.forEach(doc => {
-      parkingPlaces.push({
-        id: doc.id,
-        name: doc.data().name
-      });
-    });
-
-    res.json(parkingPlaces);
+    const tenantId = req.user.tenant_id || '1';
+    const facilities = await parkingServiceRequest(
+      `/facilities/${tenantId}`,
+      req.headers.authorization.split(' ')[1]
+    );
+    res.json(facilities);
   } catch (error) {
     console.error('Error fetching parking places:', error);
     res.status(500).json({ error: 'Failed to fetch parking places' });
@@ -289,6 +274,63 @@ app.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async
   } catch (error) {
     console.error('Error fetching card provider revenue:', error);
     res.status(500).json({ error: 'Failed to fetch card provider revenue data' });
+  }
+});
+
+// Get parking duration statistics
+app.get('/api/reports/parking-duration', authenticateToken, async (req, res) => {
+  try {
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || '1';
+    const { startDate, endDate } = req.query;
+
+    const durationStats = await parkingServiceRequest(
+      `/parkingStats/duration/${tenantId}/${facilityId}?startDate=${startDate}&endDate=${endDate}`,
+      req.headers.authorization.split(' ')[1]
+    );
+
+    res.json(durationStats);
+  } catch (error) {
+    console.error('Error fetching parking duration stats:', error);
+    res.status(500).json({ error: 'Failed to fetch parking duration statistics' });
+  }
+});
+
+// Get revenue statistics
+app.get('/api/reports/parking-revenue', authenticateToken, async (req, res) => {
+  try {
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || '1';
+    const { startDate, endDate } = req.query;
+
+    const revenueStats = await parkingServiceRequest(
+      `/parkingStats/revenue/${tenantId}/${facilityId}?startDate=${startDate}&endDate=${endDate}`,
+      req.headers.authorization.split(' ')[1]
+    );
+
+    res.json(revenueStats);
+  } catch (error) {
+    console.error('Error fetching revenue stats:', error);
+    res.status(500).json({ error: 'Failed to fetch revenue statistics' });
+  }
+});
+
+// Get floor statistics
+app.get('/api/reports/floor-stats', authenticateToken, async (req, res) => {
+  try {
+    const { parkingId: facilityId } = req.query;
+    const tenantId = req.user.tenant_id || '1';
+    const { startDate, endDate } = req.query;
+
+    const floorStats = await parkingServiceRequest(
+      `/parkingStats/floors/${tenantId}/${facilityId}?startDate=${startDate}&endDate=${endDate}`,
+      req.headers.authorization.split(' ')[1]
+    );
+
+    res.json(floorStats);
+  } catch (error) {
+    console.error('Error fetching floor stats:', error);
+    res.status(500).json({ error: 'Failed to fetch floor statistics' });
   }
 });
 

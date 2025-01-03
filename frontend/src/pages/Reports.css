@@ -4,7 +4,7 @@
 .reports-container {
   max-width: 90vw;       /* Control how wide the content can go */
   margin: 0 auto;          /* Center it horizontally */
-  padding: 1rem;           /* Some padding on the sides */
+  padding: 20px;           /* Some padding on the sides */
   box-sizing: border-box;  /* Make padding and borders count in total width */
   font-family: 'Helvetica', Arial, sans-serif;
   color: #333;
@@ -24,28 +24,34 @@
 .filters-container {
   display: flex;
   flex-wrap: wrap;              /* Allow filters to wrap on smaller screens */
-  gap: 1rem;                    /* Spacing between filter items */
-  margin-bottom: 1.5rem;        /* Space below filter section */
+  gap: 20px;                    /* Spacing between filter items */
+  margin-bottom: 30px;        /* Space below filter section */
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
   justify-content: center;      /* Center filters by default */
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
+  gap: 5px;
 }
 
 .filter-item label {
-  font-weight: 600;
+  font-weight: 500;
+  color: #495057;
   margin-bottom: 0.25rem;       /* Slight space below label */
 }
 
 .filter-item input[type="date"],
 .filter-item input[type="number"],
 .filter-item select {
-  padding: 0.5rem;
+  padding: 8px;
   font-size: 1rem;
-  border: 1px solid #ccc;       /* Slight border for clarity */
+  border: 1px solid #ced4da;       /* Slight border for clarity */
   border-radius: 4px;
+  min-width: 200px;
 }
 
 /* -------------------------------
@@ -53,33 +59,50 @@
 --------------------------------*/
 .grid-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* Two columns for medium+ screens */
-  grid-gap: 1.5rem;              /* Spacing between grid items */
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); /* Two columns for medium+ screens */
+  gap: 25px;              /* Spacing between grid items */
+  margin-top: 20px;
 }
 
 /* A single grid item block */
 .grid-item {
-  background-color: #fff;
+  background: white;
+  padding: 20px;
   border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Full width for the metrics box */
 .metrics-grid {
+  display: flex;
+  flex-direction: column;
   grid-column: 1 / -1;  /* Span across both columns in the grid */
 }
 
 /* Headings within each grid item (optional styling) */
 .grid-item h2 {
   margin-top: 0;
-  margin-bottom: 1rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-size: 1.25rem;
 }
 
 /* Metric text styling */
+.metric {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
 .metric p {
-  margin: 0.5rem 0;
+  margin: 10px 0;
+  font-size: 1.1rem;
+  color: #495057;
   line-height: 1.4;
+}
+
+.metric p:last-child {
+  margin-bottom: 0;
 }
 
 /* --------------------------------
@@ -91,6 +114,10 @@
   }
   .metrics-grid {
     grid-column: auto; /* No need to span multiple columns now */
+  }
+  .filter-item input,
+  .filter-item select {
+    min-width: 150px;
   }
   .filters-container {
     justify-content: flex-start; /* Align filters left if you prefer on narrow screens */
