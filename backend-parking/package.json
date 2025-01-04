@@ -1,0 +1,19 @@
+{
+  "name": "backend-parking",
+  "version": "1.0.0",
+  "description": "Parking management microservice for Trabi Cloud Application",
+  "main": "src/parkingController.js",
+  "scripts": {
+    "start": "node src/parkingController.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "firebase-admin": "^12.6.0",
+    "google-auth-library": "^9.14.2"
+  }
+}
