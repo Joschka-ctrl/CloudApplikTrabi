@@ -10,6 +10,8 @@ import ECharging from "./features/echarging/pages/ECharging";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Reports from "./pages/Reports";
+import ParkingLots from "./features/parkingmangement/pages/parkingLots";
+
 
 const App = () => {
   return (
@@ -33,6 +35,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <ECharging />
+                  </ProtectedRoute>
+                }
+              />
+                <Route
+                path="/parkingSpaces"
+                element={
+                  <ProtectedRoute>
+                    <ParkingLots/>
                   </ProtectedRoute>
                 }
               />
