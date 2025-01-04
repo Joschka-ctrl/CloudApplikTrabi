@@ -7,6 +7,12 @@ FROM node:${NODE_VERSION}-alpine
 # Use production node environment by default.
 ENV NODE_ENV=production
 
+ARG AUTH_API_KEY
+ENV AUTH_API_KEY=${AUTH_API_KEY}
+
+ARG PROJECT_ID
+ENV PROJECT_ID=${PROJECT_ID}
+
 WORKDIR /usr/src/app
 
 # Create app directory and ensure correct permissions

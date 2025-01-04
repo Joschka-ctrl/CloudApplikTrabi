@@ -10,6 +10,12 @@ ENV NODE_ENV=production
 ARG BUCKET_ENV
 ENV BUCKET_ENV=${BUCKET_ENV}
 
+ARG AUTH_API_KEY
+ENV AUTH_API_KEY=${AUTH_API_KEY}
+
+ARG PROJECT_ID
+ENV PROJECT_ID=${PROJECT_ID}
+
 WORKDIR /usr/src/app
 
 # Create app directory and ensure correct permissions
