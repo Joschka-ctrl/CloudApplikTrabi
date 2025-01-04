@@ -3,7 +3,7 @@ backend:
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server
     tag: "1.1.1"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   containerPort: 3015
   readinessProbe:
     path: /api/health
@@ -19,7 +19,7 @@ backendEcharging:
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server
     tag: "1.1.1"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   containerPort: 3016
   readinessProbe:
     path: /api/echarging/health
@@ -35,7 +35,7 @@ backendReporting:
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server
     tag: "1.1.1"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   containerPort: 3004
   readinessProbe:
     path: /api/reporting/health
