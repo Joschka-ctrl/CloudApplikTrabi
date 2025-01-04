@@ -62,7 +62,7 @@ const eChargingServiceRequest = async (endpoint, token) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error calling e-charging service: ${error.message}`);
+    console.error(`Error calling e-charging service: ${error.message}` + `at endpoint: ${ECHARGING_SERVICE_URL}${endpoint}`);
     throw error;
   }
 };

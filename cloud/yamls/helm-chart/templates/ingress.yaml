@@ -11,7 +11,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ .Release.Name }}-backend-echarging
+            name: backend-echarging
             port:
               number: 80
       - path: /api/reporting
