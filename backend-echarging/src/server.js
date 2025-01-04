@@ -44,7 +44,7 @@ app.get("/api/echarging/health", (req, res) => {
 });
 
 // Get all charging stations
-app.get("/charging-stations", authenticateToken, async (req, res) => {
+router.get("/charging-stations", authenticateToken, async (req, res) => {
   try {
     const garageFilter = req.query.garage;
     let query = db.collection("charging-stations");
@@ -69,7 +69,7 @@ app.get("/charging-stations", authenticateToken, async (req, res) => {
 });
 
 // Get specific charging station
-app.get("/charging-stations/:id", authenticateToken, async (req, res) => {
+router.get("/charging-stations/:id", authenticateToken, async (req, res) => {
   try {
     const doc = await db.collection("charging-stations").doc(req.params.id).get();
     if (!doc.exists) {
@@ -82,7 +82,7 @@ app.get("/charging-stations/:id", authenticateToken, async (req, res) => {
 });
 
 // Create new charging station
-app.post("/charging-stations", authenticateToken, async (req, res) => {
+router.post("/charging-stations", authenticateToken, async (req, res) => {
   try {
     const { location, power, status, connectorType, garage } = req.body;
 
@@ -111,7 +111,7 @@ app.post("/charging-stations", authenticateToken, async (req, res) => {
 });
 
 // Update charging station
-app.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
+router.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
   try {
     const { location, power, status, connectorType, garage } = req.body;
     const stationRef = db.collection("charging-stations").doc(req.params.id);
@@ -138,7 +138,7 @@ app.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
 });
 
 // Get all charging sessions
-app.get("/charging-sessions", authenticateToken, async (req, res) => {
+router.get("/charging-sessions", authenticateToken, async (req, res) => {
   try {
     const snapshot = await db.collection("charging-sessions").get();
     const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -149,7 +149,7 @@ app.get("/charging-sessions", authenticateToken, async (req, res) => {
 });
 
 // Start charging session
-app.post("/charging-sessions", async (req, res) => {
+router.post("/charging-sessions", async (req, res) => {
   try {
     const { stationId, userId, chargingCardProvider } = req.body;
 
@@ -195,7 +195,7 @@ app.post("/charging-sessions", async (req, res) => {
 });
 
 // End charging session
-app.patch("/charging-sessions/:id/end", async (req, res) => {
+router.patch("/charging-sessions/:id/end", async (req, res) => {
   try {
     const { energyConsumed } = req.body;
     const sessionRef = db.collection("charging-sessions").doc(req.params.id);
@@ -229,7 +229,7 @@ app.patch("/charging-sessions/:id/end", async (req, res) => {
 });
 
 // Get provider rates
-app.get("/provider-rates", async (req, res) => {
+router.get("/provider-rates", async (req, res) => {
   try {
     const ratesSnapshot = await db.collection("provider-rates").get();
     const rates = [];
@@ -244,7 +244,7 @@ app.get("/provider-rates", async (req, res) => {
 });
 
 // Update or create provider rate
-app.post("/provider-rates", async (req, res) => {
+router.post("/provider-rates", async (req, res) => {
   try {
     const { provider, ratePerKw } = req.body;
     const rateRef = db.collection("provider-rates").doc(provider);
@@ -261,7 +261,7 @@ app.post("/provider-rates", async (req, res) => {
 });
 
 // Get billing summary
-app.get("/billing-summary", async (req, res) => {
+router.get("/billing-summary", async (req, res) => {
   try {
     // Get garage filter from query params
     const garageFilter = req.query.garage;
@@ -313,7 +313,7 @@ app.get("/billing-summary", async (req, res) => {
 });
 
 // Get charging statistics for reporting
-app.get("/api/reports/charging-stats", authenticateToken, async (req, res) => {
+router.get("/api/reports/charging-stats", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     let query = db.collection("charging-sessions");
@@ -359,7 +359,7 @@ app.get("/api/reports/charging-stats", authenticateToken, async (req, res) => {
 });
 
 // Get station utilization data
-app.get("/api/reports/station-utilization", authenticateToken, async (req, res) => {
+router.get("/api/reports/station-utilization", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     
@@ -419,7 +419,7 @@ app.get("/api/reports/station-utilization", authenticateToken, async (req, res) 
 });
 
 // Get card provider revenue statistics
-app.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res) => {
+router.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     
