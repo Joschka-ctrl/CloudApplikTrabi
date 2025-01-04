@@ -291,8 +291,6 @@ app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
     }
 });
 
-
-
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
 });
