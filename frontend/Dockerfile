@@ -24,6 +24,9 @@ ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
 ARG AUTH_API_KEY
 ENV AUTH_API_KEY=${AUTH_API_KEY}
 
+ARG PROJECT_ID
+ENV PROJECT_ID=${PROJECT_ID}
+
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
