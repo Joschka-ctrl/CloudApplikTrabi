@@ -3,21 +3,11 @@ const cors = require("cors");
 const admin = require('firebase-admin');
 const app = express();
 const router = express.Router();
-const port = 3016; // Different port from main backend
+const port = 3016;
 
-if(process.env.NODE_ENV === 'development') {
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
-}
-else {
-  const firebaseConfig = {
-    apiKey: process.env.AUTH_API_KEY,
-    authDomain: process.env.PROJECT_ID + ".firebaseapp.com",
-    projectId: process.env.PROJECT_ID,
-  };
-  admin.initializeApp(firebaseConfig);
-}
 
 const db = admin.firestore();
 

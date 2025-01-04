@@ -3,7 +3,7 @@ name: Build and Deploy to Google Cloud Run
 on:
   push:
     branches:
-      - never-run
+      - stage
 
 jobs:
   build-and-deploy:
