@@ -44,10 +44,10 @@ app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
 
 // tested with postman
 // Create a new parking spot
-app.post('/parkingSpots', (req, res) => {
-    const { id, occupied, facilityId, tenantId, floor} = req.body;
+app.post('/parkingSpots', async (req, res) => {
+    const { facilityId, tenantId, floor} = req.body;
     try {
-        const newSpot = parkingService.createParkingSpot(id, occupied, facilityId, tenantId, floor);
+        const newSpot = await parkingService.createParkingSpot( facilityId, tenantId, floor);
         res.status(201).json(newSpot);
     } catch (error) {
         res.status(400).send(error.message);
@@ -84,17 +84,7 @@ app.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
 
 
 
-// tested with postman
-// in Parkhaus fahren
-app.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
-    try {
-        const { tenantid, facilityid } = req.params;
-        const ticketNr = await parkingService.getTicketNumber(tenantid, facilityid);
-        res.json(ticketNr);
-    } catch (error) {
-        res.status(500).send(error.message);
-    }
-});
+
 
 // tested with postman
 // Current occupancy of the parking garage
@@ -152,61 +142,12 @@ app.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
     }
 });
 
-// tested with postman
-// Get the parking fee for a car / Ticket number
-app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
-    try {
-        const { carId, facilityid, tenantid } = req.params;
-        const result = await parkingService.getParkingFeeRest(carId, tenantid, facilityid);
-        res.json(result);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
 
-// tested with postman
-// Pay the parking fee for a car / Ticket number
-app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
-    try {
-        const { carId, facilityid, tenantid } = req.params;
-        const result = await parkingService.payParkingFee(carId, tenantid, facilityid);
-        res.json(result);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
 
-// tested with postman
-// Leave the parking garage
-app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
-    try {
-        const { carId, facilityid, tenantid } = req.params;
-        const result = await parkingService.leaveParkhouse(carId, tenantid, facilityid);
-        res.json(result);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
 
-/**
- * REST-Endpunkt zum Erstellen einer der Parkplätze für eine Einrichtung.
- * beispielhafter input : 
- * {
-    "tenantId": "15",
-    "facilityId":"1313",
-    "floors": [14, 14, 3]
-    }
- */
-app.post('/createParkingSpotsForFacility', async (req, res) => {
-    const facility = req.body;
-    try {
-        const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors);
-        const newSpotsForFacility = await parkingService.newParkingSpotsInFacility(createParkingSpotObject);
-        res.status(201).json(newSpotsForFacility);
-    } catch (error) {
-        res.status(400).send(error.message);
-    }
-});
+
+
+
 
 // Ruten für reporting
 app.get('/facilities/:tenantId', async (req, res) => {
@@ -292,18 +233,71 @@ app.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
 });
 
 
-
-//************************************************************* */
-app.post('/newParkingSpot', async (req, res) => {
-    const facility = req.body;
-    try {
-        const newFacility = await parkingService.newParkingFacility(facility);
-        // { id: docRef.id, ...newFacility }
-        res.status(201).json(newFacility);
-    } catch (error) {
-        res.status(400).send(error.message);
+/**
+ * REST-Endpunkt zum Erstellen einer der Parkplätze für eine Einrichtung.
+ * beispielhafter input : 
+ * {
+    "tenantId": "15",
+    "facilityId":"1313",
+    "floors": [14, 14, 3],
+    "pricePerMinute": 0.1
     }
-});
+ */
+    app.post('/createParkingSpotsForFacility', async (req, res) => {
+        const facility = req.body;
+        try {
+            const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute);
+            const newSpotsForFacility = await parkingService.newParkingSpotsInFacility(createParkingSpotObject);
+            res.status(201).json(newSpotsForFacility);
+        } catch (error) {
+            res.status(400).send(error.message);
+        }
+    });
+    
+    // in Parkhaus fahren
+    app.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
+        try {
+            const { tenantid, facilityid } = req.params;
+            const ticketNr = await parkingService.getTicketNumber(tenantid, facilityid);
+            res.json(ticketNr);
+        } catch (error) {
+            res.status(500).send(error.message);
+        }
+    });
+ 
+    // Leave the parking garage
+    app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
+        try {
+            const { carId, facilityid, tenantid } = req.params;
+            const result = await parkingService.leaveParkhouse(carId, tenantid, facilityid);
+            res.json(result);
+        } catch (error) {
+            res.status(400).send(error.message);
+        }
+    });
+
+    // Pay the parking fee for a car / Ticket number
+    app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
+        try {
+            const { carId, facilityid, tenantid } = req.params;
+            const result = await parkingService.payParkingFee(carId, tenantid, facilityid);
+            res.json(result);
+        } catch (error) {
+            res.status(400).send(error.message);
+        }
+    });
+
+    // Get the parking fee for a car / Ticket number
+    app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
+        try {
+            const { carId, facilityid, tenantid } = req.params;
+            const result = await parkingService.getParkingFeeRest(carId, tenantid, facilityid);
+            res.json(result);
+        } catch (error) {
+            res.status(400).send(error.message);
+        }
+    });
+
 
 
 app.listen(port, () => {

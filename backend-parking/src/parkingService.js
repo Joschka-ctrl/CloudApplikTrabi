@@ -13,17 +13,17 @@ let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
 
 
 
-const createParkingSpotObject = (tenantId, facilityId, floors) => {
-    
+const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) => {
+
     let floorsArray = [];
     for (let i = 0; i < floors.length; i++) {
         let floor = {
-            floorNumber: i + 1,
+            floorNumber: i,
             spots: []
         }
         for (let j = 0; j < floors[i]; j++) {
             let spot = {
-                id: `${i}${j}`,
+                id: `${i}${j + 1}`,
                 occupied: false
             }
             floor.spots.push(spot);
@@ -32,11 +32,16 @@ const createParkingSpotObject = (tenantId, facilityId, floors) => {
     }
     console.log(floorsArray);
 
+    let maxCapacity = floors.reduce((acc, curr) => acc + curr, 0);
+
     let erg = {
         tenantId: tenantId,
         facilityId: facilityId,
         parkingSpacesOnFloor: floorsArray,
-        carsInParkingFacility: []
+        carsInParkingFacility: [],
+        currentOccupancy: 0,
+        maxCapacity: maxCapacity,
+        pricePerMinute: pricePerMinute
     }
     console.log(erg);
     return erg;
@@ -50,6 +55,10 @@ const newParkingSpotsInFacility = async (newFacility) => {
     return docRef;
 }
 
+
+
+
+
 /**
  * Fetches the data of a parking facility based on the provided facility ID and tenant ID.
  *
@@ -60,13 +69,14 @@ const newParkingSpotsInFacility = async (newFacility) => {
  */
 const getFacilityData = async (facilityID, tenantID) => {
     // Fetch the parking facility document
-    const snapshot = await db.collection("parking-facility")
-        .where("id", "==", facilityID)
+    const snapshot = await db.collection("parking-spaces")
+        .where("facilityId", "==", facilityID)
         .where("tenantId", "==", tenantID)
         .get();
 
     if (snapshot.empty) {
         console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
     }
     const doc = snapshot.docs[0];
     const facilityData = doc.data();
@@ -74,8 +84,8 @@ const getFacilityData = async (facilityID, tenantID) => {
 };
 
 const getDoc = async (facilityID, tenantID) => {
-    const snapshot = await db.collection("parking-facility")
-        .where("id", "==", facilityID)
+    const snapshot = await db.collection("parking-spaces")
+        .where("facilityId", "==", facilityID)
         .where("tenantId", "==", tenantID)
         .get();
 
@@ -91,8 +101,8 @@ const getDoc = async (facilityID, tenantID) => {
 const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
     try {
         // Query the Firestore collection "parking-facility" for documents where tenantId matches
-        const snapshot = await db.collection("parking-facility")
-            .where("id", "==", facilityID)
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
             .where("tenantId", "==", tenantID)
             .get();
 
@@ -121,8 +131,8 @@ const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
 const getParkingSpotById = async (facilityID, tenantID, spotID) => {
     try {
         // Query the Firestore collection "parking-facility" for the specific facility and tenant
-        const snapshot = await db.collection("parking-facility")
-            .where("id", "==", facilityID)
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
             .where("tenantId", "==", tenantID)
             .get();
 
@@ -157,29 +167,39 @@ const getParkingSpotById = async (facilityID, tenantID, spotID) => {
     }
 };
 
-const createParkingSpot = (id, occupied, facilityId, tenantId, floor) => {
-    if (parkingSpots.find(s => s.id === id)) {
-        console.error('Parking spot with this ID already exists');
-    }
-    const newSpot = { id, occupied };
-    parkingSpots.push(newSpot);
-    return newSpot;
-};
+const createParkingSpot = async (facilityId, tenantId, floor) => {
+    console.log('Create Parking Spot');
+    try {
+        const facility = await getFacilityData(facilityId, tenantId);
+        console.log(facility);
+        const newSpot = {
+            id: `${floor}${facility.parkingSpacesOnFloor[floor].spots.length + 1}`,
+            occupied: false
+        };
+        console.log(newSpot);
+        facility.parkingSpacesOnFloor[floor].spots.push(newSpot);
+        const doc = await getDoc(facilityId, tenantId);
+        await db.collection("parking-spaces").doc(doc.id).update({
+            parkingSpacesOnFloor: facility.parkingSpacesOnFloor
+        });
+        return newSpot;
 
-let maxCapacity = 3;
-let currentOccupancy = 0; // Current number of occupied parking spots within the parking facility
-let carsInParkingFacility = [{ ticketNumber: "1234", parkingStartedAt: Timestamp.now(), payedAt: [], parkingEndedAt: null }];
+    } catch (error) {
+        console.error('Error fetching facility data:', error);
+        throw new Error('Failed to fetch facility data.');
+    }
+};
 
 const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
     try {
         // Fetch the parking facility document
-        const snapshot = await db.collection("parking-facility")
-            .where("id", "==", facilityID)
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
             .where("tenantId", "==", tenantID)
             .get();
 
         if (snapshot.empty) {
-            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            console.error(`No object found with ID: ${facilityID} and tenantId: ${tenantID}`);
         }
 
         // Loop through the matching documents (should typically be one)
@@ -204,7 +224,7 @@ const addCarToParkingFacility = async (facilityID, tenantID, ticketNumber) => {
         facilityData.carsInParkingFacility.push(newCar);
 
         // Update the Firestore document
-        await db.collection("parking-facility").doc(doc.id).update({
+        await db.collection("parking-spaces").doc(doc.id).update({
             carsInParkingFacility: facilityData.carsInParkingFacility
         });
 
@@ -229,7 +249,7 @@ const updateCarParkingEndedAt = async (ticketNumber, parkingEndedAt, facility, d
         facility.carsInParkingFacility[carIndex].parkingEndedAt = parkingEndedAt;
 
         // Save the updated facility data back to Firestore
-        await db.collection("parking-facility").doc(docID).update({
+        await db.collection("parking-spaces").doc(docID).update({
             carsInParkingFacility: facility.carsInParkingFacility
         });
 
@@ -252,7 +272,7 @@ const updateCarPayedAt = async (ticketNumber, payedAt, facilityID, tenantID) => 
 
     const doc = await getDoc(facilityID, tenantID);
     console.log(doc.id);
-    await db.collection("parking-facility").doc(doc.id).update({
+    await db.collection("parking-spaces").doc(doc.id).update({
         carsInParkingFacility: facility.carsInParkingFacility
     });
     console.log(car.payedAt.length);
@@ -269,13 +289,13 @@ const updateCarPayedAt = async (ticketNumber, payedAt, facilityID, tenantID) => 
 const getTicketNumber = async (tenantID, facilityID) => {
     try {
         // Fetch the parking facility document
-        const snapshot = await db.collection("parking-facility")
-            .where("id", "==", facilityID)
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
             .where("tenantId", "==", tenantID)
             .get();
 
         if (snapshot.empty) {
-            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            console.error(`No Entries found with ID: ${facilityID} and tenantId: ${tenantID}`);
         }
 
         // Access the first document (assuming only one document matches)
@@ -292,7 +312,7 @@ const getTicketNumber = async (tenantID, facilityID) => {
             const newOccupancy = currentOccupancy + 1;
 
             // Update Firestore with the new occupancy
-            await db.collection("parking-facility").doc(doc.id).update({
+            await db.collection("parking-spaces").doc(doc.id).update({
                 currentOccupancy: newOccupancy
             });
 
@@ -364,7 +384,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         const doc = await getDoc(facilityID, tenantID);
         console.log(doc.id);
         // Update Firestore with the new occupancy status
-        await db.collection("parking-facility").doc(doc.id).update({
+        await db.collection("parking-spaces").doc(doc.id).update({
             parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor
         });
 
@@ -381,7 +401,7 @@ const getCarFromParkingFacility = async (ticketNumber, facilityData) => {
     // Find the car in the carsInParkingFacility array
     const car = facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car) {
-        throw new Error(`Car with ticket number ${ticketNumber} not found in facility ${facilityID}`);
+        console.error(`Car with ticket number ${ticketNumber} not found in facility ${facility.id}`);
     }
     return car;
 };
@@ -434,15 +454,6 @@ const getMinutesInMillis = (minutes) => {
     return minutes * 60 * 1000;
 }
 
-/**
- * Retrieves the pricing information from the property service.
- * ToDO: Implement the actual call to the property service. ( Preis pro minute )
- * @returns {number} The pricing value retrieved from the property service.
- */
-const getPricingFromPropertyServiceMock = () => {
-    // Call property service to get pricing
-    return 0.2; // Mock pricing value : 20 ct pro minute
-};
 const getParkingFeeRest = async (ticketNumber, tenantID, facilityID) => {
     try {
         const facility = await getFacilityData(facilityID, tenantID);
@@ -458,11 +469,11 @@ const getParkingFee = async (ticketNumber, facility) => {
     if (!car || car.parkingEndedAt) {
         console.error('Car with this ticket number not found or already left the parking facility');
     }
-    const parkingDuration = await getParkingDuration(ticketNumber, facility);
-    console.log("Parking Duration: " + parkingDuration);
-    const pricing = getPricingFromPropertyServiceMock();
+    const parkingDurationInMinutes = await getParkingDuration(ticketNumber, facility);
+    console.log("Parking Duration: " + parkingDurationInMinutes);
+    const pricing = facility.pricePerMinute;
     console.log("Pricing: " + pricing);
-    const fee = pricing * parkingDuration;
+    const fee = pricing * parkingDurationInMinutes;
     return fee;
 };
 
@@ -496,7 +507,8 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
         const car = await getCarFromParkingFacility(ticketNumber, facility);
 
         if (!car || car.parkingEndedAt) {
-            throw new Error('Car with this ticket number not found or already left the parking facility.');
+            console.error('Car with this ticket number not found or already left the parking facility.');
+            return { error: 'Car with this ticket number not found or already left the parking facility.' };
         }
 
         // Check if the car has a payment made and if the parking duration is 0
@@ -506,7 +518,7 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
 
             const doc = await getDoc(facilityID, tenantID);
             // Update the occupancy count in Firestore
-            await db.collection("parking-facility").doc(doc.id).update({
+            await db.collection("parking-spaces").doc(doc.id).update({
                 currentOccupancy: currentOccupancy
             });
 
@@ -525,7 +537,7 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
 
 // funktionen für Reports
 const getFacilitiesOfTenant = async (tenantID) => {
-    const snapshot = await db.collection("parking-facility")
+    const snapshot = await db.collection("parking-spaces")
         .where("tenantId", "==", tenantID)
         .get();
 
