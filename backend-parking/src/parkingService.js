@@ -48,11 +48,14 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
 };
 
 const newParkingSpotsInFacility = async (newFacility) => {
-
-    const docRef = await db.collection("parking-spaces").add(newFacility);
-
-    docRef.FacilityID = newFacility.id;
-    return docRef;
+    try {
+        const docRef = await db.collection("parking-spaces").add(newFacility);
+        docRef.FacilityID = newFacility.id;
+        return docRef;
+    } catch (error) {
+        console.error('Error creating new parking spots:', error);
+        throw new Error('Failed to create new parking spots.');
+    }
 }
 
 
@@ -68,34 +71,43 @@ const newParkingSpotsInFacility = async (newFacility) => {
  * @throws Will log an error if no facility is found with the given facility ID and tenant ID.
  */
 const getFacilityData = async (facilityID, tenantID) => {
-    // Fetch the parking facility document
-    const snapshot = await db.collection("parking-spaces")
-        .where("facilityId", "==", facilityID)
-        .where("tenantId", "==", tenantID)
-        .get();
+    try {
+        // Fetch the parking facility document
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
 
-    if (snapshot.empty) {
-        console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
-        throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        if (snapshot.empty) {
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+            throw new Error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+        const doc = snapshot.docs[0];
+        const facilityData = doc.data();
+        return facilityData;
+    } catch (error) {
+        console.error('Error fetching facility data:', error);
+        throw new Error('Failed to fetch facility data.');
     }
-    const doc = snapshot.docs[0];
-    const facilityData = doc.data();
-    return facilityData;
 };
 
 const getDoc = async (facilityID, tenantID) => {
-    const snapshot = await db.collection("parking-spaces")
-        .where("facilityId", "==", facilityID)
-        .where("tenantId", "==", tenantID)
-        .get();
+    try {
+        const snapshot = await db.collection("parking-spaces")
+            .where("facilityId", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
 
-    if (snapshot.empty) {
-        console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        if (snapshot.empty) {
+            console.error(`No facility found with ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        const doc = snapshot.docs[0];
+        console.log(doc.id);
+        return doc;
+    } catch (error) {
+        console.error('Error fetching facility data:', error);
     }
-
-    const doc = snapshot.docs[0];
-    console.log(doc.id);
-    return doc;
 }
 
 const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
@@ -261,22 +273,28 @@ const updateCarParkingEndedAt = async (ticketNumber, parkingEndedAt, facility, d
 };
 
 const updateCarPayedAt = async (ticketNumber, payedAt, facilityID, tenantID) => {
-    const facility = await getFacilityData(facilityID, tenantID); // bekommt das facility object
-    const car = await getCarFromParkingFacility(ticketNumber, facility); // bekommt das car object
-    if (!car || car.parkingEndedAt) {
-        console.error('Car with this ticket number not found or already left the parking facility');
-    }
-    car.payedAt.push(payedAt);
-    console.log(car.payedAt);
-    // update car in parking facility in DB 
+    try {
+        const facility = await getFacilityData(facilityID, tenantID); // bekommt das facility object
+        const car = getCarFromParkingFacility(ticketNumber, facility); // bekommt das car object
+        if (!car || car.parkingEndedAt) {
+            console.error('Car with this ticket number not found or already left the parking facility');
+        }
+        car.payedAt.push(payedAt);
+        console.log(car.payedAt);
+        // update car in parking facility in DB 
 
-    const doc = await getDoc(facilityID, tenantID);
-    console.log(doc.id);
-    await db.collection("parking-spaces").doc(doc.id).update({
-        carsInParkingFacility: facility.carsInParkingFacility
-    });
-    console.log(car.payedAt.length);
-    return car;
+        const doc = await getDoc(facilityID, tenantID);
+        console.log(doc.id);
+        await db.collection("parking-spaces").doc(doc.id).update({
+            carsInParkingFacility: facility.carsInParkingFacility
+        });
+        console.log(car.payedAt.length);
+        return car;
+    }
+    catch (error) {
+        console.error('Error updating car payed at:', error);
+        throw new Error('Failed to update car payed at.');
+    }
 };
 
 /**
@@ -396,12 +414,12 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
     }
 };
 
-const getCarFromParkingFacility = async (ticketNumber, facilityData) => {
+const getCarFromParkingFacility = (ticketNumber, facilityData) => {
 
     // Find the car in the carsInParkingFacility array
     const car = facilityData.carsInParkingFacility.find(c => c.ticketNumber === ticketNumber);
     if (!car) {
-        console.error(`Car with ticket number ${ticketNumber} not found in facility ${facility.id}`);
+        throw new Error(`Car with ticket number ${ticketNumber} not found in facility ${facilityData.facilityId}`);
     }
     return car;
 };
@@ -426,28 +444,30 @@ let allowedDurationAfterPaymentinMinutes = 0.5
  * @throws {Error} If a car with the given ticket number is not found.
  */
 const getParkingDuration = async (ticketNumber, facility) => {
+    try {
+        const car = getCarFromParkingFacility(ticketNumber, facility);
+        let durationMillis;
 
-    const car = await getCarFromParkingFacility(ticketNumber, facility);
-    let durationMillis;
-
-    if (car.parkingEndedAt) {
-        durationMillis = car.parkingEndedAt.toDate().getTime() - car.parkingStartedAt.toDate().getTime();
-        console.log("0 + " + durationMillis);
-    } else if (car.payedAt.length > 0 && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) > getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
-        durationMillis = Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime();
-        console.log("1 + " + durationMillis);
-        let wholeTime = Date.now() - car.parkingStartedAt.toDate().getTime();
-        console.log("vs the whole Time: " + wholeTime);
-    } else if (car.payedAt.length > 0 && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) < getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
-        durationMillis = 0;
-        console.log("2 + " + durationMillis);
-    } else {
-        durationMillis = Date.now() - car.parkingStartedAt.toDate().getTime();
-        console.log("3 + " + durationMillis);
+        if (car.parkingEndedAt) {
+            durationMillis = car.parkingEndedAt.toDate().getTime() - car.parkingStartedAt.toDate().getTime();
+            console.log("0 + " + durationMillis);
+        } else if (car.payedAt.length > 0 && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) > getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
+            durationMillis = Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime();
+            console.log("1 + " + durationMillis);
+            let wholeTime = Date.now() - car.parkingStartedAt.toDate().getTime();
+            console.log("vs the whole Time: " + wholeTime);
+        } else if (car.payedAt.length > 0 && (Date.now() - car.payedAt[car.payedAt.length - 1].toDate().getTime()) < getMinutesInMillis(allowedDurationAfterPaymentinMinutes)) {
+            durationMillis = 0;
+            console.log("2 + " + durationMillis);
+        } else {
+            durationMillis = Date.now() - car.parkingStartedAt.toDate().getTime();
+            console.log("3 + " + durationMillis);
+        }
+        const minutes = durationMillis / (1000 * 60);
+        return minutes;
+    } catch (error) {
+        console.error('Error fetching parking duration:', error);
     }
-    const minutes = durationMillis / (1000 * 60);
-    return minutes;
-
 };
 
 const getMinutesInMillis = (minutes) => {
@@ -465,33 +485,42 @@ const getParkingFeeRest = async (ticketNumber, tenantID, facilityID) => {
     }
 };
 const getParkingFee = async (ticketNumber, facility) => {
-    const car = await getCarFromParkingFacility(ticketNumber, facility);
-    if (!car || car.parkingEndedAt) {
-        console.error('Car with this ticket number not found or already left the parking facility');
+    try {
+        const car = getCarFromParkingFacility(ticketNumber, facility);
+        if (!car || car.parkingEndedAt) {
+            console.error('Car with this ticket number not found or already left the parking facility');
+        }
+        const parkingDurationInMinutes = await getParkingDuration(ticketNumber, facility);
+        console.log("Parking Duration: " + parkingDurationInMinutes);
+        const pricing = facility.pricePerMinute;
+        console.log("Pricing: " + pricing);
+        const fee = pricing * parkingDurationInMinutes;
+        return fee;
+    } catch (error) {
+        console.error('Error fetching parking fee:', error);
+        console.error('Failed to fetch parking fee.');
     }
-    const parkingDurationInMinutes = await getParkingDuration(ticketNumber, facility);
-    console.log("Parking Duration: " + parkingDurationInMinutes);
-    const pricing = facility.pricePerMinute;
-    console.log("Pricing: " + pricing);
-    const fee = pricing * parkingDurationInMinutes;
-    return fee;
 };
 
 const payParkingFee = async (ticketNumber, tenantID, facilityID) => {
-    console.log("Pay Parking Fee");
-    const facility = await getFacilityData(facilityID, tenantID);
+    try {
+        console.log("Pay Parking Fee");
+        const facility = await getFacilityData(facilityID, tenantID);
+        const fee = await getParkingFee(ticketNumber, facility);
+        const duration = await getParkingDuration(ticketNumber, facility);
+        // Call payment service to process payment
+        console.log("Fee: " + fee + " Duration: " + duration);
 
-    const fee = await getParkingFee(ticketNumber, facility);
-    const duration = await getParkingDuration(ticketNumber, facility);
-    // Call payment service to process payment
-    console.log("Fee: " + fee + " Duration: " + duration);
-
-    let success = mockPaymentService(fee) && duration > 0;
-    if (success) {
-        console.log(`Payment processed for car with ticket number ${ticketNumber}. Fee: ${fee}. duration: ${duration}`);
-        await updateCarPayedAt(ticketNumber, Timestamp.now(), facilityID, tenantID);
+        let success = mockPaymentService(fee) && duration > 0;
+        if (success) {
+            console.log(`Payment processed for car with ticket number ${ticketNumber}. Fee: ${fee}. duration: ${duration}`);
+            await updateCarPayedAt(ticketNumber, Timestamp.now(), facilityID, tenantID);
+        }
+        return success;
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        throw new Error('Failed to process payment.');
     }
-    return success;
 };
 
 const mockPaymentService = (fee) => {
@@ -504,7 +533,7 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
         const facility = await getFacilityData(facilityID, tenantID);
 
         // Get the car details from the parking facility
-        const car = await getCarFromParkingFacility(ticketNumber, facility);
+        const car = getCarFromParkingFacility(ticketNumber, facility);
 
         if (!car || car.parkingEndedAt) {
             console.error('Car with this ticket number not found or already left the parking facility.');
@@ -537,31 +566,35 @@ const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
 
 // funktionen für Reports
 const getFacilitiesOfTenant = async (tenantID) => {
-    const snapshot = await db.collection("parking-spaces")
-        .where("tenantId", "==", tenantID)
-        .get();
+    try {
+        const snapshot = await db.collection("parking-spaces")
+            .where("tenantId", "==", tenantID)
+            .get();
 
-    if (snapshot.empty) {
-        console.error(`No facilities found for tenant with ID: ${tenantID}`);
+        if (snapshot.empty) {
+            console.error(`No facilities found for tenant with ID: ${tenantID}`);
+        }
+
+        const facilities = [];
+        snapshot.forEach(doc => {
+            const facilityData = doc.data();
+            const facilityDataToReturn = {
+                id: facilityData.id,
+                name: facilityData.name,
+                maxCapacity: facilityData.maxCapacity,
+                floors: facilityData.parkingSpacesOnFloor.length,
+                street: facilityData.street,
+                city: facilityData.city,
+                postalCode: facilityData.postalCode,
+                country: facilityData.country,
+            };
+            facilities.push(facilityDataToReturn);
+        });
+        return facilities;
+    } catch (error) {
+        console.error('Error fetching facilities:', error);
+        throw new Error('Failed to fetch facilities.');
     }
-
-    const facilities = [];
-    snapshot.forEach(doc => {
-        const facilityData = doc.data();
-        const facilityDataToReturn = {
-            id: facilityData.id,
-            name: facilityData.name,
-            maxCapacity: facilityData.maxCapacity,
-            floors: facilityData.parkingSpacesOnFloor.length,
-            street: facilityData.street,
-            city: facilityData.city,
-            postalCode: facilityData.postalCode,
-            country: facilityData.country,
-        };
-        facilities.push(facilityDataToReturn);
-    });
-
-    return facilities;
 };
 
 const getParkingStats = async (tenantId, facilityId, startDate, endDate) => {
@@ -725,54 +758,53 @@ const getParkingDurationStats = async (tenantId, facilityId, startDate, endDate)
     }
 };
 
+//geht noch nciht
 const getRevenueStats = async (tenantId, facilityId, startDate, endDate) => {
-    const facility = await getFacilityData(facilityId, tenantId);
+    try {
+        const facility = await getFacilityData(facilityId, tenantId);
 
-    // Umsatz-Statistiken berechnen
-    const dailyRevenue = facility.carsInParkingFacility.reduce((stats, car) => {
-        try {
-            const parkingStart = car.parkingStartedAt.toDate(); // Datum zurückgeben
-            const parkingEnd = car.parkingEndedAt ? car.parkingEndedAt.toDate() : new Date(); // Falls noch geparkt, aktuelles Datum
+        // Umsatz-Statistiken berechnen
+        const dailyRevenue = facility.carsInParkingFacility.reduce((stats, car) => {
+            try {
+                const parkingStart = car.parkingStartedAt.toDate(); // Datum zurückgeben
+                const parkingEnd = car.parkingEndedAt ? car.parkingEndedAt.toDate() : new Date(); // Falls noch geparkt, aktuelles Datum
 
-            if (parkingStart >= startDate && parkingEnd <= endDate) {
-                const parkingDuration = (parkingEnd - parkingStart) / (60 * 1000); // In Minuten
+                if (parkingStart >= startDate && parkingEnd <= endDate) {
+                    const parkingDuration = (parkingEnd - parkingStart) / (60 * 1000); // In Minuten
 
-                const parkingDate = parkingEnd < endDate ? parkingEnd : new Date(endDate);
-                const formattedDate = parkingDate.toISOString().split('T')[0];
+                    const parkingDate = parkingEnd < endDate ? parkingEnd : new Date(endDate);
+                    const formattedDate = parkingDate.toISOString().split('T')[0];
 
-                const existingDate = stats.find(stat => stat.date === formattedDate);
-                if (existingDate) {
-                    existingDate.amount += parkingDuration; // Umsatz basierend auf der Dauer
-                    existingDate.transactions += 1;
-                } else {
-                    stats.push({
-                        date: formattedDate,
-                        amount: parkingDuration,
-                        transactions: 1
-                    });
+                    const existingDate = stats.find(stat => stat.date === formattedDate);
+                    if (existingDate) {
+                        existingDate.amount += parkingDuration; // Umsatz basierend auf der Dauer
+                        existingDate.transactions += 1;
+                    } else {
+                        stats.push({
+                            date: formattedDate,
+                            amount: parkingDuration,
+                            transactions: 1
+                        });
+                    }
                 }
+            } catch (error) {
+                console.error(`Fehler beim Verarbeiten von Ticket ${car.ticketNumber}:`, error);
             }
-        } catch (error) {
-            console.error(`Fehler beim Verarbeiten von Ticket ${car.ticketNumber}:`, error);
-        }
-        return stats;
-    }, []);
+            return stats;
+        }, []);
 
-    const totalRevenue = dailyRevenue.reduce((sum, stat) => sum + stat.amount, 0);
+        const totalRevenue = dailyRevenue.reduce((sum, stat) => sum + stat.amount, 0);
 
-    return {
-        totalRevenue,
-        dailyRevenue
-    };
+        return {
+            totalRevenue,
+            dailyRevenue
+        };
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Umsatz-Statistiken:', error);
+        throw new Error('Fehler beim Abrufen der Daten');
+    }
 };
 
-const CreateParkingSpace = async (newParkingSpace) => {
-    newParkingSpace.id = uuidv4();
-    const docRef = await db.collection("parking-spaces").add(newParkingSpace);
-
-    docRef.parkingSoaceID = newParkingSpace.id;
-    return docRef;
-}
 
 module.exports = {
     newParkingSpotsInFacility,
