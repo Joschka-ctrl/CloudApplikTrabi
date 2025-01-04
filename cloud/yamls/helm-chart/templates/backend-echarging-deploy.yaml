@@ -5,7 +5,7 @@ metadata:
   labels:
     app: backend-echarging
 spec:
-  replicas: {{ .Values.backend-echarging.replicaCount }}
+  replicas: {{ .Values.backendEcharging.replicaCount }}
   selector:
     matchLabels:
       app: backend-echarging
@@ -16,13 +16,13 @@ spec:
     spec:
       containers:
       - name: backend-echarging
-        image: "{{ .Values.backend-echarging.image.repository }}:{{ .Values.backend-echarging.image.tag }}"
-        imagePullPolicy: {{ .Values.backend-echarging.image.pullPolicy }}
+        image: "{{ .Values.backendEcharging.image.repository }}:{{ .Values.backendEcharging.image.tag }}"
+        imagePullPolicy: {{ .Values.backendEcharging.image.pullPolicy }}
         ports:
-        - containerPort: {{ .Values.backend-echarging.containerPort }}
+        - containerPort: {{ .Values.backendEcharging.containerPort }}
         readinessProbe:
           httpGet:
-            path: {{ .Values.backend-echarging.readinessProbe.path }}
-            port: {{ .Values.backend-echarging.containerPort }}
-          initialDelaySeconds: {{ .Values.backend-echarging.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.backend-echarging.readinessProbe.periodSeconds }}
+            path: {{ .Values.backendEcharging.readinessProbe.path }}
+            port: {{ .Values.backendEcharging.containerPort }}
+          initialDelaySeconds: {{ .Values.backendEcharging.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backendEcharging.readinessProbe.periodSeconds }}

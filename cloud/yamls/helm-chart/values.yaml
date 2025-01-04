@@ -14,10 +14,10 @@ backend:
     port: 80
     targetPort: 3015
 
-backend-echarging:
+backendEcharging:
   replicaCount: 1
   image:
-    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging
+    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server
     tag: "1.1.1"
     pullPolicy: IfNotPresent
   containerPort: 3016
@@ -30,10 +30,10 @@ backend-echarging:
     port: 80
     targetPort: 3016
 
-backend-reporting:
+backendReporting:
   replicaCount: 1
   image:
-    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting
+    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server
     tag: "1.1.1"
     pullPolicy: IfNotPresent
   containerPort: 3004

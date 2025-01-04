@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-backend-reporting
 spec:
-  type: {{ .Values.backend-reporting.service.type }}
+  type: {{ .Values.backendReporting.service.type }}
   ports:
-    - port: {{ .Values.backend-reporting.service.port }}
-      targetPort: {{ .Values.backend-reporting.service.targetPort }}
+    - port: {{ .Values.backendReporting.service.port }}
+      targetPort: {{ .Values.backendReporting.service.targetPort }}
       protocol: TCP
   selector:
     app: backend-reporting

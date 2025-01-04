@@ -38,6 +38,11 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Health check endpoint
+app.get("/api/echarging/health", (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 // Get all charging stations
 app.get("/charging-stations", authenticateToken, async (req, res) => {
   try {

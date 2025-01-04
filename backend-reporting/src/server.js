@@ -66,6 +66,11 @@ const eChargingServiceRequest = async (endpoint, token) => {
   }
 };
 
+// Health check endpoint
+app.get("/api/reporting/health", (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
 // Use router with base path
 app.use('/api/reporting', router);
 app.use('/', router);

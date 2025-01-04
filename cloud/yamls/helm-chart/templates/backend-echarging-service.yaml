@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: {{ .Release.Name }}-backend-echarging
 spec:
-  type: {{ .Values.backend-echarging.service.type }}
+  type: {{ .Values.backendEcharging.service.type }}
   ports:
-    - port: {{ .Values.backend-echarging.service.port }}
-      targetPort: {{ .Values.backend-echarging.service.targetPort }}
+    - port: {{ .Values.backendEcharging.service.port }}
+      targetPort: {{ .Values.backendEcharging.service.targetPort }}
       protocol: TCP
   selector:
     app: backend-echarging
