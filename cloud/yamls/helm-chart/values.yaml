@@ -51,7 +51,7 @@ frontend:
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server
     tag: "1.1.1"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   containerPort: 3000
   service:
     type: ClusterIP
