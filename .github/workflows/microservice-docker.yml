@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - stage
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'backend-echarging/**'
+      - 'backend-reporting/**'
+      - '.github/workflows/microservice-docker.yml'
 
 jobs:
   build-and-deploy:
@@ -12,6 +18,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "::set-output name=frontend::$(git diff --name-only HEAD^ HEAD | grep ^frontend/ || true)"
+          echo "::set-output name=backend::$(git diff --name-only HEAD^ HEAD | grep ^backend/ || true)"
+          echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
+          echo "::set-output name=backend_reporting::$(git diff --name-only HEAD^ HEAD | grep ^backend-reporting/ || true)"
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/auth@v2
@@ -22,77 +38,57 @@ jobs:
         run: |
           gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-      # Build Frontend Docker image with Backend URL as build argument
-      - name: Build Frontend Docker image
+      # Frontend
+      - name: Build and Push Frontend
+        if: steps.changed-files.outputs.frontend != ''
         run: |
           docker build \
             --build-arg REACT_APP_BACKEND_URL=/api \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             -t frontend-server:1.1.1 \
             -f frontend/Dockerfile ./frontend
-
-      - name: Tag Frontend Docker Image
-        run: |
           docker tag frontend-server:1.1.1 \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
-
-      - name: Push Frontend Docker image
-        run: |
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
 
-      # Build Backend Docker image
-      - name: Build Backend Docker image
+      # Backend
+      - name: Build and Push Backend
+        if: steps.changed-files.outputs.backend != ''
         run: |
           docker build \
             --build-arg BUCKET_ENV=_stage \
             -t backend-server:latest \
             -f backend/Dockerfile ./backend
-
-      - name: Tag Backend Docker Image
-        run: |
           docker tag backend-server:latest \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
-
-      - name: Push Backend Docker image
-        run: |
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
 
-      # Build backend-echarging Docker image
-      - name: Build backend-echarging Docker image
+      # Backend E-Charging
+      - name: Build and Push Backend E-Charging
+        if: steps.changed-files.outputs.backend_echarging != ''
         run: |
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
             -t backend-echarging-server:1.1.1 \
             -f backend-echarging/Dockerfile ./backend-echarging
-
-      - name: Tag backend-echarging Docker Image
-        run: |
           docker tag backend-echarging-server:1.1.1 \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
-
-      - name: Push backend-echarging Docker image
-        run: |
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
 
-      # Build backend-reporting Docker image
-      - name: Build backend-reporting Docker image
+      # Backend Reporting
+      - name: Build and Push Backend Reporting
+        if: steps.changed-files.outputs.backend_reporting != ''
         run: |
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
             -t backend-reporting-server:1.1.1 \
             -f backend-reporting/Dockerfile ./backend-reporting
-
-      - name: Tag backend-reporting Docker Image
-        run: |
           docker tag backend-reporting-server:1.1.1 \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
-
-      - name: Push backend-reporting Docker image
-        run: |
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
