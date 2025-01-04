@@ -1,0 +1,102 @@
+{
+	"info": {
+		"_postman_id": "ba71488d-a900-43b1-bde8-5bd1497c9f11",
+		"name": "Cloud Facility-Microservice",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26714743"
+	},
+	"item": [
+		{
+			"name": "Get All facilities",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3021/facilities",
+					"host": [
+						"localhost"
+					],
+					"port": "3021",
+					"path": [
+						"facilities"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Edit Facility",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tenantId\": \"15\",\r\n    \"name\": \"ParkhausHTWG\",\r\n    \"maxCapacity\": 1300,\r\n    \"street\": \"street\",\r\n    \"city\": \"city\",\r\n    \"postalCode\": \"postalCode\",\r\n    \"country\": \"country\",\r\n    \"Floor\": [\r\n        14,\r\n        36,\r\n        14\r\n    ],\r\n    \"facilityId\": \"1313\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3021/facility/VYJIeYkolGK4bhWCkP6m",
+					"host": [
+						"localhost"
+					],
+					"port": "3021",
+					"path": [
+						"facility",
+						"VYJIeYkolGK4bhWCkP6m"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Facility",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:3021/facility/VYJIeYkolGK4bhWCkP6m",
+					"host": [
+						"localhost"
+					],
+					"port": "3021",
+					"path": [
+						"facility",
+						"VYJIeYkolGK4bhWCkP6m"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Facility",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"tenantId\": \"15\",\r\n    \"name\": \"ParkhausRWU\",\r\n    \"maxCapacity\": 12480,\r\n    \"street\": \"street\",\r\n    \"city\": \"city\",\r\n    \"postalCode\": \"postalCode\",\r\n    \"country\": \"country\",\r\n    \"Floor\": [\r\n        14,\r\n        300,\r\n        14\r\n    ],\r\n    \"facilityId\": \"1313\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:3021/facility",
+					"host": [
+						"localhost"
+					],
+					"port": "3021",
+					"path": [
+						"facility"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
