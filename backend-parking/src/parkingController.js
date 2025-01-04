@@ -1,5 +1,6 @@
 
 const express = require('express');
+const cors = require("cors");
 const parkingService = require('./parkingService.js');
 const admin = require('firebase-admin');
 const app = express();
@@ -8,6 +9,7 @@ const port = 3033;
 
 
 app.use(express.json());
+app.use(cors());
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {

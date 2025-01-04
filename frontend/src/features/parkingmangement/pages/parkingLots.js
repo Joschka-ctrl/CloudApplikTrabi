@@ -1,140 +1,130 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Button, 
-  Box,
-  FormControl,
-  InputLabel,
+import {
   Select,
-  MenuItem 
+  MenuItem,
+  FormControl,
+  Container,
+  Paper
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import ParkingLotTable from '../components/parkingLotTable';
-import { useAuth } from '../../../components/AuthProvider';
+import { DataGrid } from '@mui/x-data-grid';
 
-const ParkingLots = () => {
-  const [parkingLots, setParkingLots] = useState([]);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedLot, setSelectedLot] = useState(null);
-  const [selectedFacility, setSelectedFacility] = useState('');
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/echarging';
+
+const ParkingLots = ({ tenantId }) => {
   const [facilities, setFacilities] = useState([]);
-  const { user } = useAuth();
-
-  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
-
-  const fetchParkingLots = async () => {
-    try {
-      const token = await user.getIdToken();
-      const url = selectedFacility 
-        ? `${HOST_URL}/parking-lots?facility=${encodeURIComponent(selectedFacility)}`
-        : `${HOST_URL}/parking-lots`;
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      setParkingLots(data);
-      
-      // Extract unique facilities
-      const uniqueFacilities = [...new Set(data.map(lot => lot.facilityId))].filter(Boolean);
-      setFacilities(uniqueFacilities);
-    } catch (error) {
-      console.error('Error fetching parking lots:', error);
-    }
-  };
+  const [selectedFacilityId, setSelectedFacilityId] = useState('');
+  const [parkingSpots, setParkingSpots] = useState([]);
 
   useEffect(() => {
-    fetchParkingLots();
-  }, [selectedFacility]);
+    // Set default tenantId if not provided
+    tenantId = tenantId || '15';
+
+    // Fetch facilities for the given tenantId
+    fetch(`${HOST_URL}/facilities/${tenantId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch facilities. Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        setFacilities(data);
+      })
+      .catch(error => console.error('Error fetching facilities:', error));
+  }, [tenantId]);
+
+  useEffect(() => {
+    tenantId = tenantId || '15';
+
+    if (selectedFacilityId) {
+      // Fetch parking spots based on the selectedFacilityId
+      fetch(`${HOST_URL}/parkingSpots/${tenantId}/${selectedFacilityId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch parking spots. Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          setParkingSpots(data); // Updates only the parkingSpots state
+        })
+        .catch(error => console.error('Error fetching parking spots:', error));
+    } else {
+      setParkingSpots([]); // Clear parking spots if no facility selected
+    }
+  }, [selectedFacilityId, tenantId]);
 
   const handleFacilityChange = (event) => {
-    setSelectedFacility(event.target.value);
+    setSelectedFacilityId(event.target.value);
   };
 
-  const handleAddLot = () => {
-    setSelectedLot(null);
-    setIsFormOpen(true);
+  // Sort function
+  const sortParkingSpots = (key) => {
+    const sortedSpots = [...parkingSpots].sort((a, b) => {
+      if (key === 'floor') {
+        return a.isOnfloor - b.isOnfloor; // Sort by floor (numerical order)
+      } else if (key === 'occupied') {
+        return (a.occupied === b.occupied) ? 0 : a.occupied ? -1 : 1; // Sort by occupied (true > false)
+      }
+      return 0;
+    });
+    setParkingSpots(sortedSpots);
   };
 
-  const handleEditLot = (lot) => {
-    setSelectedLot(lot);
-    setIsFormOpen(true);
-  };
-
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setSelectedLot(null);
-  };
-
-  const handleSave = async (lotData) => {
-    try {
-      const token = await user.getIdToken();
-      const url = selectedLot
-        ? `${HOST_URL}/parking-lots/${selectedLot.id}`
-        : `${HOST_URL}/parking-lots`;
-      
-      const method = selectedLot ? 'PATCH' : 'POST';
-      
-      await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(lotData)
-      });
-
-      fetchParkingLots();
-      handleCloseForm();
-    } catch (error) {
-      console.error('Error saving parking lot:', error);
+  const columns = [
+    { field: 'isOnfloor', headerName: 'Floor', width: 130, sortable: true },
+    { field: 'id', headerName: 'Parking Spot Number', width: 150 },
+    {
+      field: 'occupied',
+      headerName: 'Occupied',
+      width: 150,
+      renderCell: (params) => (
+        <div style={{
+          color: params.value ? 'green' : 'red',
+          fontWeight: 'bold'
+        }}>
+          {params.value.toString()}
+        </div>
+      )
     }
-  };
+  ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 8 }}>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Parking Lots
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel id="facility-select-label">Facility</InputLabel>
-          <Select
-            labelId="facility-select-label"
-            id="facility-select"
-            value={selectedFacility}
-            label="Facility"
-            onChange={handleFacilityChange}
-          >
-            <MenuItem value="">All</MenuItem>
-            {facilities.map(facility => (
-              <MenuItem key={facility} value={facility}>{facility}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleAddLot}
+    <Container style={{ marginTop: '50px' }}>
+      <FormControl fullWidth margin="normal">
+        <Select
+          labelId="facility-id-label"
+          value={selectedFacilityId}
+          onChange={handleFacilityChange}
+          displayEmpty
         >
-          Add Parking Lot
-        </Button>
-        </Box>
+          <MenuItem value="" disabled>
+            Select a Facility ID
+          </MenuItem>
+          {facilities.length > 0 ? (
+            facilities.map(facility => (
+              <MenuItem key={facility.facilityId} value={facility.facilityId}>
+                {facility.facilityId}
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>No facilities available</MenuItem>
+          )}
+        </Select>
+      </FormControl>
 
-        <ParkingLotTable
-          parkingLots={parkingLots}
-          onEdit={handleEditLot}
-          onRefresh={fetchParkingLots}
-        />
-
-       
-      </Box>
+      {parkingSpots.length > 0 && (
+        <Paper sx={{ height: 400, width: '100%' }}>
+          <DataGrid
+            rows={parkingSpots}
+            columns={columns}
+            pageSize={5}
+            rowsPerPageOptions={[5, 10]}
+            checkboxSelection
+            sx={{ border: 0 }}
+          />
+        </Paper>
+      )}
     </Container>
   );
 };

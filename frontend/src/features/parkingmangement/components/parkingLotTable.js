@@ -1,88 +1,73 @@
-import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
-  Chip
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import LocalParkingIcon from '@mui/icons-material/LocalParking';
-import { useAuth } from '../../../components/AuthProvider';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, List, ListItem, ListItemText, CircularProgress } from '@mui/material';
 
-const ParkingLotTable = ({ parkingFacility, onEdit, onRefresh }) => {
-  const { user } = useAuth();
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
-  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
+const ParkingLotForm = ({ open, onClose, tenantId }) => {
+  const [facilities, setFacilities] = useState([]);
+  const [parkingSpots, setParkingSpots] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSpotStatusChange = async (spotId, occupied) => {
-    try {
-      const token = await user.getIdToken();
-      const newStatus = !occupied;
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${HOST_URL}/facilities/${tenantId}`);
+        const data = await response.json();
+        setFacilities(data);
+      } catch (error) {
+        console.error('Error fetching facilities:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      await fetch(`${HOST_URL}/parking-spots/${spotId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ occupied: newStatus })
-      });
-
-      onRefresh();
-    } catch (error) {
-      console.error('Error updating parking spot status:', error);
+    if (open) {
+      fetchFacilities();
     }
-  };
+  }, [open, tenantId]);
 
-  const getStatusColor = (occupied) => (occupied ? 'error' : 'success');
+  useEffect(() => {
+    const fetchParkingSpots = async () => {
+      try {
+        setLoading(true);
+        const facilityId = facilities.length ? facilities[0].id : 'defaultFacilityId';
+        const response = await fetch(`${HOST_URL}/parkingSpots/${tenantId}/${facilityId}`);
+        const data = await response.json();
+        setParkingSpots(data);
+      } catch (error) {
+        console.error('Error fetching parking spots:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (facilities.length > 0) {
+      fetchParkingSpots();
+    }
+  }, [facilities, tenantId]);
 
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Spot ID</TableCell>
-            <TableCell>Floor</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {parkingFacility.parkingSpacesOnFloor.map((floor, floorIndex) => (
-            floor.spots.map((spot) => (
-              <TableRow key={spot.id}>
-                <TableCell>{spot.id}</TableCell>
-                <TableCell>{floorIndex + 1}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={spot.occupied ? 'Occupied' : 'Available'}
-                    color={getStatusColor(spot.occupied)}
-                    onClick={() => handleSpotStatusChange(spot.id, spot.occupied)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => onEdit(spot)} color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleSpotStatusChange(spot.id, spot.occupied)}
-                    color={spot.occupied ? 'error' : 'success'}
-                  >
-                    <LocalParkingIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Parking Spots</DialogTitle>
+      <DialogContent>
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <List>
+            {parkingSpots.map((spot) => (
+              <ListItem key={spot.id}>
+                <ListItemText
+                  primary={`Spot ID: ${spot.id}`}
+                  secondary={`Occupied: ${spot.occupied ? 'Yes' : 'No'}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default ParkingLotTable;
+export default ParkingLotForm;

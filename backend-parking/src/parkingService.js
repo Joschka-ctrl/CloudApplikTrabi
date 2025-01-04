@@ -24,7 +24,8 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
         for (let j = 0; j < floors[i]; j++) {
             let spot = {
                 id: `${i}${j + 1}`,
-                occupied: false
+                occupied: false,
+                isOnfloor: i
             }
             floor.spots.push(spot);
         }
@@ -186,7 +187,8 @@ const createParkingSpot = async (facilityId, tenantId, floor) => {
         console.log(facility);
         const newSpot = {
             id: `${floor}${facility.parkingSpacesOnFloor[floor].spots.length + 1}`,
-            occupied: false
+            occupied: false,
+            isOnfloor: floor
         };
         console.log(newSpot);
         facility.parkingSpacesOnFloor[floor].spots.push(newSpot);
@@ -578,17 +580,7 @@ const getFacilitiesOfTenant = async (tenantID) => {
         const facilities = [];
         snapshot.forEach(doc => {
             const facilityData = doc.data();
-            const facilityDataToReturn = {
-                id: facilityData.id,
-                name: facilityData.name,
-                maxCapacity: facilityData.maxCapacity,
-                floors: facilityData.parkingSpacesOnFloor.length,
-                street: facilityData.street,
-                city: facilityData.city,
-                postalCode: facilityData.postalCode,
-                country: facilityData.country,
-            };
-            facilities.push(facilityDataToReturn);
+            facilities.push(facilityData);
         });
         return facilities;
     } catch (error) {
