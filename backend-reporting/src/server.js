@@ -12,8 +12,9 @@ admin.initializeApp({
 const db = admin.firestore();
 const app = express();
 const router = express.Router();
-const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
-const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://trabant-backend-echarging';
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-backend-parking';
+
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://backend-echarging';
 
 // Middleware
 app.use(cors());
