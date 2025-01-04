@@ -1,5 +1,6 @@
 
 const express = require('express');
+const cors = require("cors");
 const parkingService = require('./parkingService.js');
 const admin = require('firebase-admin');
 const app = express();
@@ -8,6 +9,7 @@ const port = 3033;
 
 
 app.use(express.json());
+app.use(cors());
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
@@ -106,6 +108,22 @@ app.post("/reserveParkingSpot", async (req, res) => {
         const tenantID = req.body.tenantID;
         const occupied = true;
         const result = await parkingService.manageParkingSpotOccupancy(tenantID, facilityID, id, occupied);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
+// Add a car to tone specific parking spot
+app.post("/reverseOccupancy", async (req, res) => {
+
+    try {
+        const id = req.body.id;
+        const facilityID = req.body.facilityID;
+        const tenantID = req.body.tenantID;
+        const occupied = req.body.occupied;
+
+        const result = await parkingService.reverseOccupancy(tenantID, facilityID, id, occupied);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
@@ -290,6 +308,8 @@ app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
         res.status(400).send(error.message);
     }
 });
+
+
 
 app.listen(port, () => {
     console.log("Listening on Port: " + port);

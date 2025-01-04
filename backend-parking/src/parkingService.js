@@ -24,7 +24,8 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
         for (let j = 0; j < floors[i]; j++) {
             let spot = {
                 id: `${i}${j + 1}`,
-                occupied: false
+                occupied: false,
+                isOnfloor: i
             }
             floor.spots.push(spot);
         }
@@ -186,7 +187,8 @@ const createParkingSpot = async (facilityId, tenantId, floor) => {
         console.log(facility);
         const newSpot = {
             id: `${floor}${facility.parkingSpacesOnFloor[floor].spots.length + 1}`,
-            occupied: false
+            occupied: false,
+            isOnfloor: floor
         };
         console.log(newSpot);
         facility.parkingSpacesOnFloor[floor].spots.push(newSpot);
@@ -354,14 +356,12 @@ const getTicketNumber = async (tenantID, facilityID) => {
 const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
         const facilityData = await getFacilityData(facilityID, tenantID);
-
-        console.log(facilityData);
         const { currentOccupancy } = facilityData;
         return currentOccupancy;
     }
     catch (error) {
-        console.error('Error fetching current occupancy:', error);
-        console.error('Failed to fetch current occupancy.');
+    console.error('Error fetching current occupancy:', error);
+    return { error: 'Failed to fetch current occupancy.' };
     }
 };
 
@@ -407,10 +407,43 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         });
 
         console.log(`Successfully updated parking spot ${spotID} to status: ${newStatus}`);
-        return { success: true, spotID, status: newStatus };
+        return { success: true, spotID, status: spot.occupied };
     } catch (error) {
         console.error('Error managing parking spot occupancy:', error);
         return { success: false, message: 'Failed to update parking spot occupancy.', error: error.message };
+    }
+};
+
+const reverseOccupancy = async (tenantID, facilityID, spotID) => {
+    console.log("reverse Parking Spot Occupancy");
+    try {
+        const facilityData = await getFacilityData(facilityID, tenantID);
+        console.log(facilityData);
+        // Locate the parking spot
+        let spotFound = false;
+        facilityData.parkingSpacesOnFloor.forEach(floor => {
+            const spot = floor.spots.find(s => s.id === spotID);
+            if (spot) {
+                spot.occupied = !spot.occupied;
+                spotFound = true;
+            }
+        });
+        if (!spotFound) {
+            console.error(`Parking spot with ID ${spotID} not found`);
+            throw new Error(`Parking spot with ID ${spotID} not found`);
+        }
+        const doc = await getDoc(facilityID, tenantID);
+        console.log(doc.id);
+        // Update Firestore with the new occupancy status
+        await db.collection("parking-spaces").doc(doc.id).update({
+            parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor
+        });
+
+        console.log(`Successfully updated parking spot ${spotID} to status:`);
+        return { success: true, spotID };
+    } catch (error) {
+        console.error('Error managing parking spot occupancy:', error);
+        throw new Error('Failed to update parking spot occupancy.');
     }
 };
 
@@ -434,6 +467,8 @@ const getParkingDurationREST = async (ticketNumber, tenantID, facilityID) => {
         console.error('Failed to fetch parking duration.');
     }
 };
+
+
 
 let allowedDurationAfterPaymentinMinutes = 0.5
 /**
@@ -578,17 +613,7 @@ const getFacilitiesOfTenant = async (tenantID) => {
         const facilities = [];
         snapshot.forEach(doc => {
             const facilityData = doc.data();
-            const facilityDataToReturn = {
-                id: facilityData.id,
-                name: facilityData.name,
-                maxCapacity: facilityData.maxCapacity,
-                floors: facilityData.parkingSpacesOnFloor.length,
-                street: facilityData.street,
-                city: facilityData.city,
-                postalCode: facilityData.postalCode,
-                country: facilityData.country,
-            };
-            facilities.push(facilityDataToReturn);
+            facilities.push(facilityData);
         });
         return facilities;
     } catch (error) {
@@ -809,7 +834,6 @@ const getRevenueStats = async (tenantId, facilityId, startDate, endDate) => {
 module.exports = {
     newParkingSpotsInFacility,
     createParkingSpotObject,
-
     getAllParkingSpotsOfFacility,
     getParkingSpotById,
     createParkingSpot,
@@ -817,6 +841,7 @@ module.exports = {
     getCurrentOccupancy,
     getParkingDurationREST,
     manageParkingSpotOccupancy,
+    reverseOccupancy,
     getParkingFeeRest,
     payParkingFee,
     leaveParkhouse,
