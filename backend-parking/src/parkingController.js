@@ -114,6 +114,22 @@ app.post("/reserveParkingSpot", async (req, res) => {
     }
 });
 
+// Add a car to tone specific parking spot
+app.post("/reverseOccupancy", async (req, res) => {
+
+    try {
+        const id = req.body.id;
+        const facilityID = req.body.facilityID;
+        const tenantID = req.body.tenantID;
+        const occupied = req.body.occupied;
+
+        const result = await parkingService.reverseOccupancy(tenantID, facilityID, id, occupied);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
 // Release a specific parking spot
 app.post("/releaseParkingSpot", async (req, res) => {
     try {
@@ -292,6 +308,8 @@ app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
         res.status(400).send(error.message);
     }
 });
+
+
 
 app.listen(port, () => {
     console.log("Listening on Port: " + port);
