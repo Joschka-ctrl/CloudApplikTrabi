@@ -313,7 +313,7 @@ router.get("/billing-summary", async (req, res) => {
 });
 
 // Get charging statistics for reporting
-router.get("/api/reports/charging-stats", authenticateToken, async (req, res) => {
+router.get("/charging-stats", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     let query = db.collection("charging-sessions");
@@ -359,7 +359,7 @@ router.get("/api/reports/charging-stats", authenticateToken, async (req, res) =>
 });
 
 // Get station utilization data
-router.get("/api/reports/station-utilization", authenticateToken, async (req, res) => {
+router.get("/station-utilization", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     
@@ -419,7 +419,7 @@ router.get("/api/reports/station-utilization", authenticateToken, async (req, re
 });
 
 // Get card provider revenue statistics
-router.get("/api/reports/card-provider-revenue", authenticateToken, async (req, res) => {
+router.get("/card-provider-revenue", authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     

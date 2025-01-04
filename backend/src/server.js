@@ -17,7 +17,7 @@ const upload = multer({
 // Google Cloud Storage Konfiguration
 const projectId = process.env.GOOGLE_CLOUD_PROJECT || "trabantparking";
 const storage = new Storage({ projectId });
-const bucket_env = process.env.BUCKET_ENV || "";
+const bucket_env = process.env.BUCKET_ENV || "_stage";
 const bucketName = `trabant_images${bucket_env}`;
 console.log("Using bucket: " + bucketName);
 const bucket = storage.bucket(bucketName);

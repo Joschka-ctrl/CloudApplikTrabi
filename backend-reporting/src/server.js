@@ -230,7 +230,7 @@ router.get('/api/reports/echarging/stats', authenticateToken, async (req, res) =
     if (garage) queryParams.append('garage', garage);
 
     const stats = await eChargingServiceRequest(
-      `/api/reports/charging-stats?${queryParams.toString()}`,
+      `/charging-stats?${queryParams.toString()}`,
       token
     );
 
@@ -254,7 +254,7 @@ router.get('/api/reports/echarging/utilization', authenticateToken, async (req, 
     if (garage) queryParams.append('garage', garage);
 
     const utilizationData = await eChargingServiceRequest(
-      `/api/reports/station-utilization?${queryParams.toString()}`,
+      `/station-utilization?${queryParams.toString()}`,
       token
     );
 
@@ -278,7 +278,7 @@ router.get('/api/reports/echarging/card-provider-revenue', authenticateToken, as
     if (garage) queryParams.append('garage', garage);
 
     const providerStats = await eChargingServiceRequest(
-      `/api/reports/card-provider-revenue?${queryParams.toString()}`,
+      `/card-provider-revenue?${queryParams.toString()}`,
       token
     );
 
