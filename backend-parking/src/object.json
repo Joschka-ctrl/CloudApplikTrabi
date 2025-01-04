@@ -1,0 +1,28 @@
+{
+    "tenantId": "15",
+    "facilityId":"1313",
+    "parkingSpacesOnFloor": [
+        {
+            "spots": [
+                { "id": "1", "occupied": false },
+                { "id": "2", "occupied": true }
+            ]
+           
+        },
+        {
+            "spots": [
+                { "id": "3", "occupied": false },
+                { "id": "4", "occupied": true }
+            ]
+           
+        }
+    ],
+    "carsInParkingFacility": [
+        { 
+            "ticketNumber": "1234", 
+            "parkingStartedAt": { "seconds": 1730528400, "nanoseconds": 0 }, 
+            "payedAt": [], 
+            "parkingEndedAt": null 
+        }
+    ]
+}
