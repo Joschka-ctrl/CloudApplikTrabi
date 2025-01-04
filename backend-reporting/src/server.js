@@ -5,9 +5,19 @@ const moment = require('moment');
 const axios = require('axios');
 require('dotenv').config();
 
+if(process.env.NODE_ENV === 'development') {
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
+}
+else {
+  const firebaseConfig = {
+    apiKey: process.env.AUTH_API_KEY,
+    authDomain: process.env.PROJECT_ID + ".firebaseapp.com",
+    projectId: process.env.PROJECT_ID,
+  };
+  admin.initializeApp(firebaseConfig);
+}
 
 const db = admin.firestore();
 const app = express();

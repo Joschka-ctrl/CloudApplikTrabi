@@ -38,7 +38,7 @@ jobs:
     # build backend-reporting image
     - name: Build backend-reporting Docker image
       run: |
-        docker build -t backend-reporting-server:1.1.1 -f backend-reporting/Dockerfile ./backend-reporting
+        docker build --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} --build-arg PROJECT_ID=trabantparking-stage -t backend-reporting-server:1.1.1 -f backend-reporting/Dockerfile ./backend-reporting
 
     - name: Tag backend-reporting Docker Image
       run: |
