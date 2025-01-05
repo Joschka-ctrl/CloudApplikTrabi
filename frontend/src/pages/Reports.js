@@ -106,7 +106,7 @@ const Reports = () => {
 
   const fetchParkingPlaces = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-places`);
+      const response = await fetchWithAuth(`${HOST_URL}/parking-places`);
       const data = await response.json();
       setParkingPlaces(data);
       if (data.length > 0) {
@@ -126,7 +126,7 @@ const Reports = () => {
       if (minUsage) params.append('minUsage', minUsage);
       if (maxUsage) params.append('maxUsage', maxUsage);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/daily-usage?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/daily-usage?${params}`);
       if (!response.ok) throw new Error('Failed to fetch daily usage data');
       
       const data = await response.json();
