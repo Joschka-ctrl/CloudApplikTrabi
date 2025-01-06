@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-parking
+  labels:
+    app: backend-parking
+spec:
+  replicas: {{ .Values.backendParking.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend-parking
+  template:
+    metadata:
+      labels:
+        app: backend-parking
+    spec:
+      containers:
+        - name: backend-parking
+          image: "{{ .Values.backendParking.image.repository }}:{{ .Values.backendParking.image.tag }}"
+          imagePullPolicy: {{ .Values.backendParking.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backendParking.containerPort }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backendParking.readinessProbe.path }}
+              port: {{ .Values.backendParking.containerPort }}
+            initialDelaySeconds: {{ .Values.backendParking.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backendParking.readinessProbe.periodSeconds }}

@@ -9,6 +9,7 @@ on:
       - 'backend/**'
       - 'backend-echarging/**'
       - 'backend-reporting/**'
+      - 'backend-parking/**'
       - '.github/workflows/microservice-docker.yml'
 
 jobs:
@@ -28,6 +29,7 @@ jobs:
           echo "::set-output name=backend::$(git diff --name-only HEAD^ HEAD | grep ^backend/ || true)"
           echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
           echo "::set-output name=backend_reporting::$(git diff --name-only HEAD^ HEAD | grep ^backend-reporting/ || true)"
+          echo "::set-output name=backend_parking::$(git diff --name-only HEAD^ HEAD | grep ^backend-parking/ || true)"
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/auth@v2
@@ -92,3 +94,17 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
+
+      # Backend Parking
+      - name: Build and Push Backend Parking
+        if: steps.changed-files.outputs.backend_parking != ''
+        run: |
+          docker build \
+            --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+            --build-arg PROJECT_ID=trabantparking-stage \
+            -t backend-parking-server:1.1.1 \
+            -f backend-parking/Dockerfile ./backend-parking
+          docker tag backend-parking-server:1.1.1 \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1

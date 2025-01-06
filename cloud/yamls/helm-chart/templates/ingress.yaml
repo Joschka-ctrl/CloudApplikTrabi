@@ -6,7 +6,13 @@ spec:
   rules:
   - http:
       paths:
-
+      - path: /api/parking
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-backend-parking
+            port:
+              number: 80
       - path: /api/echarging
         pathType: Prefix
         backend:

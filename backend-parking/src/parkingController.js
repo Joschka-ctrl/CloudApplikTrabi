@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require("cors");
 const parkingService = require('./parkingService.js');
 const admin = require('firebase-admin');
+const router = express.Router();
 const app = express();
 const port = 3033;
 
@@ -10,6 +11,9 @@ const port = 3033;
 
 app.use(express.json());
 app.use(cors());
+
+app.use('/api/parking', router)
+app.use('/', router)
 
 // Middleware zur Authentifizierung
 const authenticateToken = async (req, res, next) => {
@@ -32,9 +36,14 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
+//health route
+router.get("/health", (req, res) => {
+    res.status(200).json({ status: "healthy" });
+});
+
 // unused
 // Create a new parking spot
-app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
+router.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
     try {
         const { id, occupied } = req.body;
         const newSpot = parkingService.createParkingSpot(id, occupied);
@@ -46,7 +55,7 @@ app.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
 
 // tested with postman
 // Create a new parking spot
-app.post('/parkingSpots', async (req, res) => {
+router.post('/parkingSpots', async (req, res) => {
     try {
         const { facilityId, tenantId, floor } = req.body;
         const newSpot = await parkingService.createParkingSpot(facilityId, tenantId, floor);
@@ -57,7 +66,7 @@ app.post('/parkingSpots', async (req, res) => {
 });
 
 // Get all parking spots
-app.get('/parkingSpots/:tenantid/:facilityid', async (req, res) => {
+router.get('/parkingSpots/:tenantid/:facilityid', async (req, res) => {
     try {
         // Extract path parameters
         const { facilityid, tenantid } = req.params;
@@ -75,7 +84,7 @@ app.get('/parkingSpots/:tenantid/:facilityid', async (req, res) => {
 
 // tested with postman
 // Get a specific parking spot
-app.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
+router.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
     try {
         const { id, facilityid, tenantid } = req.params;
         const spot = await parkingService.getParkingSpotById(facilityid, tenantid, id);
@@ -88,7 +97,7 @@ app.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
 
 // tested with postman
 // Current occupancy of the parking garage
-app.get("/currentOccupancy/:tenantid/:facilityid", async (req, res) => {
+router.get("/currentOccupancy/:tenantid/:facilityid", async (req, res) => {
     try {
         const { facilityid, tenantid } = req.params;
         const occupancy = await parkingService.getCurrentOccupancy(tenantid, facilityid);
@@ -100,7 +109,7 @@ app.get("/currentOccupancy/:tenantid/:facilityid", async (req, res) => {
 });
 
 // Add a car to tone specific parking spot
-app.post("/reserveParkingSpot", async (req, res) => {
+router.post("/reserveParkingSpot", async (req, res) => {
 
     try {
         const id = req.body.id;
@@ -115,7 +124,7 @@ app.post("/reserveParkingSpot", async (req, res) => {
 });
 
 // Add a car to tone specific parking spot
-app.post("/reverseOccupancy", async (req, res) => {
+router.post("/reverseOccupancy", async (req, res) => {
 
     try {
         const id = req.body.id;
@@ -131,7 +140,7 @@ app.post("/reverseOccupancy", async (req, res) => {
 });
 
 // Release a specific parking spot
-app.post("/releaseParkingSpot", async (req, res) => {
+router.post("/releaseParkingSpot", async (req, res) => {
     try {
         const id = req.body.id;
         const facilityID = req.body.facilityID;
@@ -145,7 +154,7 @@ app.post("/releaseParkingSpot", async (req, res) => {
 });
 
 // Get the duration of a car's stay in the parking garage
-app.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
+router.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         const result = await parkingService.getParkingDurationREST(carId, tenantid, facilityid);
@@ -156,7 +165,7 @@ app.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
 });
 
 // Ruten für reporting
-app.get('/facilities/:tenantId', async (req, res) => {
+router.get('/facilities/:tenantId', async (req, res) => {
     try {
         const { tenantId } = req.params;
         const facilities = await parkingService.getFacilitiesOfTenant(tenantId);
@@ -167,7 +176,7 @@ app.get('/facilities/:tenantId', async (req, res) => {
 
 });
 
-app.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
     try {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
@@ -183,7 +192,7 @@ app.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
     }
 });
 
-app.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
     console.log('Query Params:', { startDate, endDate });
@@ -205,7 +214,7 @@ app.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
 });
 
 
-app.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
 
@@ -221,7 +230,7 @@ app.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
     }
 });
 
-app.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
 
@@ -254,7 +263,7 @@ app.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
     "pricePerMinute": 0.1
     }
  */
-app.post('/createParkingSpotsForFacility', async (req, res) => {
+router.post('/createParkingSpotsForFacility', async (req, res) => {
     const facility = req.body;
     try {
         const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute);
@@ -266,7 +275,7 @@ app.post('/createParkingSpotsForFacility', async (req, res) => {
 });
 
 // in Parkhaus fahren
-app.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
+router.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
     try {
         const { tenantid, facilityid } = req.params;
         const ticketNr = await parkingService.getTicketNumber(tenantid, facilityid);
@@ -277,7 +286,7 @@ app.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
 });
 
 // Leave the parking garage
-app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
+router.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         console.log('carId: ' + carId + ' facilityid: ' + facilityid + ' tenantid: ' + tenantid);
@@ -289,7 +298,7 @@ app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
 });
 
 // Pay the parking fee for a car / Ticket number
-app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
+router.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         const result = await parkingService.payParkingFee(carId, tenantid, facilityid);
@@ -300,7 +309,7 @@ app.get("/payParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
 });
 
 // Get the parking fee for a car / Ticket number
-app.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
+router.get("/getParkingFee/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         const result = await parkingService.getParkingFeeRest(carId, tenantid, facilityid);
