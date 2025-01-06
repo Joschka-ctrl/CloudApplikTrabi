@@ -14,7 +14,7 @@ const app = express();
 const router = express.Router();
 const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-backend-parking';
 
-const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://backend-echarging';
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://api-gateway-ingress/api/echarging';
 
 // Middleware
 app.use(cors());
