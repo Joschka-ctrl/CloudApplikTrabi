@@ -35,7 +35,7 @@ backendReporting:
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server
     tag: "1.1.1"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   containerPort: 3004
   readinessProbe:
     path: /api/reporting/health

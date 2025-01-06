@@ -12,8 +12,9 @@ admin.initializeApp({
 const db = admin.firestore();
 const app = express();
 const router = express.Router();
-const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
-const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://trabant-backend-echarging';
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-backend-parking';
+
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://api-gateway-ingress/api/echarging';
 
 // Middleware
 app.use(cors());
@@ -61,7 +62,7 @@ const eChargingServiceRequest = async (endpoint, token) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error calling e-charging service: ${error.message}`);
+    console.error(`Error calling e-charging service: ${error.message}` + `at endpoint: ${ECHARGING_SERVICE_URL}${endpoint}`);
     throw error;
   }
 };
@@ -76,7 +77,7 @@ app.use('/api/reporting', router);
 app.use('/', router);
 
 // Get daily parking usage data
-router.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
+router.get('/daily-usage', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -101,7 +102,7 @@ router.get('/api/reports/daily-usage', authenticateToken, async (req, res) => {
 });
 
 // Get floor occupancy data
-router.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) => {
+router.get('/floor-occupancy', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -144,7 +145,7 @@ router.get('/api/reports/floor-occupancy', authenticateToken, async (req, res) =
 });
 
 // Get parking metrics
-router.get('/api/reports/metrics', authenticateToken, async (req, res) => {
+router.get('/metrics', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -203,7 +204,7 @@ router.get('/api/reports/metrics', authenticateToken, async (req, res) => {
 });
 
 // Get list of parking places (facilities)
-router.get('/api/reports/parking-places', authenticateToken, async (req, res) => {
+router.get('/parking-places', authenticateToken, async (req, res) => {
   try {
     const tenantId = req.user.tenant_id || '1';
     const facilities = await parkingServiceRequest(
@@ -218,7 +219,7 @@ router.get('/api/reports/parking-places', authenticateToken, async (req, res) =>
 });
 
 // Get e-charging statistics
-router.get('/api/reports/echarging/stats', authenticateToken, async (req, res) => {
+router.get('/echarging/stats', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -242,7 +243,7 @@ router.get('/api/reports/echarging/stats', authenticateToken, async (req, res) =
 });
 
 // Get station utilization data
-router.get('/api/reports/echarging/utilization', authenticateToken, async (req, res) => {
+router.get('/echarging/utilization', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -266,7 +267,7 @@ router.get('/api/reports/echarging/utilization', authenticateToken, async (req, 
 });
 
 // Get card provider revenue data
-router.get('/api/reports/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
+router.get('/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
   try {
     const { startDate, endDate, garage } = req.query;
     const token = req.headers.authorization.split(' ')[1];
@@ -290,7 +291,7 @@ router.get('/api/reports/echarging/card-provider-revenue', authenticateToken, as
 });
 
 // Get parking duration statistics
-router.get('/api/reports/parking-duration', authenticateToken, async (req, res) => {
+router.get('/parking-duration', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -309,7 +310,7 @@ router.get('/api/reports/parking-duration', authenticateToken, async (req, res) 
 });
 
 // Get revenue statistics
-router.get('/api/reports/parking-revenue', authenticateToken, async (req, res) => {
+router.get('/parking-revenue', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';
@@ -328,7 +329,7 @@ router.get('/api/reports/parking-revenue', authenticateToken, async (req, res) =
 });
 
 // Get floor statistics
-router.get('/api/reports/floor-stats', authenticateToken, async (req, res) => {
+router.get('/floor-stats', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
     const tenantId = req.user.tenant_id || '1';

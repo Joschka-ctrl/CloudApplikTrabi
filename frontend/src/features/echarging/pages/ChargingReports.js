@@ -41,6 +41,9 @@ const ChargingReports = () => {
   const fetchChargingStats = async () => {
     try {
       setLoading(prev => ({ ...prev, stats: true }));
+      if (selectedGarage == ''){
+        selectedGarage = 'All'
+      }
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
@@ -48,7 +51,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/api/reports/echarging/stats?${params}`
+        `${HOST_URL}/echarging/stats?${params}`
       );
       const data = await response.json();
       setChargingStats(data);
@@ -69,7 +72,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/api/reports/echarging/utilization?${params}`
+        `${HOST_URL}/echarging/utilization?${params}`
       );
       const data = await response.json();
       setUtilizationData(data);
@@ -90,7 +93,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/api/reports/echarging/card-provider-revenue?${params}`
+        `${HOST_URL}/echarging/card-provider-revenue?${params}`
       );
       const data = await response.json();
       setProviderRevenue(data);
