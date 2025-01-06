@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 
-const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/echarging';
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
 const ParkingLots = ({ tenantId }) => {
   const [facilities, setFacilities] = useState([]);
