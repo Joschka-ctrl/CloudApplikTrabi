@@ -280,6 +280,7 @@ app.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
 app.get("/leaveParkhouse/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
+        console.log('carId: ' + carId + ' facilityid: ' + facilityid + ' tenantid: ' + tenantid);
         const result = await parkingService.leaveParkhouse(carId, tenantid, facilityid);
         res.json(result);
     } catch (error) {

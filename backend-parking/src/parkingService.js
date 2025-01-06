@@ -51,6 +51,13 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
 const newParkingSpotsInFacility = async (newFacility) => {
     try {
         const docRef = await db.collection("parking-spaces").add(newFacility);
+        const history = {
+            facilityId: newFacility.facilityId,
+            tenantId: newFacility.tenantId,
+            History: []
+        }
+        const docRef1 = await db.collection("parking-history").add(history);
+        console.log('Document written with ID: ', docRef1.id);
         docRef.FacilityID = newFacility.id;
         return docRef;
     } catch (error) {
@@ -563,41 +570,91 @@ const mockPaymentService = (fee) => {
 };
 
 const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
+    
     try {
-        // Fetch the facility data using the facilityID and tenantID
-        const facility = await getFacilityData(facilityID, tenantID);
+console.log("Leave Parkhouse");
+       
+        // Holen der Facility-Daten aus Firestore
+        const facilityDoc = await db.collection("parking-spaces")
+        .where("facilityId", "==", facilityID)
+        .where("tenantId", "==", tenantID)
+        .get();
 
-        // Get the car details from the parking facility
-        const car = getCarFromParkingFacility(ticketNumber, facility);
+        if (facilityDoc.empty) {
+            throw new Error('Facility not found for the given tenant and facility ID.');
+        }
 
-        if (!car || car.parkingEndedAt) {
+        const facility = facilityDoc.docs[0].data();
+        const docID = facilityDoc.docs[0].id;
+
+        // Finden des Autos in der Facility
+        const carIndex = facility.carsInParkingFacility.findIndex(
+            c => c.ticketNumber === ticketNumber
+        );
+
+        if (carIndex === -1 || facility.carsInParkingFacility[carIndex].parkingEndedAt) {
             console.error('Car with this ticket number not found or already left the parking facility.');
             return { error: 'Car with this ticket number not found or already left the parking facility.' };
         }
 
-        // Check if the car has a payment made and if the parking duration is 0
-        if (car.payedAt.length > 0 && await getParkingDuration(ticketNumber, facility) == 0) {
-            // Decrease the current occupancy count
-            let currentOccupancy = facility.currentOccupancy - 1;
+        const car = facility.carsInParkingFacility[carIndex];
 
-            const doc = await getDoc(facilityID, tenantID);
-            // Update the occupancy count in Firestore
-            await db.collection("parking-spaces").doc(doc.id).update({
-                currentOccupancy: currentOccupancy
+        // Prüfen, ob die Zahlung abgeschlossen ist und die Parkdauer abgelaufen ist
+        if (car.payedAt.length > 0 && await getParkingDuration(ticketNumber, facility) === 0) {
+            // Holen der aktuellen Zeit für `parkingEndedAt`
+            const parkingEndedAt = Timestamp.now();
+
+            // Holen der Autodaten und Aktualisierung des Zeitstempels
+            const carData = { ...car, parkingEndedAt };
+
+            // Prüfen, ob es bereits einen Eintrag für die `facilityId` und `tenantId` in `Parking-history` gibt
+            const historyDoc = await db.collection("parking-history")
+                .where("facilityId", "==", facilityID)
+                .where("tenantId", "==", tenantID)
+                .limit(1)
+                .get();
+
+            if (historyDoc.empty) {
+                // Wenn kein Eintrag existiert, wird ein neues Dokument erstellt
+                await db.collection("parking-history").add({
+                    facilityId: facilityID,
+                    tenantId: tenantID,
+                    History: [carData] // Erstes Auto wird hinzugefügt
+                });
+            } else {
+                // Wenn ein Eintrag existiert, wird das Auto zur `History[]` hinzugefügt
+                const history = historyDoc.docs[0];
+                const historyData = history.data();
+
+                await db.collection("parking-history").doc(history.id).update({
+                    History: [...historyData.History, carData]
+                });
+            }
+
+            // Entfernen des Autos aus der aktuellen Tabelle und anpasssen der Occupancy
+            const updatedCars = facility.carsInParkingFacility.filter(c => c.ticketNumber !== ticketNumber);
+            const updatedOccupancy = Math.max(0, facility.currentOccupancy - 1); // Sicherstellen, dass Occupancy nicht negativ wird
+
+            await db.collection("parking-spaces").doc(docID).update({
+                carsInParkingFacility: updatedCars,
+                currentOccupancy: updatedOccupancy
             });
 
-            // Update the car's parkingEndedAt timestamp
-            await updateCarParkingEndedAt(ticketNumber, Timestamp.now(), facility, doc.id);
-
-            return { success: true, ticketNumber };
+            return { success: true, movedCar: carData };
         } else {
-            return { error: 'open Payment' };
+            return { error: 'Payment not completed or parking duration is not zero.' };
         }
     } catch (error) {
         console.error('Error leaving parking facility:', error);
-        throw new Error('Failed to leave parking facility.');
+        return {
+            success: false,
+            error: 'Failed to leave parking facility.',
+            details: error.message
+        };
     }
 };
+
+
 
 // funktionen für Reports
 const getFacilitiesOfTenant = async (tenantID) => {
