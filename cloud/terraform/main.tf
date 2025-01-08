@@ -1,5 +1,5 @@
 provider "google" {
-  project = "trabantparking-stage" # Replace with your project ID
+  project = "trabantparking-stage" 
   region  = "europe-west1"
   zone    = "europe-west1-b"
 }
