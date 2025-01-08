@@ -38,19 +38,35 @@ jobs:
       with:
         terraform_version: "1.5.7"
 
+    - name: Check Cluster Existence
+      id: check-cluster
+      run: |
+        if gcloud container clusters list --region=${{ env.GKE_REGION }} --format="value(name)" | grep -q "^${{ env.GKE_CLUSTER }}$"; then
+          echo "cluster_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "cluster_exists=false" >> $GITHUB_OUTPUT
+        fi
+
     - name: Initialize Terraform
       run: |
         terraform init
       working-directory: cloud/terraform
 
+    - name: Import Existing Cluster (if exists)
+      if: steps.check-cluster.outputs.cluster_exists == 'true'
+      run: |
+        terraform import google_container_cluster.primary projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }} || true
+      working-directory: cloud/terraform
+      continue-on-error: true
+
     - name: Terraform Plan
       run: |
-        terraform plan
+        terraform plan -out=tfplan
       working-directory: cloud/terraform
 
     - name: Terraform Apply
       run: |
-        terraform apply -auto-approve
+        terraform apply -auto-approve tfplan
       working-directory: cloud/terraform
 
     - name: Install GKE Auth Plugin
