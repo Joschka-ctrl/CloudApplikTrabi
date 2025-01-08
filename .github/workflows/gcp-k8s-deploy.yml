@@ -10,6 +10,8 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GKE_CLUSTER: terraform-cluster
   GKE_REGION: europe-west1
+  TF_PLAN_BUCKET: ${{ secrets.GCP_PROJECT_ID }}-terraform-plans
+  TF_PLAN_FILE: terraform-plan-${{ github.sha }}.tfplan
 
 jobs:
   deploy:
@@ -33,40 +35,35 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
+    - name: Create Terraform Plan Bucket
+      run: |
+        gsutil mb -p ${{ env.PROJECT_ID }} -l ${{ env.GKE_REGION }} gs://${{ env.TF_PLAN_BUCKET }} || true
+
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: "1.5.7"
-
-    - name: Check Cluster Existence
-      id: check-cluster
-      run: |
-        if gcloud container clusters list --region=${{ env.GKE_REGION }} --format="value(name)" | grep -q "^${{ env.GKE_CLUSTER }}$"; then
-          echo "cluster_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "cluster_exists=false" >> $GITHUB_OUTPUT
-        fi
 
     - name: Initialize Terraform
       run: |
         terraform init
       working-directory: cloud/terraform
 
-    - name: Import Existing Cluster (if exists)
-      if: steps.check-cluster.outputs.cluster_exists == 'true'
-      run: |
-        terraform import google_container_cluster.primary projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }} || true
-      working-directory: cloud/terraform
-      continue-on-error: true
-
     - name: Terraform Plan
       run: |
         terraform plan -out=tfplan
+        terraform show -json tfplan > tfplan.json
+        gcloud storage cp tfplan.json gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+      working-directory: cloud/terraform
+
+    - name: Download Previous Plan
+      run: |
+        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan.json
       working-directory: cloud/terraform
 
     - name: Terraform Apply
       run: |
-        terraform apply -auto-approve tfplan
+        terraform show -json tfplan.json | terraform apply -auto-approve
       working-directory: cloud/terraform
 
     - name: Install GKE Auth Plugin
