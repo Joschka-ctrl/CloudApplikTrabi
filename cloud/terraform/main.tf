@@ -24,9 +24,3 @@ resource "google_container_cluster" "gke" {
   initial_node_count = 1
 }
 
-terraform {
-  backend "gcs" {
-    bucket  = "trabantparking-stage-terraform-states"
-    prefix  = "terraform/state"
-  }
-}
