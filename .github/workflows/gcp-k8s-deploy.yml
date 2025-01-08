@@ -10,7 +10,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GKE_CLUSTER: terraform-cluster
   GKE_REGION: europe-west1
-  TF_PLAN_BUCKET: ${{ secrets.GCP_PROJECT_ID }}-terraform-plans
+  TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform-plan-${{ github.sha }}.tfplan
 
 jobs:
