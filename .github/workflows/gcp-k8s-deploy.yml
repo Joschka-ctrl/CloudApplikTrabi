@@ -11,7 +11,7 @@ env:
   GKE_CLUSTER: terraform-cluster
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
-  TF_PLAN_FILE: terraform-plan-${{ github.sha }}.tfplan
+  TF_PLAN_FILE: latest-terraform-plan.tfplan
 
 jobs:
   deploy:
@@ -51,7 +51,8 @@ jobs:
 
     - name: Download Previous Plan
       run: |
-        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan.json
+        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan.json || true
+      continue-on-error: true
       working-directory: cloud/terraform
 
     - name: Terraform Plan
@@ -63,7 +64,11 @@ jobs:
 
     - name: Terraform Apply
       run: |
-        terraform show -json tfplan.json | terraform apply -auto-approve
+        if [ -f "tfplan.json" ]; then
+          terraform show -json tfplan.json | terraform apply -auto-approve
+        else
+          terraform apply -auto-approve
+        fi
       working-directory: cloud/terraform
 
     - name: Install GKE Auth Plugin
