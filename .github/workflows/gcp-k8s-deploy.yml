@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GKE_CLUSTER: terraform-cluster2
+  GKE_CLUSTER: terraform-cluster
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
@@ -47,24 +47,24 @@ jobs:
 
     - name: Download Previous Plan
       run: |
-        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} terraform.tfstate || true
+        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan || true
       continue-on-error: true
       working-directory: cloud/terraform
 
     - name: Terraform Plan
       run: |
-        terraform plan -out=terraform.tfstate
-        terraform show -tfstate terraform.tfstate > terraform.tfstate
-        gcloud storage cp terraform.tfstate gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+        terraform plan -out=tfplan
+        terraform show -json tfplan > plan.json
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
       working-directory: cloud/terraform
 
     - name: Terraform Apply
       run: |
-        if [ -f "terraform.tfstate" ]; then
-          terraform show -tfstate terraform.tfstate | terraform apply -auto-approve
-        else
-          terraform apply -auto-approve
-        fi
+          if [ -f "tfplan" ]; then
+            terraform apply tfplan
+          else
+            terraform apply -auto-approve
+          fi
       working-directory: cloud/terraform
 
     - name: Install GKE Auth Plugin
@@ -89,7 +89,7 @@ jobs:
           --namespace trabi-app \
           --create-namespace \
           --wait \
-          --timeout 10m0s
+          --timeout 10m0s || kubectl describe pods -n trabi-app
 
     - name: Verify Deployment
       run: |
