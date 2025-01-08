@@ -47,10 +47,17 @@ app.get("/api/echarging/health", (req, res) => {
 router.get("/charging-stations", authenticateToken, async (req, res) => {
   try {
     const garageFilter = req.query.garage;
+    const tenantId = req.query.tenantId;
     let query = db.collection("charging-stations");
     
     if (garageFilter) {
       query = query.where("garage", "==", garageFilter);
+    }
+    
+    if (tenantId) {
+      query = query.where("tenantId", "==", tenantId);
+    }else{
+      return res.status(400).json({ error: "tenantId is required" });
     }
     
     const snapshot = await query.get();
@@ -84,11 +91,11 @@ router.get("/charging-stations/:id", authenticateToken, async (req, res) => {
 // Create new charging station
 router.post("/charging-stations", authenticateToken, async (req, res) => {
   try {
-    const { location, power, status, connectorType, garage } = req.body;
+    const { location, power, status, connectorType, garage, tenantId } = req.body;
 
-    if (!location || !power || !connectorType || !garage) {
+    if (!location || !power || !connectorType || !garage || !tenantId) {
       return res.status(400).json({ 
-        error: "Missing required fields. Location, power, connector type, and garage are required." 
+        error: "Missing required fields. Location, power, connector type, tenantId and garage are required." 
       });
     }
 
@@ -98,6 +105,7 @@ router.post("/charging-stations", authenticateToken, async (req, res) => {
       status: status || 'available',
       connectorType: connectorType,
       garage: garage,
+      tenantId: tenantId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastModified: admin.firestore.FieldValue.serverTimestamp()
     };
