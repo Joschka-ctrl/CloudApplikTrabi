@@ -85,11 +85,7 @@ jobs:
 
     - name: Deploy Helm Chart
       run: |
-        helm upgrade --install trabi-app ./helm/trabi-app \
-          --namespace trabi-app \
-          --create-namespace \
-          --wait \
-          --timeout 10m0s || kubectl describe pods -n trabi-app
+        helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace
 
     - name: Verify Deployment
       run: |
