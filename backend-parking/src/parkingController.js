@@ -130,9 +130,25 @@ router.post("/reverseOccupancy", async (req, res) => {
         const id = req.body.id;
         const facilityID = req.body.facilityID;
         const tenantID = req.body.tenantID;
-        const occupied = req.body.occupied;
 
-        const result = await parkingService.reverseOccupancy(tenantID, facilityID, id, occupied);
+        const result = await parkingService.reverseOccupancy(tenantID, facilityID, id);
+        res.json(result);
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
+});
+
+// Add a car to tone specific parking spot
+router.post("/handleSpotAvalibilityStatus", async (req, res) => {
+
+    try {
+        console.log(req.body);
+        const id = req.body.id;
+        const facilityID = req.body.facilityID;
+        const tenantID = req.body.tenantID;
+        const newStatus = req.body.newStatus;
+
+        const result = await parkingService.handleSpotAvalibilityStatusByStatusName(tenantID, facilityID, id, newStatus);
         res.json(result);
     } catch (error) {
         res.status(400).send(error.message);
@@ -256,17 +272,18 @@ router.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
 /**
  * REST-Endpunkt zum Erstellen einer der Parkplätze für eine Einrichtung.
  * beispielhafter input : 
- * {
+ *{
     "tenantId": "15",
-    "facilityId":"1313",
+    "facilityId":"1234567889",
     "floors": [14, 14, 3],
-    "pricePerMinute": 0.1
-    }
+    "pricePerMinute":0.1
+}
+
  */
 router.post('/createParkingSpotsForFacility', async (req, res) => {
     const facility = req.body;
     try {
-        const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute);
+        const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute, facility.maxCapacity);
         const newSpotsForFacility = await parkingService.newParkingSpotsInFacility(createParkingSpotObject);
         res.status(201).json(newSpotsForFacility);
     } catch (error) {
