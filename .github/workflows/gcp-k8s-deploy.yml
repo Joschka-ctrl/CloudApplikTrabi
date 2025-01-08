@@ -8,7 +8,7 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GKE_CLUSTER: terraform-cluster
+  GKE_CLUSTER: terraform-cluster2
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
