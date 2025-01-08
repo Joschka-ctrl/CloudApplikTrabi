@@ -1,8 +1,10 @@
 import express from "express";
 import admin from "firebase-admin";
+import cors from 'cors';
 import { Facility } from "./înterface/facility";
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 const port = 3021;
 
@@ -16,36 +18,9 @@ admin.firestore().settings({
 
 const db = admin.firestore();
 
-app.post("/", async (req, res) => {
-  try {
-    const data = { message: "Hello, World!" };
-    const result = await db.collection("helloworld").add(data);
-    res.status(201).send(`Document added with ID: ${result.id}`);
-  } catch (error) {
-    res.status(500).send(`Error adding document: ${(error as Error).message}`);
-  }
-});
-
-app.get("/", (req, res) => {
-  (async () => {
-    try {
-      const snapshot = await db.collection("helloworld").get();
-      const documents = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      res.status(200).json(documents);
-    } catch (error) {
-      res
-        .status(500)
-        .send(`Error retrieving documents: ${(error as Error).message}`);
-    }
-  })();
-});
-
 // Routes
 
-app.post("/facility", async (req, res) => {
+app.post("/api/facilities", async (req, res) => {
   console.log("POST /facility");
   try {
     const body = req.body;
@@ -76,7 +51,7 @@ app.post("/facility", async (req, res) => {
 })
 
 //Update facility
-app.put("/facility/:id", async (req, res) => {
+app.put("/api/facilities/:id", async (req, res) => {
   console.log("PUT facility");
   try {
     const id = req.params.id;
@@ -106,7 +81,7 @@ app.put("/facility/:id", async (req, res) => {
 })
 
 //Get facility
-app.get("/facility/:id", async (req, res) => {
+app.get("/api/facilities/:id", async (req, res) => {
   console.log("GET facility");
   try {
     const id = req.params.id;
@@ -129,7 +104,7 @@ app.get("/facility/:id", async (req, res) => {
 });
 
 //Get all facilities
-app.get("/facilities", async (req, res) => {
+app.get("/api/facilities", async (req, res) => {
   console.log("GET facilities");
   try {
     const snapshot = await db.collection("facilities").limit(100).get();

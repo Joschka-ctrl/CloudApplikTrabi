@@ -10,6 +10,9 @@ import ECharging from "./features/echarging/pages/ECharging";
 import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Reports from "./pages/Reports";
+import Facilities from "./pages/Facilities";
+import FacilityDetail from "./pages/Facility";
+import CreateFacility from "./pages/CreateFacility";
 
 const App = () => {
   return (
@@ -36,6 +39,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/facilities" element={<Facilities />} />
+              <Route path="/facilities/new" element={<CreateFacility />} />
+              <Route path="/facilities/:id" element={<FacilityDetail />} />
+              <Route path="/facilities/:id/edit" element={<CreateFacility edit />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route
