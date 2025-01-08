@@ -11,7 +11,7 @@ env:
   GKE_CLUSTER: terraform-cluster
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
-  TF_PLAN_FILE: latest-terraform-plan.tfplan
+  TF_PLAN_FILE: terraform.tfstate
 
 jobs:
   deploy:
@@ -35,10 +35,6 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-    - name: Create Terraform Plan Bucket
-      run: |
-        gsutil mb -p ${{ env.PROJECT_ID }} -l ${{ env.GKE_REGION }} gs://${{ env.TF_PLAN_BUCKET }} || true
-
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -51,21 +47,21 @@ jobs:
 
     - name: Download Previous Plan
       run: |
-        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan.json || true
+        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} terraform.tfstate || true
       continue-on-error: true
       working-directory: cloud/terraform
 
     - name: Terraform Plan
       run: |
-        terraform plan -out=tfplan
-        terraform show -json tfplan > tfplan.json
-        gcloud storage cp tfplan.json gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+        terraform plan -out=terraform.tfstate
+        terraform show -tfstate terraform.tfstate > terraform.tfstate
+        gcloud storage cp terraform.tfstate gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
       working-directory: cloud/terraform
 
     - name: Terraform Apply
       run: |
-        if [ -f "tfplan.json" ]; then
-          terraform show -json tfplan.json | terraform apply -auto-approve
+        if [ -f "terraform.tfstate" ]; then
+          terraform show -tfstate terraform.tfstate | terraform apply -auto-approve
         else
           terraform apply -auto-approve
         fi
