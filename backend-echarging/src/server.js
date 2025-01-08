@@ -148,7 +148,15 @@ router.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
 // Get all charging sessions
 router.get("/charging-sessions", authenticateToken, async (req, res) => {
   try {
-    const snapshot = await db.collection("charging-sessions").get();
+    const tenantId = req.query.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
+    
+    const snapshot = await db.collection("charging-sessions")
+      .where("tenantId", "==", tenantId)
+      .get();
+
     const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(sessions);
   } catch (error) {
@@ -237,9 +245,13 @@ router.patch("/charging-sessions/:id/end", async (req, res) => {
 });
 
 // Get provider rates
-router.get("/provider-rates", async (req, res) => {
+router.get("/provider-rates", authenticateToken, async (req, res) => {
   try {
-    const ratesSnapshot = await db.collection("provider-rates").get();
+    const tenantId = req.query.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
+    const ratesSnapshot = await db.collection("provider-rates").where("tenantId", "==", tenantId).get();
     const rates = [];
     ratesSnapshot.forEach(doc => {
       rates.push({ id: doc.id, ...doc.data() });
@@ -252,11 +264,16 @@ router.get("/provider-rates", async (req, res) => {
 });
 
 // Update or create provider rate
-router.post("/provider-rates", async (req, res) => {
+router.post("/provider-rates", authenticateToken, async (req, res) => {
   try {
+    const tenantId = req.query.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
     const { provider, ratePerKw } = req.body;
     const rateRef = db.collection("provider-rates").doc(provider);
     await rateRef.set({
+      tenantId,
       provider,
       ratePerKw: Number(ratePerKw),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -269,10 +286,14 @@ router.post("/provider-rates", async (req, res) => {
 });
 
 // Get billing summary
-router.get("/billing-summary", async (req, res) => {
+router.get("/billing-summary", authenticateToken, async (req, res) => {
   try {
     // Get garage filter from query params
     const garageFilter = req.query.garage;
+    const tenantId = req.query.tenantId;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
     
     // Get all completed charging sessions
     let query = db.collection("charging-sessions")
