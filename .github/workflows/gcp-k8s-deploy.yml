@@ -12,6 +12,7 @@ env:
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
+  BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
 
 jobs:
   deploy:
@@ -45,12 +46,6 @@ jobs:
         terraform init
       working-directory: cloud/terraform
 
-    - name: Download Previous Plan
-      run: |
-        gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }} tfplan || true
-      continue-on-error: true
-      working-directory: cloud/terraform
-
     - name: Terraform Plan
       run: |
         terraform plan -out=tfplan
@@ -66,6 +61,10 @@ jobs:
             terraform apply -auto-approve
           fi
       working-directory: cloud/terraform
+
+    - name: Migrate Terraform State to Google Cloud Storage
+      run: |
+        terraform init -migrate-state
 
     - name: Install GKE Auth Plugin
       run: |
