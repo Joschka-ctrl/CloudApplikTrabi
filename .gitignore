@@ -4,9 +4,10 @@ backend/src/cloud-eigl-firebase-adminsdk-5gdjf-15af4bd2c6.json
 # TERRAFORM
 # Ignore everything in the cloud/terraform directory
 cloud/*.tfstate
+cloud/terraform
 
 # But do not ignore .tf, .tfvars, and .tfbackend files
-!cloud/terraform/main.tf
+!cloud/terraform/*.tf
 !cloud/terraform/*.tfvars
 !cloud/terraform/*.tfbackend
 
