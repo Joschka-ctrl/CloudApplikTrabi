@@ -13,7 +13,7 @@ let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
 
 
 
-const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) => {
+const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute, maxCapacity) => {
 
     let floorsArray = [];
     for (let i = 0; i < floors.length; i++) {
@@ -25,7 +25,9 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
             let spot = {
                 id: `${i}${j + 1}`,
                 occupied: false,
-                isOnfloor: i
+                isOnfloor: i,
+                isClosed: false,
+                avalibilityStatus: "free"
             }
             floor.spots.push(spot);
         }
@@ -33,7 +35,7 @@ const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute) =
     }
     console.log(floorsArray);
 
-    let maxCapacity = floors.reduce((acc, curr) => acc + curr, 0);
+
 
     let erg = {
         tenantId: tenantId,
@@ -367,8 +369,8 @@ const getCurrentOccupancy = async (tenantID, facilityID) => {
         return currentOccupancy;
     }
     catch (error) {
-    console.error('Error fetching current occupancy:', error);
-    return { error: 'Failed to fetch current occupancy.' };
+        console.error('Error fetching current occupancy:', error);
+        return { error: 'Failed to fetch current occupancy.' };
     }
 };
 
@@ -424,8 +426,8 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
 const reverseOccupancy = async (tenantID, facilityID, spotID) => {
     console.log("reverse Parking Spot Occupancy");
     try {
-        const facilityData = await getFacilityData(facilityID, tenantID);
-        console.log(facilityData);
+        const doc = await getDoc(facilityID, tenantID);
+        const facilityData = doc.data();
         // Locate the parking spot
         let spotFound = false;
         facilityData.parkingSpacesOnFloor.forEach(floor => {
@@ -439,8 +441,7 @@ const reverseOccupancy = async (tenantID, facilityID, spotID) => {
             console.error(`Parking spot with ID ${spotID} not found`);
             throw new Error(`Parking spot with ID ${spotID} not found`);
         }
-        const doc = await getDoc(facilityID, tenantID);
-        console.log(doc.id);
+
         // Update Firestore with the new occupancy status
         await db.collection("parking-spaces").doc(doc.id).update({
             parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor
@@ -451,6 +452,177 @@ const reverseOccupancy = async (tenantID, facilityID, spotID) => {
     } catch (error) {
         console.error('Error managing parking spot occupancy:', error);
         throw new Error('Failed to update parking spot occupancy.');
+    }
+};
+
+/**
+ * handle handleSpotAvalibilityStatus
+ * 
+ */
+const handleSpotAvalibilityStatus = async (tenantID, facilityID, spotID, shouldBeClosed, shouldBeOccupied) => {
+    console.log("handleSpotAvalibilityStatus");
+    try {
+
+
+        // update DB Parking-Spaces
+
+
+        const doc = await getDoc(facilityID, tenantID);
+        const facilityData = doc.data();
+        console.log(facilityData);
+
+        // Locate the parking spot
+        let spotFound = false;
+        facilityData.parkingSpacesOnFloor.forEach(floor => {
+            const spot = floor.spots.find(s => s.id === spotID);
+            if (spot) {
+
+                const currentState = {
+                    isClosed: spot.isClosed,
+                    occupied: spot.occupied,
+                };
+
+                switch (true) {
+                    case (!currentState.isClosed && shouldBeClosed):
+                        // Case: Der Parkplatz wird geschlossen
+                        spot.occupied = false;
+                        spot.isClosed = true;
+                        spot.avalibilityStatus = "closed"; // Parkplatz nicht verfügbar
+                        facilityData.maxCapacity -= 1; // Kapazität reduzieren
+                        console.log(`Spot ${spot.id} wurde geschlossen.`);
+                        break;
+                    case (currentState.isClosed && shouldBeClosed):
+                        // Case: Parkplatz bleibt geschlossen
+                        console.log(`Spot ${spot.id} bleibt geschlossen.`);
+                        break;
+                    case (currentState.isClosed && !shouldBeClosed):
+                        // Case: Parkplatz wird freigegeben
+                        spot.occupied = false;
+                        spot.isClosed = false;
+                        spot.avalibilityStatus = "free"; // Parkplatz verfügbar
+                        facilityData.maxCapacity += 1; // Kapazität erhöhen
+                        console.log(`Spot ${spot.id} wurde freigegeben.`);
+                        break;
+                    case (!currentState.isClosed && !shouldBeClosed && shouldBeOccupied):
+                        // Case: Parkplatz wird besetzt
+                        spot.occupied = true;
+                        spot.isClosed = false;
+                        spot.avalibilityStatus = "occupied"; // Parkplatz nicht verfügbar
+                        console.log(`Spot ${spot.id} wurde besetzt.`);
+                        break;
+                    case (!currentState.isClosed && !shouldBeClosed && !shouldBeOccupied):
+                        // Case: Parkplatz ist frei
+                        spot.occupied = false;
+                        spot.avalibilityStatus = "free"; // Parkplatz verfügbar
+                        console.log(`Spot ${spot.id} ist frei.`);
+                        break;
+                    case (currentState.isClosed && !shouldBeClosed && shouldBeOccupied):
+                        // Case: Parkplatz bleibt geschlossen
+                        console.log(`Spot ${spot.id} bleibt geschlossen.`);
+                        break;
+                    case (currentState.isClosed && shouldBeClosed):
+                        // Case: Parkplatz bleibt geschlossen
+                        console.log(`Spot ${spot.id} bleibt geschlossen.`);
+                        break;
+
+
+
+                    default:
+                        console.error(`Unerwarteter Zustand für Spot ${spot.id}`);
+                }
+
+                spotFound = true;
+            }
+        });
+        if (!spotFound) {
+            console.error(`Parking spot with ID ${spotID} not found`);
+            throw new Error(`Parking spot with ID ${spotID} not found`);
+        }
+
+        console.log(doc.id);
+        // Update Firestore with the new isClosed status
+        await db.collection("parking-spaces").doc(doc.id).update({
+            parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor,
+            maxCapacity: facilityData.maxCapacity
+        });
+
+        console.log(`Successfully updated parking spot ${spotID}`);
+        return { success: true, spotID };
+    } catch (error) {
+        console.error('Error managing parking spot closure status:', error);
+        throw new Error('Failed to update parking spot closure status.');
+    }
+};
+
+const handleSpotAvalibilityStatusByStatusName = async (tenantID, facilityID, spotID, newStatus) => {
+    console.log("handleSpotAvalibilityStatus");
+    try {
+        // update DB Parking-Spaces
+        const doc = await getDoc(facilityID, tenantID);
+        const facilityData = doc.data();
+        console.log(facilityData);
+
+        // Locate the parking spot
+        let spotFound = false;
+        facilityData.parkingSpacesOnFloor.forEach(floor => {
+            const spot = floor.spots.find(s => s.id === spotID);
+            if (spot) {
+                switch (true) {
+                    case (newStatus === "closed"):
+                        // Case: Der Parkplatz wird geschlossen
+                        if (!spot.isClosed) {
+                            facilityData.maxCapacity -= 1; // Kapazität reduzieren
+                        }
+                        spot.occupied = false;
+                        spot.isClosed = true;
+                        spot.avalibilityStatus = "closed"; // Parkplatz nicht verfügbar
+                        console.log(`Spot ${spot.id} wurde geschlossen.`);
+                        break;
+
+                    case (newStatus === "free"):
+                        // Case: Parkplatz wird freigegeben
+                        if (spot.isClosed) {
+                            facilityData.maxCapacity += 1; // Kapazität reduzieren
+                        }
+                        spot.occupied = false;
+                        spot.isClosed = false;
+                        spot.avalibilityStatus = "free"; // Parkplatz verfügbar
+                        console.log(`Spot ${spot.id} wurde freigegeben.`);
+                        break;
+                    case (newStatus === "occupied"):
+                        // Case: Parkplatz wird besetzt
+                        if (spot.isClosed) {
+                            facilityData.maxCapacity += 1; // Kapazität reduzieren
+                        }
+                        spot.occupied = true;
+                        spot.isClosed = false;
+                        spot.avalibilityStatus = "occupied"; // Parkplatz nicht verfügbar
+                        console.log(`Spot ${spot.id} wurde besetzt.`);
+                        break;
+                    default:
+                        console.error(`Unerwarteter Zustand für Spot ${spot.id}`);
+                }
+
+                spotFound = true;
+            }
+        });
+        if (!spotFound) {
+            console.error(`Parking spot with ID ${spotID} not found`);
+            throw new Error(`Parking spot with ID ${spotID} not found`);
+        }
+
+        console.log(doc.id);
+        // Update Firestore with the new isClosed status
+        await db.collection("parking-spaces").doc(doc.id).update({
+            parkingSpacesOnFloor: facilityData.parkingSpacesOnFloor,
+            maxCapacity: facilityData.maxCapacity
+        });
+
+        console.log(`Successfully updated parking spot ${spotID}`);
+        return { success: true, spotID };
+    } catch (error) {
+        console.error('Error managing parking spot closure status:', error);
+        throw new Error('Failed to update parking spot closure status.');
     }
 };
 
@@ -570,15 +742,15 @@ const mockPaymentService = (fee) => {
 };
 
 const leaveParkhouse = async (ticketNumber, tenantID, facilityID) => {
-    
+
     try {
-console.log("Leave Parkhouse");
-       
+        console.log("Leave Parkhouse");
+
         // Holen der Facility-Daten aus Firestore
         const facilityDoc = await db.collection("parking-spaces")
-        .where("facilityId", "==", facilityID)
-        .where("tenantId", "==", tenantID)
-        .get();
+            .where("facilityId", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
 
         if (facilityDoc.empty) {
             throw new Error('Facility not found for the given tenant and facility ID.');
@@ -899,6 +1071,8 @@ module.exports = {
     getParkingDurationREST,
     manageParkingSpotOccupancy,
     reverseOccupancy,
+    handleSpotAvalibilityStatus,
+    handleSpotAvalibilityStatusByStatusName,
     getParkingFeeRest,
     payParkingFee,
     leaveParkhouse,
