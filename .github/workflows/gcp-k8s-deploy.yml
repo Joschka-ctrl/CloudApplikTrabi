@@ -55,9 +55,6 @@ jobs:
       run: |
         echo ${{ env.GKE_CLUSTER }}
 
-    - name: Import Bucket
-      run: |
-        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans    
 
     - name: Terraform Plan
       run: |
@@ -66,6 +63,10 @@ jobs:
         gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
       working-directory: cloud/terraform
 
+    - name: Import Bucket
+      run: |
+        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
+            
     - name: Terraform Apply
       run: |
           if [ -f "tfplan" ]; then
