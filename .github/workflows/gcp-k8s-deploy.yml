@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - kubernetes-creation-pipeline
-  workflow_dispatch:  
+  workflow_dispatch:
+    inputs:
+      tenant_name:
+        description: "Tenant Name"
+        required: true
+        default: "default-cluster"  
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
