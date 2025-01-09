@@ -113,22 +113,23 @@ const ParkingLots = ({ tenantId }) => {
         }
   
         return (
-          <div
+          <Button
+            variant="contained"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               backgroundColor: statusColor,
+              color: 'white',
+              fontWeight: 'bold',
               borderRadius: '50px', // Oval shape
               padding: '5px 15px', // Padding to make it oval
-              color: 'white', // Keep text color white
-              fontWeight: 'bold',
               cursor: 'pointer',
+              minWidth: '120px', // Ensure all buttons are at least 120px wide
+              height: '40px', // Fixed height for buttons
+              textAlign: 'center', // Center text
             }}
-            onClick={() => handleOpenPopup(params.row.id)}
+            onClick={() => handleOpenPopup(params.row.id)} // Handle click
           >
             {params.value.charAt(0).toUpperCase() + params.value.slice(1)} {/* Display full status text */}
-          </div>
+          </Button>
         );
       },
     },
@@ -166,7 +167,7 @@ const ParkingLots = ({ tenantId }) => {
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5, 10]}
-            checkboxSelection
+            // checkboxSelection
             sx={{ border: 0 }}
           />
         </Paper>
@@ -219,7 +220,7 @@ const ParkingLots = ({ tenantId }) => {
             Cancel
           </Button>
         </Box>
-      </Modal>;
+      </Modal>
     </Container>
   );
 };
