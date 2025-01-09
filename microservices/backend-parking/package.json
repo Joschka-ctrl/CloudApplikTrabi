@@ -4,7 +4,7 @@
   "description": "Parking management microservice for Trabi Cloud Application",
   "main": "src/parkingController.js",
   "scripts": {
-    "start": "node src/parkingController.js",
+    "start": "nodemon src/parkingController.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
