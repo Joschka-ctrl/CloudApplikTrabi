@@ -19,6 +19,7 @@ const ParkingLots = ({ tenantId }) => {
   const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [parkingSpots, setParkingSpots] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
+  const [openPopupCloing, setOpenPopupClosing] = useState(false);
   const [selectedSpotId, setSelectedSpotId] = useState(null);
 
   useEffect(() => {
@@ -55,46 +56,136 @@ const ParkingLots = ({ tenantId }) => {
     setSelectedSpotId(null);
   };
   const handleChangeOccupiedStatus = (tenantId, action) => {
-    const occupiedStatus = action === 'reserve'; // Wenn 'reserve', dann auf belegt setzen, sonst auf frei
+    const occupiedStatus = action === 'freigeben'; // Wenn 'reserve', dann auf belegt setzen, sonst auf frei
     console.log("occupied", occupiedStatus);
     fetch(`${HOST_URL}/reverseOccupancy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: selectedSpotId, tenantID: tenantId, facilityID: selectedFacilityId, occupied: occupiedStatus })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: selectedSpotId, tenantID: tenantId, facilityID: selectedFacilityId })
     })
-    .then(response => {
+      .then(response => {
         console.log(response);
         if (!response.ok) throw new Error(`Failed to ${action === 'reserve' ? 'update' : 'release'} parking spot status: ${response.status}`);
         return response.json();
-    })
-    .then(() => {
+      })
+      .then(() => {
         const updatedSpots = parkingSpots.map(spot => spot.id === selectedSpotId ? { ...spot, occupied: action === 'reserve' } : spot);
         setParkingSpots(updatedSpots);
         handleClosePopup();
+      })
+      .catch(error => console.error(error));
+  };
+
+  const handleOpenPopupClosing = (spotId) => {
+    setSelectedSpotId(spotId);
+    setOpenPopupClosing(true);
+  };
+
+  const handleClosePopupClosing = () => {
+    setOpenPopupClosing(false);
+    setSelectedSpotId(null);
+  };
+
+  const handleChangeisClosed = (tenantId, action) => {
+    const closedStatus = action === 'closed'; // Wenn 'reserve', dann auf belegt setzen, sonst auf frei
+    console.log("isClosed", closedStatus);
+    fetch(`${HOST_URL}/reverseParkingSpotClosure`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: selectedSpotId, tenantID: tenantId, facilityID: selectedFacilityId })
     })
-    .catch(error => console.error(error));
-};
+      .then(response => {
+        console.log(response);
+        if (!response.ok) throw new Error(`Failed to ${action === 'close' ? 'update' : 'release'} parking spot status: ${response.status}`);
+        return response.json();
+      })
+      .then(() => {
+        const updatedSpots = parkingSpots.map(spot => spot.id === selectedSpotId ? { ...spot, isClosed: action === 'closed' } : spot);
+        setParkingSpots(updatedSpots);
+        handleClosePopupClosing();
+      })
+      .catch(error => console.error(error));
+  };
+
+  const handleChangeSpotAvailabilityStatus = (newStatus) => {
+    tenantId = tenantId || '15';
+    return fetch(`${HOST_URL}/handleSpotAvalibilityStatus`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: selectedSpotId,
+        tenantID: tenantId,
+        facilityID: selectedFacilityId,
+        newStatus: newStatus,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Failed to update parking spot status: ${response.status}`);
+        return response.json();
+      })
+      .then(() => {
+        const updatedSpots = parkingSpots.map((spot) =>
+          spot.id === selectedSpotId
+            ? {
+                ...spot,
+                avalibilityStatus: newStatus, // Set the status
+              }
+            : spot
+        );
+        setParkingSpots(updatedSpots);
+        handleClosePopup();
+      })
+      .catch((error) => console.error(error));
+  };
+  
 
 
   const columns = [
-   
-    { field: 'id', headerName: 'Parking Spot Number',flex: 1, sortable: true },
+    { field: 'id', headerName: 'Parking Spot Number', flex: 1, sortable: true },
     { field: 'isOnfloor', headerName: 'Floor', flex: 1, sortable: true },
     {
-      field: 'occupied',
-      headerName: 'Occupied',
+      field: 'avalibilityStatus',
+      headerName: 'Status',
       flex: 1,
-      renderCell: (params) => (
-        <div style={{
-          color: params.value ? 'green' : 'red',
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }} onClick={() => handleOpenPopup(params.row.id)}>
-          {params.value.toString()}
-        </div>
-      )
-    }
+      renderCell: (params) => {
+        let statusColor;
+        switch (params.value) {
+          case 'occupied':
+            statusColor = '#FFCC00'; // Yellow for occupied
+            break;
+          case 'free':
+            statusColor = '#4CAF50'; // Green for free
+            break;
+          case 'closed':
+            statusColor = '#F44336'; // Red for closed
+            break;
+          default:
+            statusColor = '#9E9E9E'; // Gray for unknown
+            break;
+        }
+  
+        return (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: statusColor,
+              borderRadius: '50px', // Oval shape
+              padding: '5px 15px', // Padding to make it oval
+              color: 'white', // Keep text color white
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+            onClick={() => handleOpenPopup(params.row.id)}
+          >
+            {params.value.charAt(0).toUpperCase() + params.value.slice(1)} {/* Display full status text */}
+          </div>
+        );
+      },
+    },
   ];
+  
 
   return (
     <Container style={{ marginTop: '50px' }}>
@@ -133,30 +224,54 @@ const ParkingLots = ({ tenantId }) => {
         </Paper>
       )}
 
+
       <Modal
         open={openPopup}
         onClose={handleClosePopup}
         aria-labelledby="change-status-modal"
-        aria-describedby="change-occupied-status"
+        aria-describedby="change-spot-status"
       >
         <Box sx={{ ...style, width: 300 }}>
           <Typography variant="h6" component="h2" align="center">
             Change Parking Spot Status
           </Typography>
           <Typography variant="body1" align="center">
-            Do you want to change the status of this parking spot?
+            Select the new status for this parking spot.
           </Typography>
-          <Button variant="contained" color="primary" onClick={() => handleChangeOccupiedStatus("15", 'reserve')} sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleChangeSpotAvailabilityStatus("occupied")}
+            sx={{ mt: 2 }}
+          >
             Mark as Occupied
           </Button>
-          <Button variant="contained" color="secondary" onClick={() => handleChangeOccupiedStatus("15", 'release')} sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => handleChangeSpotAvailabilityStatus("free")}
+            sx={{ mt: 2 }}
+          >
             Release Spot
           </Button>
-          <Button variant="outlined" color="secondary" onClick={handleClosePopup} sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => handleChangeSpotAvailabilityStatus("closed")}
+            sx={{ mt: 2 }}
+          >
+            Close Spot
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={handleClosePopup}
+            sx={{ mt: 2 }}
+          >
             Cancel
           </Button>
         </Box>
-      </Modal>
+      </Modal>;
     </Container>
   );
 };
