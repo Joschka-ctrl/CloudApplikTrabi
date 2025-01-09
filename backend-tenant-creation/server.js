@@ -5,7 +5,7 @@ const Joi = require('joi');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3023;
 
 // Middleware
 app.use(cors());
