@@ -36,6 +36,11 @@ resource "google_storage_bucket" "default" {
   versioning {
     enabled = true
   }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes  = all
+  }
 }
 
 resource "local_file" "default" {
