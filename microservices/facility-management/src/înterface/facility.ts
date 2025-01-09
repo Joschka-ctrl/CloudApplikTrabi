@@ -8,4 +8,5 @@ export interface Facility {
     country: string;
     floor: number[];
     facilityId: string;
+    pricePerMinute: number;
 }

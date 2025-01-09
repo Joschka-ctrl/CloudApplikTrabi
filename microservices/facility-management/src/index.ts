@@ -2,6 +2,8 @@ import express from "express";
 import admin from "firebase-admin";
 import cors from 'cors';
 import { Facility } from "./înterface/facility";
+import { v4 } from 'uuid';
+import { nanoid } from 'nanoid';
 
 const app = express();
 app.use(cors())
@@ -10,6 +12,7 @@ const port = 3021;
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
+  projectId: 'trabantparking-stage'
 });
 
 admin.firestore().settings({
@@ -23,6 +26,7 @@ const db = admin.firestore();
 app.post("/api/facilities", async (req, res) => {
   console.log("POST /facility");
   try {
+    const facilityId = nanoid(16);
     const body = req.body;
       if (!body || typeof body !== "object") {
         res.status(400).send("Invalid request body");
@@ -38,12 +42,15 @@ app.post("/api/facilities", async (req, res) => {
       console.log('Saving Facility');
       
       const data: Facility = body;
+      data.facilityId = facilityId;
       db.collection("facilities")
         .add(data)
         .then((docRef) => {
           res.status(201).send(`Facility added with ID: ${docRef.id}`);
         });
       
+      
+
       console.log('Facility saved');
     } catch (error) {
       res.status(500).send(`Error adding facility: ${(error as Error).message}`);
@@ -73,7 +80,13 @@ app.put("/api/facilities/:id", async (req, res) => {
     }
 
     const data: Facility = body;
-    await db.collection("facilities").doc(id).set(data, { merge: true });
+    const snapshot = await db.collection("facilities").where("facilityId", "==", id).get();
+    if (snapshot.empty) {
+      res.status(404).send(`Facility ${id} not found`);
+      return;
+    }
+    const docRef = snapshot.docs[0].ref;
+    await docRef.set(data, { merge: true });
     res.status(200).send(`Facility updated with ID: ${id}`);
   } catch (error) {
     res.status(500).send(`Error updating facility: ${(error as Error).message}`);
@@ -90,13 +103,14 @@ app.get("/api/facilities/:id", async (req, res) => {
       return
     }
 
-    const doc = await db.collection("facilities").doc(id).get();
-    if (!doc.exists) {
-      res.status(404).send("Facility not found");
-      return
+    const snapshot = await db.collection("facilities").where("facilityId", "==", id).get();
+    if (snapshot.empty) {
+      res.status(404).send(`Facility ${id} not found`);
+      return;
     }
+    const doc = snapshot.docs[0].ref;
 
-    const data = doc.data();
+    const data = (await doc.get()).data()
     res.status(200).json(data);
   } catch (error) {
     res.status(500).send(`Error retrieving facility: ${(error as Error).message}`);
@@ -121,4 +135,11 @@ app.get("/api/facilities", async (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
+  db.collection("facilities").limit(1).get()
+    .then(() => {
+      console.log("Firestore connection is valid");
+    })
+    .catch((error) => {
+      console.error("Error validating Firestore connection:", error);
+    });
 });

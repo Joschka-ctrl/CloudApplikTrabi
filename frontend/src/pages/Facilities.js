@@ -36,10 +36,10 @@ return (
         </Grid>
         <Grid className="mt-2" container spacing={3}>
             {facilities.map((facility) => (
-                <Grid item xs={12} sm={6} md={4} key={facility.id}>
+                <Grid item xs={12} sm={6} md={4} key={facility.facilityId}>
                     <Card
                         style={{ position: "relative", cursor: "pointer" }}
-                        onClick={() => navigate(`/facilities/${facility.id}`)}
+                        onClick={() => navigate(`/facilities/${facility.facilityId}`)}
                     >
                         <CardContent>
                             <Typography
@@ -53,7 +53,7 @@ return (
                                     fontSize: "0.75rem",
                                 }}
                             >
-                                {facility.id}
+                                {facility.facilityId}
                             </Typography>
                             <Typography variant="h5" component="div">
                                 {facility.name}
