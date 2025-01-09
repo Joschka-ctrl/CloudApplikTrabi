@@ -4,11 +4,16 @@ on:
   push:
     branches:
       - kubernetes-creation-pipeline
-  workflow_dispatch:  
+  workflow_dispatch:
+    inputs:
+      tenant_name:
+        description: "Tenant Name"
+        required: true
+        default: "default-cluster"  
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GKE_CLUSTER: variable-cluster-name
+  GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate

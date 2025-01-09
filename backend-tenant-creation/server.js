@@ -5,7 +5,7 @@ const Joi = require('joi');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3023;
 
 // Middleware
 app.use(cors());
@@ -16,17 +16,6 @@ const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN
 });
 
-// Validation schema for tenant creation
-const tenantSchema = Joi.object({
-  tenantName: Joi.string().required().min(3).max(50),
-  adminEmail: Joi.string().email().required(),
-  region: Joi.string().required(),
-  resources: Joi.object({
-    cpu: Joi.string().required(),
-    memory: Joi.string().required(),
-    storage: Joi.string().required()
-  }).required()
-});
 
 // Trigger GitHub Actions workflow
 async function triggerWorkflow(tenantConfig) {
@@ -38,10 +27,6 @@ async function triggerWorkflow(tenantConfig) {
       ref: 'kubernetes-creation-pipeline',
       inputs: {
         tenant_name: tenantConfig.tenantName,
-        region: tenantConfig.region,
-        cpu_request: tenantConfig.resources.cpu,
-        memory_request: tenantConfig.resources.memory,
-        storage_request: tenantConfig.resources.storage
       }
     });
     return true;
@@ -54,18 +39,12 @@ async function triggerWorkflow(tenantConfig) {
 // Create new tenant endpoint
 app.post('/api/tenants', async (req, res) => {
   try {
-    // Validate request body
-    const { error, value } = tenantSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-
     // Trigger the workflow
-    await triggerWorkflow(value);
+    await triggerWorkflow(req.body);
 
     res.status(202).json({
       message: 'Tenant creation initiated',
-      tenant: value.tenantName,
+      tenant: req.body.tenantName,
       status: 'PENDING'
     });
   } catch (error) {
