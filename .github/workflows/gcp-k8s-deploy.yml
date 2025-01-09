@@ -66,7 +66,8 @@ jobs:
     - name: Import Bucket
       run: |
         terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
-            
+      working-directory: cloud/terraform  
+
     - name: Terraform Apply
       run: |
           if [ -f "tfplan" ]; then
