@@ -39,8 +39,27 @@ async function triggerWorkflow(tenantConfig) {
 // Create new tenant endpoint
 app.post('/api/tenants', async (req, res) => {
   try {
-    // Trigger the workflow
-    await triggerWorkflow(req.body);
+    const { plan, tenantName, emails } = req.body;
+
+    switch (plan) {
+      case 'free':
+        console.log("free");
+        // Trigger the workflow for free plan
+        await triggerWorkflow(req.body);
+        break;
+      case 'standard':
+        console.log("standard");
+        await triggerWorkflow(req.body);
+        break;
+      case 'enterprise':
+        console.log("enterprise");
+        await triggerWorkflow(req.body);
+        break;
+      default:
+        return res.status(400).json({
+          error: 'Invalid plan selected',
+        });
+    }
 
     res.status(202).json({
       message: 'Tenant creation initiated',

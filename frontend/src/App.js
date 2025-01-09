@@ -41,9 +41,9 @@ const App = () => {
                 <Route
                 path="/parkingSpaces"
                 element={
-                  // <ProtectedRoute>
+                  <ProtectedRoute>
                     <ParkingLots/>
-                  // </ProtectedRoute>
+                  </ProtectedRoute>
                 }
               />
               <Route path="/login" element={<Login />} />

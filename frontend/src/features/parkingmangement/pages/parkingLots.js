@@ -19,7 +19,6 @@ const ParkingLots = ({ tenantId }) => {
   const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [parkingSpots, setParkingSpots] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
-  const [openPopupCloing, setOpenPopupClosing] = useState(false);
   const [selectedSpotId, setSelectedSpotId] = useState(null);
 
   useEffect(() => {
@@ -54,57 +53,6 @@ const ParkingLots = ({ tenantId }) => {
   const handleClosePopup = () => {
     setOpenPopup(false);
     setSelectedSpotId(null);
-  };
-  const handleChangeOccupiedStatus = (tenantId, action) => {
-    const occupiedStatus = action === 'freigeben'; // Wenn 'reserve', dann auf belegt setzen, sonst auf frei
-    console.log("occupied", occupiedStatus);
-    fetch(`${HOST_URL}/reverseOccupancy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: selectedSpotId, tenantID: tenantId, facilityID: selectedFacilityId })
-    })
-      .then(response => {
-        console.log(response);
-        if (!response.ok) throw new Error(`Failed to ${action === 'reserve' ? 'update' : 'release'} parking spot status: ${response.status}`);
-        return response.json();
-      })
-      .then(() => {
-        const updatedSpots = parkingSpots.map(spot => spot.id === selectedSpotId ? { ...spot, occupied: action === 'reserve' } : spot);
-        setParkingSpots(updatedSpots);
-        handleClosePopup();
-      })
-      .catch(error => console.error(error));
-  };
-
-  const handleOpenPopupClosing = (spotId) => {
-    setSelectedSpotId(spotId);
-    setOpenPopupClosing(true);
-  };
-
-  const handleClosePopupClosing = () => {
-    setOpenPopupClosing(false);
-    setSelectedSpotId(null);
-  };
-
-  const handleChangeisClosed = (tenantId, action) => {
-    const closedStatus = action === 'closed'; // Wenn 'reserve', dann auf belegt setzen, sonst auf frei
-    console.log("isClosed", closedStatus);
-    fetch(`${HOST_URL}/reverseParkingSpotClosure`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: selectedSpotId, tenantID: tenantId, facilityID: selectedFacilityId })
-    })
-      .then(response => {
-        console.log(response);
-        if (!response.ok) throw new Error(`Failed to ${action === 'close' ? 'update' : 'release'} parking spot status: ${response.status}`);
-        return response.json();
-      })
-      .then(() => {
-        const updatedSpots = parkingSpots.map(spot => spot.id === selectedSpotId ? { ...spot, isClosed: action === 'closed' } : spot);
-        setParkingSpots(updatedSpots);
-        handleClosePopupClosing();
-      })
-      .catch(error => console.error(error));
   };
 
   const handleChangeSpotAvailabilityStatus = (newStatus) => {
