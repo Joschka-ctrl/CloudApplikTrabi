@@ -14,6 +14,7 @@ import {
   Box,
   IconButton,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -42,6 +43,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const HOST = 'http://localhost:3023/api/tenants';
 
@@ -92,27 +94,40 @@ function App() {
     setEmails(newEmails);
   };
 
-  const handleSubmit = () => {
-    console.log({
-      tenantId: auth.tenantId,
-      selectedPlan,
-      emails: emails.filter(email => email !== ''),
-    });
+  const handleSubmit = async () => {
+    try {
+      setError(null);
+      
+      if (!auth.tenantId) {
+        setError('No tenant ID available');
+        return;
+      }
 
-    fetch(HOST, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        tenantId: auth.tenantId,
-        plan: selectedPlan.toLowerCase(),
-        emails: emails.filter(email => email !== '').map(email => email.toLowerCase()),
-      }),
-    });
+      const response = await fetch(HOST, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantId: auth.tenantId,
+          plan: selectedPlan.toLowerCase(),
+          emails: emails.filter(email => email !== '').map(email => email.toLowerCase()),
+        }),
+      });
 
-    setShowModal(false);
-    setEmails(['']);
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create tenant');
+      }
+
+      const data = await response.json();
+      console.log('Tenant created:', data);
+      setShowModal(false);
+      setEmails(['']);
+    } catch (err) {
+      console.error('Error creating tenant:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create tenant');
+    }
   };
 
   if (!isAuthenticated) {
@@ -211,6 +226,11 @@ function App() {
               <DialogTitle>Create Tenant</DialogTitle>
               <DialogContent>
                 <Box component="form" sx={{ mt: 2 }}>
+                  {error && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {error}
+                    </Alert>
+                  )}
                   <TextField
                     fullWidth
                     label="Tenant ID"

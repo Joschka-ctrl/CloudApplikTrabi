@@ -68,7 +68,10 @@ async function triggerWorkflow(tenantConfig) {
 
 async function createTenantDocument(tenantConfig) {
   try {
-    await db.collection('tenants').doc(tenantConfig.tenantName).set(tenantConfig);
+    if (!tenantConfig.tenantId) {
+      throw new Error('tenantId is required');
+    }
+    await db.collection('tenants').doc(tenantConfig.tenantId).set(tenantConfig);
     return true;
   } catch (error) {
     console.error('Error creating tenant document:', error);
@@ -169,27 +172,33 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
 // Create new tenant endpoint
 app.post('/api/tenants', async (req, res) => {
   try {
-    const { plan, tenantName, emails } = req.body;
+    const { plan, tenantId, emails } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({
+        error: 'tenantId is required',
+      });
+    }
 
     switch (plan) {
       case 'free':
         console.log("free");
         // Trigger the workflow for free plan
-        await triggerWorkflow(req.body);
+        await triggerWorkflow({ tenantId, tenantName: tenantId });
         // Create a document for free plan
-        await createTenantDocument(req.body);
+        await createTenantDocument({ tenantId, plan });
         break;
       case 'standard':
         console.log("standard");
-        await triggerWorkflow(req.body);
+        await triggerWorkflow({ tenantId, tenantName: tenantId });
         // Create a document for standard plan
-        await createTenantDocument(req.body);
+        await createTenantDocument({ tenantId, plan });
         break;
       case 'enterprise':
         console.log("enterprise");
-        await triggerWorkflow(req.body);
+        await triggerWorkflow({ tenantId, tenantName: tenantId });
         // Create a document for enterprise plan
-        await createTenantDocument(req.body);
+        await createTenantDocument({ tenantId, plan });
         break;
       default:
         return res.status(400).json({
@@ -199,7 +208,7 @@ app.post('/api/tenants', async (req, res) => {
 
     res.status(202).json({
       message: 'Tenant creation initiated',
-      tenant: req.body.tenantName,
+      tenant: tenantId,
       status: 'PENDING'
     });
   } catch (error) {
