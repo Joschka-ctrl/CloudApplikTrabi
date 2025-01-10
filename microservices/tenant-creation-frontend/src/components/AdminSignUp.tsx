@@ -114,7 +114,7 @@ export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpPro
               Admin Sign Up
             </Typography>
             <Typography variant="body1" align="center" color="textSecondary" sx={{ mb: 3 }}>
-              Create your admin account and company tenant
+              Create your admin account to get started
             </Typography>
 
             {error && (
