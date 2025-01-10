@@ -1,7 +1,6 @@
 const express = require('express');
 const { Octokit } = require('@octokit/rest');
 const cors = require('cors');
-const Joi = require('joi');
 require('dotenv').config();
 
 const app = express();

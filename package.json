@@ -12,7 +12,6 @@
     "install-backend-reporting": "cd microservices/backend-reporting && npm install",
     "install-backend-tenant-creation": "cd microservices/backend-tenant-creation && npm install",
     "install-facility-management": "cd microservices/facility-management && npm install",
-    "install-tenant-creation-backend": "cd microservices/tenant-creation-backend && npm install",
     "install-tenant-creation-frontend": "cd microservices/tenant-creation-frontend && npm install",
     "start:dev": "run-p -n -l start:dev:*",
     "start:dev:backend": "cd microservices/backend && npm start",
@@ -21,7 +20,6 @@
     "start:dev:backend-reporting": "cd microservices/backend-reporting && npm start",
     "start:dev:backend-tenant-creation": "cd microservices/backend-tenant-creation && npm start",
     "start:dev:facility-management": "cd microservices/facility-management && npm start",
-    "start:dev:tenant-creation-backend": "cd microservices/tenant-creation-backend && npm run dev",
     "start:dev:tenant-creation-frontend": "cd microservices/tenant-creation-frontend && npm run dev"
   },
   "author": "",
