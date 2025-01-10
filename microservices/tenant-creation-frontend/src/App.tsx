@@ -17,6 +17,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useState } from 'react';
+import { AdminSignUp } from './components/AdminSignUp';
 
 const theme = createTheme({
   palette: {
@@ -34,6 +35,9 @@ function App() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [tenantName, setTenantName] = useState('');
   const [emails, setEmails] = useState(['']);
+  const [isAdminSignedUp, setIsAdminSignedUp] = useState(false);
+
+  const HOST = 'http://localhost:3023/api/tenants';
 
   function selectPlan(plan: string) {
     console.log(`Selected plan: ${plan}`);
@@ -63,7 +67,7 @@ function App() {
       emails: emails.filter(email => email !== ''),
     });
 
-    fetch('http://localhost:3023/api/tenants', {
+    fetch(HOST, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,6 +83,14 @@ function App() {
     setTenantName('');
     setEmails(['']);
   };
+
+  if (!isAdminSignedUp) {
+    return (
+      <ThemeProvider theme={theme}>
+        <AdminSignUp onSignUpSuccess={() => setIsAdminSignedUp(true)} />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>
