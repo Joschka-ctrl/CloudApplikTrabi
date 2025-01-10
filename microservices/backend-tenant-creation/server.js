@@ -90,26 +90,10 @@ async function createAdminUserAndTenant(adminData) {
     
     const tenant = await admin.auth().tenantManager().createTenant(tenantConfig);
 
-    // Now create user with the correct tenant ID
-    const userRecord = await admin.auth().createUser({
-      email: adminData.email,
-      password: adminData.password,
-      displayName: adminData.fullName,
-      emailVerified: false,
-      disabled: false
-    });
-
-    // Set custom claims for admin
-    await admin.auth().setCustomUserClaims(userRecord.uid, {
-      admin: true,
-      tenantId: tenant.tenantId
-    });
-
     // Create tenant document in Firestore
     const tenantData = {
       tenantId: tenant.tenantId,
       companyName: adminData.companyName,
-      adminUid: userRecord.uid,
       adminEmail: adminData.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       plan: adminData.plan || 'standard',
@@ -120,11 +104,10 @@ async function createAdminUserAndTenant(adminData) {
 
     return {
       tenantId: tenant.tenantId,
-      adminUid: userRecord.uid,
       success: true
     };
   } catch (error) {
-    console.error('Error creating admin user and tenant:', error);
+    console.error('Error creating tenant:', error);
     throw error;
   }
 }
@@ -132,43 +115,54 @@ async function createAdminUserAndTenant(adminData) {
 // Admin sign-in and tenant creation endpoint
 app.post('/api/admin/signup', async (req, res) => {
   try {
-    const {
-      email,
-      password,
-      fullName,
-      companyName,
-      plan
-    } = req.body;
+    const { email, password, fullName, companyName } = req.body;
 
     if (!email || !password || !fullName || !companyName) {
-      return res.status(400).json({
-        error: 'Missing required fields'
-      });
+      return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const adminData = {
+    const result = await createAdminUserAndTenant({
       email,
       password,
       fullName,
-      companyName,
-      companyId: companyName.toLowerCase().replace(/\s+/g, '-'),
-      plan
-    };
-
-    const result = await createAdminUserAndTenant(adminData);
-
-    res.status(201).json({
-      success: true,
-      tenantId: result.tenantId,
-      message: 'Admin user and tenant created successfully'
+      companyName
     });
 
+    res.status(200).json(result);
   } catch (error) {
-    console.error('Error in admin signup:', error);
-    res.status(500).json({
-      error: 'Failed to create admin user and tenant',
-      message: error.message
+    console.error('Error in signup endpoint:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Verify signup and set custom claims
+app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.body;
+    const uid = req.user.uid;
+    console.log('Tenant ID:', tenantId);
+    console.log('UID:', uid);
+
+    if (!tenantId) {
+      return res.status(400).json({ message: 'Missing tenant ID' });
+    }
+
+    // Set custom claims for admin
+    /*
+    await admin.auth().setCustomUserClaims(uid, {
+      admin: true,
+      tenantId: tenantId
+    });*/
+
+    // Update tenant document with admin UID
+    await db.collection('tenants').doc(tenantId).update({
+      adminUid: uid
     });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error in verify-signup endpoint:', error);
+    res.status(500).json({ message: error.message });
   }
 });
 

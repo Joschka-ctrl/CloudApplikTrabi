@@ -9,6 +9,8 @@ import {
   Container,
   Alert,
 } from '@mui/material';
+import { auth } from '../firebase.ts';
+import { createUserWithEmailAndPassword } from '@firebase/auth';
 
 interface AdminSignUpProps {
   onSignUpSuccess: () => void;
@@ -44,6 +46,8 @@ export function AdminSignUp({ onSignUpSuccess }: AdminSignUpProps) {
 
     try {
       setLoading(true);
+      
+      // First, create tenant and admin user in backend
       const response = await fetch('http://localhost:3023/api/admin/signup', {
         method: 'POST',
         headers: {
@@ -61,6 +65,33 @@ export function AdminSignUp({ onSignUpSuccess }: AdminSignUpProps) {
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to create admin account');
+      }
+
+      auth.tenantId = data.tenantId;
+      // Now sign in the user with Firebase
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      // Set the tenant ID in the user's custom claims
+      const idToken = await userCredential.user.getIdToken(true);
+      
+      // Call backend to verify the signup was successful
+      const verifyResponse = await fetch('http://localhost:3023/api/admin/verify-signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          tenantId: data.tenantId
+        })
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error('Failed to verify signup');
       }
 
       onSignUpSuccess();

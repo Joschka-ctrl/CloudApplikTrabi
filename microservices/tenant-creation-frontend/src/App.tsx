@@ -18,6 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useState } from 'react';
 import { AdminSignUp } from './components/AdminSignUp';
+import { auth } from './firebase';
 
 const theme = createTheme({
   palette: {
@@ -33,7 +34,6 @@ const theme = createTheme({
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const [tenantName, setTenantName] = useState('');
   const [emails, setEmails] = useState(['']);
   const [isAdminSignedUp, setIsAdminSignedUp] = useState(false);
 
@@ -62,7 +62,7 @@ function App() {
 
   const handleSubmit = () => {
     console.log({
-      tenantName,
+      tenantId: auth.tenantId,
       selectedPlan,
       emails: emails.filter(email => email !== ''),
     });
@@ -73,14 +73,13 @@ function App() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        tenantName: tenantName.toLowerCase(),
+        tenantId: auth.tenantId,
         plan: selectedPlan.toLowerCase(),
         emails: emails.filter(email => email !== '').map(email => email.toLowerCase()),
       }),
     });
 
     setShowModal(false);
-    setTenantName('');
     setEmails(['']);
   };
 
@@ -162,10 +161,11 @@ function App() {
               <TextField
                 fullWidth
                 label="Tenant Name"
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
+                value={auth.tenantId || ''}
+                disabled
                 margin="normal"
                 variant="outlined"
+                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}
               />
               
               {emails.map((email, index) => (
