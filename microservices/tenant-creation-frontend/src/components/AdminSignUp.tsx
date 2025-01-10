@@ -8,15 +8,17 @@ import {
   Typography,
   Container,
   Alert,
+  Link,
 } from '@mui/material';
 import { auth } from '../firebase.ts';
 import { createUserWithEmailAndPassword } from '@firebase/auth';
 
 interface AdminSignUpProps {
   onSignUpSuccess: () => void;
+  onSwitchToLogin?: () => void;
 }
 
-export function AdminSignUp({ onSignUpSuccess }: AdminSignUpProps) {
+export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpProps) {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -68,6 +70,7 @@ export function AdminSignUp({ onSignUpSuccess }: AdminSignUpProps) {
       }
 
       auth.tenantId = data.tenantId;
+      localStorage.setItem('tenantId', data.tenantId);
       // Now sign in the user with Firebase
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -179,6 +182,18 @@ export function AdminSignUp({ onSignUpSuccess }: AdminSignUpProps) {
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </Button>
+              {onSwitchToLogin && (
+                <Box textAlign="center">
+                  <Link
+                    component="button"
+                    variant="body2"
+                    onClick={onSwitchToLogin}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    Already have an account? Login
+                  </Link>
+                </Box>
+              )}
             </form>
           </CardContent>
         </Card>

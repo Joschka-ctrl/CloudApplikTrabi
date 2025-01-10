@@ -211,6 +211,26 @@ app.post('/api/tenants', async (req, res) => {
   }
 });
 
+// Get all tenants endpoint
+app.get('/api/tenants', async (req, res) => {
+  try {
+    const tenantsSnapshot = await db.collection('tenants').get();
+    const tenants = [];
+    
+    tenantsSnapshot.forEach(doc => {
+      tenants.push({
+        id: doc.id,
+        name: doc.data().companyName || doc.id, // Use companyName if available, fallback to id
+      });
+    });
+
+    res.json(tenants);
+  } catch (error) {
+    console.error('Error fetching tenants:', error);
+    res.status(500).json({ error: 'Failed to fetch tenants' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy' });
