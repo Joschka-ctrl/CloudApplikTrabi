@@ -27,6 +27,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/container": "^5.19.0",
     "nodemon": "^3.1.9"
   },
   "devDependencies": {
