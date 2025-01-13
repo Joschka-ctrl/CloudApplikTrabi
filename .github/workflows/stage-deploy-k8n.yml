@@ -14,7 +14,7 @@ env:
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
 
 jobs:
-  kubernetes:
+  build and deploy:
     name: Deploy to GCP
     runs-on: ubuntu-latest
 
@@ -94,7 +94,6 @@ jobs:
         terraform init -migrate-state
 
 # APPLY HELM
-    steps:
     - name: Install GKE Auth Plugin
       run: |
         echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
