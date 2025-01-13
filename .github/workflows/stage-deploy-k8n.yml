@@ -45,6 +45,23 @@ jobs:
         terraform init
       working-directory: cloud/terraform
 
+    - name: Check if Cluster Exists
+      id: check_cluster
+      run: |
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+          echo "Cluster exists"
+          echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Cluster does not exist"
+          echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Import Existing Cluster
+      if: env.CLUSTER_EXISTS == 'true'
+      run: |
+        terraform import google_container_cluster.gke ${{ env.GKE_CLUSTER }}
+      working-directory: cloud/terraform  
+
     - name: Cluster Name
       run: |
         echo ${{ env.GKE_CLUSTER }}
