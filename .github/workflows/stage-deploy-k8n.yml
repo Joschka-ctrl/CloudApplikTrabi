@@ -3,9 +3,7 @@ name: Stage Cluster Creation
 on:
   push:
     tags:
-      - '*'
-    branches:
-      - stage-cluster 
+      - '0.*' 
 
 env:
   PROJECT_ID: trabantparking-stage
