@@ -12,7 +12,7 @@ on:
         default: "default-cluster"  
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: trabantparking-stage
   GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
@@ -50,6 +50,24 @@ jobs:
       run: |
         terraform init
       working-directory: cloud/terraform
+
+    - name: Check if Cluster Exists
+      id: check_cluster
+      run: |
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+          echo "Cluster exists"
+          echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "Cluster does not exist"
+          echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Import Existing Cluster
+      if: env.CLUSTER_EXISTS == 'true'
+      run: |
+        echo ${{ env.PROJECT_ID }}
+        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+      working-directory: cloud/terraform  
 
     - name: Cluster Name
       run: |
