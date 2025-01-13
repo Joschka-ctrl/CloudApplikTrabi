@@ -3,7 +3,7 @@ name: Tag New Version
 on:
   push:
     branches:
-      - stage-cluster
+      - never-run
 
 jobs:
   tag:
