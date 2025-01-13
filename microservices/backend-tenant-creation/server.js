@@ -115,6 +115,53 @@ async function createAdminUserAndTenant(adminData) {
   }
 }
 
+// Helper function to create a user in Firebase Auth
+async function createTenantUser(tenantId, email) {
+  try {
+    const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
+    const userRecord = await tenantAuth.createUser({
+      email: email,
+      emailVerified: false,
+      disabled: false,
+    });
+
+    // Create a user document in Firestore
+    const userData = {
+      id: userRecord.uid,
+      email: email,
+      tenantId: tenantId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'active'
+    };
+
+    await db.collection('tenants').doc(tenantId).collection('users').doc(userRecord.uid).set(userData);
+
+    return {
+      ...userData,
+      createdAt: new Date().toISOString() // Convert to ISO string for frontend
+    };
+  } catch (error) {
+    console.error('Error creating tenant user:', error);
+    throw error;
+  }
+}
+
+// Helper function to delete a user from Firebase Auth
+async function deleteTenantUser(tenantId, userId) {
+  try {
+    const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
+    await tenantAuth.deleteUser(userId);
+    
+    // Delete user document from Firestore
+    await db.collection('tenants').doc(tenantId).collection('users').doc(userId).delete();
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting tenant user:', error);
+    throw error;
+  }
+}
+
 // Admin sign-in and tenant creation endpoint
 app.post('/api/admin/signup', async (req, res) => {
   try {
@@ -237,6 +284,68 @@ app.get('/api/tenants', async (req, res) => {
   } catch (error) {
     console.error('Error fetching tenants:', error);
     res.status(500).json({ error: 'Failed to fetch tenants' });
+  }
+});
+
+// Get all users for a tenant
+app.get('/api/tenants/users', async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
+    const users = [];
+
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      users.push({
+        ...userData,
+        createdAt: userData.createdAt.toDate().toISOString()
+      });
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add a new user to a tenant
+app.post('/api/tenants/users', async (req, res) => {
+  try {
+    const { tenantId, email } = req.body;
+
+    if (!tenantId || !email) {
+      return res.status(400).json({ error: 'tenantId and email are required' });
+    }
+
+    const newUser = await createTenantUser(tenantId, email);
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a user from a tenant
+app.delete('/api/tenants/users/:userId', async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const { userId } = req.params;
+
+    if (!tenantId || !userId) {
+      return res.status(400).json({ error: 'tenantId and userId are required' });
+    }
+
+    await deleteTenantUser(tenantId, userId);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

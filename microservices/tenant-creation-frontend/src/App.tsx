@@ -15,6 +15,13 @@ import {
   IconButton,
   CircularProgress,
   Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -36,6 +43,12 @@ const theme = createTheme({
   },
 });
 
+interface User {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -44,9 +57,14 @@ function App() {
   const [showSignUp, setShowSignUp] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [userError, setUserError] = useState<string | null>(null);
 
   const HOST = 'http://localhost:3023/api/tenants';
 
+  // Auth state effect
   useEffect(() => {
     // Check for stored tenantId
     const storedTenantId = localStorage.getItem('tenantId');
@@ -62,6 +80,29 @@ function App() {
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch users effect
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!auth.tenantId) return;
+      
+      try {
+        const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setUserError(err instanceof Error ? err.message : 'Failed to fetch users');
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUsers();
+    }
+  }, [isAuthenticated]);
 
   if (loading) {
     return (
@@ -97,7 +138,7 @@ function App() {
   const handleSubmit = async () => {
     try {
       setError(null);
-      
+
       if (!auth.tenantId) {
         setError('No tenant ID available');
         return;
@@ -127,6 +168,66 @@ function App() {
     } catch (err) {
       console.error('Error creating tenant:', err);
       setError(err instanceof Error ? err.message : 'Failed to create tenant');
+    }
+  };
+
+  const handleAddUser = async () => {
+    try {
+      setUserError(null);
+
+      if (!auth.tenantId) {
+        setUserError('No tenant ID available');
+        return;
+      }
+
+      const response = await fetch(`${HOST}/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantId: auth.tenantId,
+          email: newUserEmail.toLowerCase(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add user');
+      }
+
+      const newUser = await response.json();
+      setUsers([...users, newUser]);
+      setShowAddUserModal(false);
+      setNewUserEmail('');
+    } catch (err) {
+      console.error('Error adding user:', err);
+      setUserError(err instanceof Error ? err.message : 'Failed to add user');
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      if (!auth.tenantId) {
+        setUserError('No tenant ID available');
+        return;
+      }
+
+      const response = await fetch(`${HOST}/users/${userId}?tenantId=${auth.tenantId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      setUsers(users.filter(user => user.id !== userId));
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setUserError(err instanceof Error ? err.message : 'Failed to delete user');
     }
   };
 
@@ -221,6 +322,76 @@ function App() {
                 </Card>
               </Grid>
             </Grid>
+
+            {/* User Management Section */}
+            <Box sx={{ mt: 6 }}>
+              <Typography variant="h4" component="h2" gutterBottom>
+                User Management
+              </Typography>
+              {userError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {userError}
+                </Alert>
+              )}
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setShowAddUserModal(true)}
+                >
+                  Add New User
+                </Button>
+              </Box>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Created At</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell align="right">
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDeleteUser(user.id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+
+            {/* Add User Modal */}
+            <Dialog open={showAddUserModal} onClose={() => setShowAddUserModal(false)} maxWidth="sm" fullWidth>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogContent>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  margin="normal"
+                  variant="outlined"
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setShowAddUserModal(false)}>Cancel</Button>
+                <Button onClick={handleAddUser} variant="contained">
+                  Add User
+                </Button>
+              </DialogActions>
+            </Dialog>
 
             <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
               <DialogTitle>Create Tenant</DialogTitle>
