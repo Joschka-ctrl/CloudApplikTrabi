@@ -24,8 +24,8 @@ jobs:
       - name: Get the latest tag
         id: get_latest_tag
         run: |
-          git fetch --tags
-          echo "LATEST_TAG=$(git describe --tags)" >> $GITHUB_ENV
+          git fetch --tags --always
+          echo "LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
 
       - name: Increment the version
         id: increment_version
