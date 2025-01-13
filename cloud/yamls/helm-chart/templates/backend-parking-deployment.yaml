@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend-parking
-          image: "{{ .Values.backendParking.image.repository }}:{{ .Values.backendParking.image.tag }}"
+          image: "{{ .Values.backendParking.image.repository }}:{{ .Values.global.tag }}"
           imagePullPolicy: {{ .Values.backendParking.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.backendParking.containerPort }}

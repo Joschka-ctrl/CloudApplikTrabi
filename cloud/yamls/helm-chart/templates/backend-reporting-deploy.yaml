@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend-reporting
-        image: "{{ .Values.backendReporting.image.repository }}:{{ .Values.backendReporting.image.tag }}"
+        image: "{{ .Values.backendReporting.image.repository }}:{{ .Values.global.tag }}"
         imagePullPolicy: {{ .Values.backendReporting.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.backendReporting.containerPort }}
