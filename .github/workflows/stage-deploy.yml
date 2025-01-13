@@ -25,14 +25,11 @@ jobs:
         run: |
           git fetch --tags
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV  
-          echo ${{ env.LATEST_TAG }}
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
       - name: Get changed files
         id: changed-files
         run: |
-          echo ${LATEST_TAG}
-          echo ${{ env.LATEST_TAG }}
           echo "::set-output name=frontend::$(git diff --name-only HEAD^ HEAD | grep ^frontend/ || true)"
           echo "::set-output name=backend::$(git diff --name-only HEAD^ HEAD | grep ^backend/ || true)"
           echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
@@ -55,12 +52,12 @@ jobs:
           docker build \
             --build-arg REACT_APP_BACKEND_URL=/api \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-            -t frontend-server:1.1.1 \
+            -t frontend-server:${{ env.LATEST_TAG }} \
             -f frontend/Dockerfile ./frontend
-          docker tag frontend-server:1.1.1 \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+          docker tag frontend-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
 
       # Backend
       - name: Build and Push Backend
@@ -71,9 +68,9 @@ jobs:
             -t backend-server:latest \
             -f backend/Dockerfile ./backend
           docker tag backend-server:latest \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
 
       # Backend E-Charging
       - name: Build and Push Backend E-Charging
@@ -82,12 +79,12 @@ jobs:
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-echarging-server:1.1.1 \
+            -t backend-echarging-server:${{ env.LATEST_TAG }} \
             -f backend-echarging/Dockerfile ./backend-echarging
-          docker tag backend-echarging-server:1.1.1 \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
+          docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
 
       # Backend Reporting
       - name: Build and Push Backend Reporting
@@ -96,23 +93,23 @@ jobs:
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-reporting-server:1.1.1 \
+            -t backend-reporting-server:${{ env.LATEST_TAG }} \
             -f backend-reporting/Dockerfile ./backend-reporting
-          docker tag backend-reporting-server:1.1.1 \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
+          docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
 
       # Backend Parking
       - name: Build and Push Backend Parking
-        if: steps.changed-files.outputs.backend_parking != ''
+        #if: steps.changed-files.outputs.backend_parking != ''
         run: |
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-parking-server:1.1.1 \
+            -t backend-parking-server:${{ env.LATEST_TAG }} \
             -f backend-parking/Dockerfile ./backend-parking
-          docker tag backend-parking-server:1.1.1 \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1
+          docker tag backend-parking-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
