@@ -483,6 +483,28 @@ app.get('/api/tenants/:tenantId', async (req, res) => {
   }
 });
 
+app.put('/api/tenants/:tenantId/changePlan', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { plan } = req.body;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    await db.collection('tenants').doc(tenantId).set({
+      plan
+    });
+
+    // Hier kommt später Joschkas workflow hin wenn Plan gewählt wird
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error changing plan:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy' });
