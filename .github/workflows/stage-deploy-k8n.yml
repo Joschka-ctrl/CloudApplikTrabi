@@ -14,7 +14,7 @@ env:
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
 
 jobs:
-  build and deploy:
+  build-and-deploy:
     name: Deploy to GCP
     runs-on: ubuntu-latest
 
