@@ -33,7 +33,7 @@ jobs:
           if [ -z "${{ env.LATEST_TAG }}" ]; then
             echo "NEW_TAG=0.1.0" >> $GITHUB_ENV
           else
-            NEW_TAG=$(semver bump patch ${{ env.LATEST_TAG }})
+            NEW_TAG=$(semver semver -i --patch ${{ env.LATEST_TAG }})
             echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
           fi
 
