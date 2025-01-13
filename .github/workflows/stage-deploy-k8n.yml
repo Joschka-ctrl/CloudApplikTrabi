@@ -1,101 +1,101 @@
-name: Build and Deploy to Kubernetes
+name: Stage Cluster Creation
 
 on:
   push:
     branches:
-      - never-run
+      - stage-cluster 
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: stage-cluster
+  GKE_REGION: europe-west1
+  TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
+  TF_PLAN_FILE: terraform.tfstate
+  BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
 
 jobs:
-  build-and-deploy:
+  deploy:
+    name: Deploy to GCP
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the repository
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    # Authenticate with Google Cloud
     - name: Set up Google Cloud SDK
       uses: google-github-actions/auth@v2
       with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
+        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-    - name: Authenticate Docker with Google Cloud
+    - name: Install Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker for GCP Artifact Registry
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-    # Terraform: Apply Kubernetes Cluster and Resource
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
-        terraform_version: 1.5.7
+        terraform_version: "1.5.7"
 
     - name: Initialize Terraform
-      run: terraform init
+      run: |
+        terraform init
       working-directory: cloud/terraform
 
-    - name: Apply Terraform (Provision Cluster and Resources)
-      run: terraform apply -auto-approve
+    - name: Cluster Name
+      run: |
+        echo ${{ env.GKE_CLUSTER }}
+
+    - name: Import Bucket
+      run: |
+        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
+      working-directory: cloud/terraform  
+
+    - name: Terraform Plan
+      run: |
+        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
+        terraform show -json tfplan > plan.json
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
       working-directory: cloud/terraform
 
-    # Create api-gateway-ingress
-    - name: Install gke-gcloud-auth-plugin
+
+    - name: Terraform Apply
       run: |
-        sudo apt-get install google-cloud-cli-gke-gcloud-auth-plugin
-
-    - name: Get Kubernetes Credentials
-      run: gcloud container clusters get-credentials terraform-cluster --region=europe-west1
-
-    - name: Create Kubernetes Ingress
-      run: kubectl apply -f cloud/yamls/ingress.yaml
-
-    # Wait for Kubernetes Ingress Address
-    - name: Get Kubernetes Ingress Address
-      id: get-ingress
-      run: |
-        while true; do
-          INGRESS_ADDRESS=$(kubectl get ingress api-gateway-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          if [[ -n "$INGRESS_ADDRESS" ]]; then
-            break
+          if [ -f "tfplan" ]; then
+            terraform apply tfplan
+          else
+            terraform apply -auto-approve
           fi
-          echo "Waiting for ingress address..."
-          sleep 10
-        done
-        echo "INGRESS_ADDRESS=${INGRESS_ADDRESS}" >> $GITHUB_ENV
+      working-directory: cloud/terraform
 
-    # Build Backend Docker image
-    - name: Build Backend Docker image
+    - name: Migrate Terraform State to Google Cloud Storage
       run: |
-        docker build --build-arg BUCKET_ENV=_stage -t backend-server:1.1.1 -f backend/Dockerfile ./backend
+        terraform init -migrate-state
 
-    - name: Tag Backend Docker Image
+    - name: Install GKE Auth Plugin
       run: |
-        docker tag backend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.1.1
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
-    - name: Push Backend Docker image
+    - name: Get GKE Credentials
       run: |
-        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:1.1.1
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
 
-    # Build Frontend Docker image with Kubernetes Ingress URL
-    - name: Build Frontend Docker image
-      run: |
-        docker build --build-arg REACT_APP_BACKEND_URL=${{ env.INGRESS_ADDRESS }} \
-                     --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-                     -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.3'
 
-    - name: Tag Frontend Docker Image
+    - name: Deploy Helm Chart
       run: |
-        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
+        helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace
 
-    - name: Push Frontend Docker image
+    - name: Verify Deployment
       run: |
-        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
-        
-
-    # Apply Kubernetes Deployment and Services
-    - name: Deploy Kubernetes Resources
-      run: |
-        kubectl apply -f cloud/yamls/backend-deploy.yaml
-        kubectl apply -f cloud/yamls/backend-service.yaml
-        kubectl apply -f cloud/yamls/frontend-deploy.yaml
-        kubectl apply -f cloud/yamls/frontend-service.yaml
+        kubectl get pods -n trabi-app
+        kubectl get services -n trabi-app
