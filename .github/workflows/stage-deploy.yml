@@ -31,6 +31,8 @@ jobs:
       - name: Get changed files
         id: changed-files
         run: |
+          echo ${LATEST_TAG}
+          echo ${{ env.LATEST_TAG }}
           echo "::set-output name=frontend::$(git diff --name-only HEAD^ HEAD | grep ^frontend/ || true)"
           echo "::set-output name=backend::$(git diff --name-only HEAD^ HEAD | grep ^backend/ || true)"
           echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
