@@ -121,6 +121,7 @@ async function createTenantUser(tenantId, email) {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     const userRecord = await tenantAuth.createUser({
       email: email,
+      password: tenantId,
       emailVerified: false,
       disabled: false,
     });
@@ -345,6 +346,29 @@ app.delete('/api/tenants/users/:userId', async (req, res) => {
     res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error deleting user:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get tenant details
+app.get('/api/tenants/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenantId is required' });
+    }
+
+    const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+    
+    if (!tenantDoc.exists) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+
+    const tenantData = tenantDoc.data();
+    res.status(200).json(tenantData);
+  } catch (error) {
+    console.error('Error fetching tenant:', error);
     res.status(500).json({ error: error.message });
   }
 });

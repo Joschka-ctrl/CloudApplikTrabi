@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import CheckIcon from '@mui/icons-material/Check';
 import { useState, useEffect } from 'react';
 import { AdminSignUp } from './components/AdminSignUp';
 import { AdminLogin } from './components/AdminLogin';
@@ -52,7 +53,6 @@ interface User {
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const [emails, setEmails] = useState(['']);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -61,8 +61,54 @@ function App() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [userError, setUserError] = useState<string | null>(null);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [changingPlan, setChangingPlan] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   const HOST = 'http://localhost:3023/api/tenants';
+
+  const getPlanPrice = (plan: string): number => {
+    switch (plan.toLowerCase()) {
+      case 'free':
+        return 0;
+      case 'standard':
+        return 10;
+      case 'enterprise':
+        return 50;
+      default:
+        return 0;
+    }
+  };
+
+  const handlePayment = async () => {
+    setIsProcessingPayment(true);
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setIsProcessingPayment(false);
+    setShowPaymentSuccess(true);
+    // Close payment success dialog after 2 seconds and set current plan
+    setTimeout(() => {
+      // handleSubmit();
+      setShowPaymentSuccess(false);
+      setCurrentPlan(selectedPlan);
+      setShowModal(false);
+    }, 2000);
+  };
+
+  function selectPlan(plan: string) {
+    setSelectedPlan(plan);
+    setShowModal(true);
+  }
+
+  const handleChangePlan = () => {
+    setChangingPlan(true);
+  };
+
+  const handleKeepCurrentPlan = () => {
+    setChangingPlan(false);
+  };
 
   // Auth state effect
   useEffect(() => {
@@ -75,11 +121,42 @@ function App() {
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
-      setLoading(false);
+      if (!user) {
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch tenant details effect
+  useEffect(() => {
+    const fetchTenantDetails = async () => {
+      if (!auth.tenantId || !isAuthenticated) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${HOST}/${auth.tenantId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch tenant details');
+        }
+        const data = await response.json();
+        if (data.plan) {
+          setCurrentPlan(data.plan.replace(/-/g, ' '));
+        }
+      } catch (err) {
+        console.error('Error fetching tenant details:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
+      } finally {
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
+    };
+
+    fetchTenantDetails();
+  }, [isAuthenticated]);
 
   // Fetch users effect
   useEffect(() => {
@@ -104,7 +181,7 @@ function App() {
     }
   }, [isAuthenticated]);
 
-  if (loading) {
+  if (!initialLoadComplete || loading) {
     return (
       <ThemeProvider theme={theme}>
         <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -113,27 +190,6 @@ function App() {
       </ThemeProvider>
     );
   }
-
-  function selectPlan(plan: string) {
-    console.log(`Selected plan: ${plan}`);
-    setSelectedPlan(plan);
-    setShowModal(true);
-  }
-
-  const handleEmailChange = (index: number, value: string) => {
-    const newEmails = [...emails];
-    newEmails[index] = value;
-    setEmails(newEmails);
-  };
-
-  const handleAddEmail = () => {
-    setEmails([...emails, '']);
-  };
-
-  const handleRemoveEmail = (index: number) => {
-    const newEmails = emails.filter((_, i) => i !== index);
-    setEmails(newEmails);
-  };
 
   const handleSubmit = async () => {
     try {
@@ -151,8 +207,7 @@ function App() {
         },
         body: JSON.stringify({
           tenantId: auth.tenantId,
-          plan: selectedPlan.toLowerCase(),
-          emails: emails.filter(email => email !== '').map(email => email.toLowerCase()),
+          plan: selectedPlan.toLowerCase().replace(/ /g, '-'),
         }),
       });
 
@@ -164,7 +219,6 @@ function App() {
       const data = await response.json();
       console.log('Tenant created:', data);
       setShowModal(false);
-      setEmails(['']);
     } catch (err) {
       console.error('Error creating tenant:', err);
       setError(err instanceof Error ? err.message : 'Failed to create tenant');
@@ -263,65 +317,162 @@ function App() {
         <Navbar onLogout={() => setIsAuthenticated(false)} />
         <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h3" component="h1" align="center" gutterBottom>
-              Choose a Plan
-            </Typography>
-            <Grid container spacing={4} justifyContent="center">
-              <Grid item xs={12} sm={6} md={4}>
-                <Card raised sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="h2" gutterBottom>
-                      Free
-                    </Typography>
-                    <Typography variant="h5" color="primary" gutterBottom>
-                      $0 / month
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      Basic features for personal use.
-                    </Typography>
-                    <Button variant="contained" fullWidth onClick={() => selectPlan('free')}>
-                      Select
+            {!currentPlan || changingPlan ? (
+              <>
+                <Typography variant="h3" component="h1" align="center" gutterBottom>
+                  {changingPlan ? 'Change Your Plan' : 'Choose a Plan'}
+                </Typography>
+                {changingPlan && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleKeepCurrentPlan}
+                      startIcon={<CheckIcon />}
+                    >
+                      Keep Current Plan
                     </Button>
+                  </Box>
+                )}
+                <Grid container spacing={4} justifyContent="center">
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Card 
+                      raised 
+                      sx={{ 
+                        height: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        ...(changingPlan && currentPlan === 'free' && {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                        })
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography variant="h4" component="h2" gutterBottom>
+                          Free
+                        </Typography>
+                        <Typography variant="h5" color="primary" gutterBottom>
+                          $0 / month
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          Basic features for personal use.
+                        </Typography>
+                        <Button 
+                          variant="contained" 
+                          fullWidth 
+                          onClick={() => selectPlan('free')}
+                          {...(changingPlan && currentPlan === 'free' && {
+                            startIcon: <CheckIcon />,
+                            children: 'Current Plan'
+                          })}
+                        >
+                          {changingPlan && currentPlan === 'free' ? 'Current Plan' : 'Select'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Card 
+                      raised 
+                      sx={{ 
+                        height: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        ...(changingPlan && currentPlan === 'standard' && {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                        })
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography variant="h4" component="h2" gutterBottom>
+                          Standard
+                        </Typography>
+                        <Typography variant="h5" color="primary" gutterBottom>
+                          $10 / month
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          Advanced features for small teams.
+                        </Typography>
+                        <Button 
+                          variant="contained" 
+                          fullWidth 
+                          onClick={() => selectPlan('standard')}
+                          {...(changingPlan && currentPlan === 'standard' && {
+                            startIcon: <CheckIcon />,
+                            children: 'Current Plan'
+                          })}
+                        >
+                          {changingPlan && currentPlan === 'standard' ? 'Current Plan' : 'Select'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Card 
+                      raised 
+                      sx={{ 
+                        height: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        ...(changingPlan && currentPlan === 'enterprise' && {
+                          outline: '2px solid',
+                          outlineColor: 'primary.main',
+                        })
+                      }}
+                    >
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography variant="h4" component="h2" gutterBottom>
+                          Enterprise
+                        </Typography>
+                        <Typography variant="h5" color="primary" gutterBottom>
+                          $50 / month
+                        </Typography>
+                        <Typography variant="body1" sx={{ mb: 2 }}>
+                          All features for large organizations.
+                        </Typography>
+                        <Button 
+                          variant="contained" 
+                          fullWidth 
+                          onClick={() => selectPlan('enterprise')}
+                          {...(changingPlan && currentPlan === 'enterprise' && {
+                            startIcon: <CheckIcon />,
+                            children: 'Current Plan'
+                          })}
+                        >
+                          {changingPlan && currentPlan === 'enterprise' ? 'Current Plan' : 'Select'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </>
+            ) : (
+              <Box sx={{ mt: 4 }}>
+                <Card raised>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="h4" gutterBottom>
+                          Current Plan: {currentPlan.charAt(0).toUpperCase() + currentPlan.slice(1)}
+                        </Typography>
+                        <Typography variant="h6" color="primary" gutterBottom>
+                          ${getPlanPrice(currentPlan)}/month
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleChangePlan}
+                      >
+                        Change Plan
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card raised sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="h2" gutterBottom>
-                      Standard
-                    </Typography>
-                    <Typography variant="h5" color="primary" gutterBottom>
-                      $10 / month
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      Advanced features for small teams.
-                    </Typography>
-                    <Button variant="contained" fullWidth onClick={() => selectPlan('standard')}>
-                      Select
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card raised sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h4" component="h2" gutterBottom>
-                      Enterprise
-                    </Typography>
-                    <Typography variant="h5" color="primary" gutterBottom>
-                      $50 / month
-                    </Typography>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      All features for large organizations.
-                    </Typography>
-                    <Button variant="contained" fullWidth onClick={() => selectPlan('enterprise')}>
-                      Select
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+              </Box>
+            )}
 
             {/* User Management Section */}
             <Box sx={{ mt: 6 }}>
@@ -394,7 +545,7 @@ function App() {
             </Dialog>
 
             <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
-              <DialogTitle>Create Tenant</DialogTitle>
+              <DialogTitle>Plan Details</DialogTitle>
               <DialogContent>
                 <Box component="form" sx={{ mt: 2 }}>
                   {error && (
@@ -411,41 +562,49 @@ function App() {
                     variant="outlined"
                     sx={{ backgroundColor: 'rgba(0, 0, 0, 0.05)' }}
                   />
-                  {emails.map((email, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                      <TextField
-                        fullWidth
-                        label="Email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => handleEmailChange(index, e.target.value)}
-                        variant="outlined"
-                      />
-                      <IconButton
-                        color="error"
-                        onClick={() => handleRemoveEmail(index)}
-                        disabled={emails.length === 1}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                  <Box sx={{ mt: 3, mb: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Cost Calculation
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography>
+                        Selected Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}
+                      </Typography>
+                      <Typography variant="h6" color="primary">
+                        ${getPlanPrice(selectedPlan)}/month
+                      </Typography>
                     </Box>
-                  ))}
-                  <Button
-                    startIcon={<AddIcon />}
-                    onClick={handleAddEmail}
-                    variant="outlined"
-                    sx={{ mt: 1 }}
-                  >
-                    Add Email
-                  </Button>
+                  </Box>
                 </Box>
               </DialogContent>
               <DialogActions>
                 <Button onClick={() => setShowModal(false)}>Cancel</Button>
-                <Button onClick={handleSubmit} variant="contained">
-                  Create Tenant
+                <Button
+                  onClick={handlePayment}
+                  variant="contained"
+                  disabled={isProcessingPayment}
+                  startIcon={isProcessingPayment ? <CircularProgress size={20} /> : null}
+                >
+                  {isProcessingPayment ? 'Processing...' : 'Pay Now'}
                 </Button>
               </DialogActions>
+            </Dialog>
+
+            {/* Payment Success Dialog */}
+            <Dialog
+              open={showPaymentSuccess}
+              aria-labelledby="payment-success-dialog"
+              maxWidth="xs"
+              fullWidth
+            >
+              <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Payment Successful!
+                </Typography>
+                <Typography>
+                  Your tenant will be created momentarily...
+                </Typography>
+              </DialogContent>
             </Dialog>
           </Container>
         </Box>
