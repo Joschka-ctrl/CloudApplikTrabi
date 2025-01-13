@@ -59,6 +59,7 @@ jobs:
     - name: Import Existing Cluster
       if: env.CLUSTER_EXISTS == 'true'
       run: |
+        echo ${{ secrets.GCP_PROJECT_ID }}
         terraform import google_container_cluster.gke projects/${{ secrets.GCP_PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
 
