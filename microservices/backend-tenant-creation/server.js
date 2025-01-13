@@ -217,6 +217,118 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
   }
 });
 
+
+
+async function loadKubernetesClient() {
+  const { KubeConfig, CoreV1Api } = await import('@kubernetes/client-node');
+  const kc = new KubeConfig();
+  kc.loadFromDefault();  // Lädt die Standard-Konfiguration aus dem .kube/config
+  const k8sApi = kc.makeApiClient(CoreV1Api);
+  return k8sApi;
+}
+
+async function getIngressControllerUrl(namespace = 'default', serviceName = 'istio-ingressgateway') {
+  try {
+    const k8sApi = await loadKubernetesClient();
+    console.log('Kubernetes client loaded successfully');
+    
+    // Hole den Service für den Ingress Controller
+    const res = await k8sApi.readNamespacedService({name: serviceName, namespace: namespace});
+    console.log('Service fetched successfully:', res.body);
+
+    // Extrahiere die externe IP aus der Antwort
+    const externalIp = res.body.status.loadBalancer.ingress[0].ip;
+
+    if (externalIp) {
+      console.log('Ingress Controller URL:', externalIp);
+      return externalIp;
+    } else {
+      throw new Error('No external IP found for Ingress Controller');
+    }
+  } catch (err) {
+    console.error('Error fetching Ingress URL:', err);
+    throw new Error('Unable to fetch Ingress URL');
+  }
+}
+
+
+
+
+const { ClusterManagerClient } = require('@google-cloud/container');
+
+const getClusterUrl = async (clusterName) => {
+  try {
+    const region = 'europe-west1';
+    const projectId = 'trabantparking-stage';
+    console.log('projectId:', projectId);
+    console.log('region:', region);
+    console.log('clusterName:', clusterName);
+
+    const clusterPath = `projects/${projectId}/locations/${region}/clusters/${clusterName}`;
+    
+
+
+    const client = new ClusterManagerClient();
+    const [response] = await client.getCluster({
+      // projectId: projectId,
+      // zone: region,
+      // clusterId: clusterName,
+      name: clusterPath,  // Hier den vollständigen Cluster-Pfad verwenden
+    });
+
+    // Rückgabe der Endpunkt-URL des Clusters
+    return `http://${response.endpoint}`;
+  } catch (error) {
+    console.error(`Error fetching cluster URL for ${clusterName}:`, error);
+    throw new Error('Unable to fetch cluster URL');
+  }
+};
+
+
+// Free Plan Tenant erstellen
+async function handleFreePlan(tenantConfig) {
+  try {
+
+   let externalIp = await getIngressControllerUrl();
+   console.log('Ingress Controller URL:', externalIp);
+
+    // const clusterUrl = await getClusterUrl('stage-cluster');
+    // console.log('Cluster URL:', clusterUrl);
+    // const tenantData = {
+    //   ...tenantConfig,
+    //   // clusterUrl: "http://34.149.162.63/",
+    //   clusterUrl: clusterUrl,
+    //   plan: 'free',
+    //   createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    //   status: 'active',
+    // };
+    // // await db.collection('tenants').doc(tenantConfig.tenantId).set(tenantData);
+    // console.log('Free Plan Tenant created successfully');
+    return tenantData;
+  } catch (error) {
+    console.error('Error creating Free Plan Tenant:', error);
+    throw error;
+  }
+}
+
+async function handleStandardPlan(tenantConfig) {
+  try {
+    const tenantData = {
+      ...tenantConfig,
+      clusterUrl: process.env.STANDARD_CLUSTER_URL,
+      plan: 'standard',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      status: 'active',
+    };
+    await db.collection('tenants').doc(tenantConfig.tenantId).set(tenantData);
+    console.log('Standard Plan Tenant created successfully');
+    return tenantData;
+  } catch (error) {
+    console.error('Error creating Standard Plan Tenant:', error);
+    throw error;
+  }
+}
+
 // Create new tenant endpoint
 app.post('/api/tenants', async (req, res) => {
   try {
@@ -232,15 +344,13 @@ app.post('/api/tenants', async (req, res) => {
       case 'free':
         console.log("free");
         // Trigger the workflow for free plan
-        await triggerWorkflow({ tenantId, tenantName: tenantId });
-        // Create a document for free plan
-        await createTenantDocument({ tenantId, plan });
+        await handleFreePlan({ tenantId, tenantName: tenantId });
         break;
       case 'standard':
         console.log("standard");
-        await triggerWorkflow({ tenantId, tenantName: tenantId });
+        await handleStandardPlan({ tenantId, tenantName: tenantId });
         // Create a document for standard plan
-        await createTenantDocument({ tenantId, plan });
+        // await createTenantDocument({ tenantId, plan });
         break;
       case 'enterprise':
         console.log("enterprise");
