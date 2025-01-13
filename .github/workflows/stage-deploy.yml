@@ -1,14 +1,10 @@
 name: Build and Deploy to Google Cloud Run
 
 on:
-  push:
-    paths:
-      - 'frontend/**'
-      - 'backend/**'
-      - 'backend-echarging/**'
-      - 'backend-reporting/**'
-      - 'backend-parking/**'
-      - '.github/workflows/stage-deploy.yml'
+  workflow_run:
+    workflows: ["Stage Cluster Creation"]
+    types:
+      - completed
 
 jobs:
   build-and-deploy:
@@ -35,6 +31,7 @@ jobs:
           echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
           echo "::set-output name=backend_reporting::$(git diff --name-only HEAD^ HEAD | grep ^backend-reporting/ || true)"
           echo "::set-output name=backend_parking::$(git diff --name-only HEAD^ HEAD | grep ^backend-parking/ || true)"
+        working-directory: microservices
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/auth@v2
@@ -58,6 +55,7 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
       # Backend
       - name: Build and Push Backend
@@ -71,6 +69,7 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
       # Backend E-Charging
       - name: Build and Push Backend E-Charging
@@ -85,6 +84,7 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
       # Backend Reporting
       - name: Build and Push Backend Reporting
@@ -99,10 +99,11 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
       # Backend Parking
       - name: Build and Push Backend Parking
-        #if: steps.changed-files.outputs.backend_parking != ''
+        if: steps.changed-files.outputs.backend_parking != ''
         run: |
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
