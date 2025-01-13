@@ -113,3 +113,4 @@ jobs:
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
           docker push \
             europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
