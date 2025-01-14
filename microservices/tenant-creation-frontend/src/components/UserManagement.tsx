@@ -20,6 +20,7 @@ import { useState } from 'react';
 interface User {
   id: string;
   email: string;
+  name: string;
   createdAt: string;
 }
 
@@ -76,6 +77,7 @@ export const UserManagement = ({
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Created At</TableCell>
               <TableCell align="right">Actions</TableCell>
@@ -84,6 +86,7 @@ export const UserManagement = ({
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
+                <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell align="right">

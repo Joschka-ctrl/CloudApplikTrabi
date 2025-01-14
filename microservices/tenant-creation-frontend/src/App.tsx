@@ -46,6 +46,7 @@ function App() {
   const [users, setUsers] = useState<User[]>([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserName, setNewUserName] = useState('');
   const [userError, setUserError] = useState<string | null>(null);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -205,6 +206,7 @@ function App() {
         body: JSON.stringify({
           tenantId: auth.tenantId,
           email: newUserEmail.toLowerCase(),
+          name: newUserName.trim(),
         }),
       });
 
@@ -217,6 +219,7 @@ function App() {
       setUsers([...users, newUser]);
       setShowAddUserModal(false);
       setNewUserEmail('');
+      setNewUserName('');
     } catch (err) {
       console.error('Error adding user:', err);
       setUserError(err instanceof Error ? err.message : 'Failed to add user');
@@ -328,8 +331,14 @@ function App() {
       <AddUserDialog
         open={showAddUserModal}
         email={newUserEmail}
-        onClose={() => setShowAddUserModal(false)}
+        name={newUserName}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setNewUserEmail('');
+          setNewUserName('');
+        }}
         onEmailChange={setNewUserEmail}
+        onNameChange={setNewUserName}
         onSubmit={handleAddUser}
       />
 

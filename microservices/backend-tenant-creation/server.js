@@ -116,7 +116,7 @@ async function createAdminUserAndTenant(adminData) {
 }
 
 // Helper function to create a user in Firebase Auth
-async function createTenantUser(tenantId, email) {
+async function createTenantUser(tenantId, email, name) {
   try {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     const userRecord = await tenantAuth.createUser({
@@ -124,12 +124,14 @@ async function createTenantUser(tenantId, email) {
       password: tenantId,
       emailVerified: false,
       disabled: false,
+      displayName: name,
     });
 
     // Create a user document in Firestore
     const userData = {
       id: userRecord.uid,
       email: email,
+      name: name,
       tenantId: tenantId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       status: 'active'
@@ -428,13 +430,13 @@ app.get('/api/tenants/users', async (req, res) => {
 // Add a new user to a tenant
 app.post('/api/tenants/users', async (req, res) => {
   try {
-    const { tenantId, email } = req.body;
+    const { tenantId, email, name } = req.body;
 
     if (!tenantId || !email) {
       return res.status(400).json({ error: 'tenantId and email are required' });
     }
 
-    const newUser = await createTenantUser(tenantId, email);
+    const newUser = await createTenantUser(tenantId, email, name);
     res.status(201).json(newUser);
   } catch (error) {
     console.error('Error creating user:', error);
