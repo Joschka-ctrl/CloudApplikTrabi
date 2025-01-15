@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-backend-reporting
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: {{ .Values.backendReporting.service.type }}
   ports:

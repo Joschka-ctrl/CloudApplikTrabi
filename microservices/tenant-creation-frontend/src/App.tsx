@@ -217,6 +217,7 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
         },
         body: JSON.stringify({
           tenantId: auth.tenantId,
@@ -323,6 +324,7 @@ function App() {
                 plan={currentPlan}
                 price={getPlanPrice(currentPlan)}
                 onChangePlan={handleChangePlan}
+                url={`https://${auth.tenantId}.trabantparking.ninja`}
               />
             )}
 

@@ -22,6 +22,7 @@ interface User {
   email: string;
   name: string;
   createdAt: string;
+  role: string;
 }
 
 interface UserManagementProps {
@@ -79,6 +80,7 @@ export const UserManagement = ({
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>Role</TableCell>
               <TableCell>Created At</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -88,6 +90,7 @@ export const UserManagement = ({
               <TableRow key={user.id}>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
+                <TableCell>{user.role}</TableCell>
                 <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell align="right">
                   <IconButton color="error" onClick={() => handleDeleteClick(user)}>

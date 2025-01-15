@@ -296,22 +296,7 @@ const getClusterUrl = async (clusterName) => {
 async function handleFreePlan(tenantConfig) {
   try {
 
-   let externalIp = await getIngressControllerUrl();
-   console.log('Ingress Controller URL:', externalIp);
-
-    // const clusterUrl = await getClusterUrl('stage-cluster');
-    // console.log('Cluster URL:', clusterUrl);
-    // const tenantData = {
-    //   ...tenantConfig,
-    //   // clusterUrl: "http://34.149.162.63/",
-    //   clusterUrl: clusterUrl,
-    //   plan: 'free',
-    //   createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    //   status: 'active',
-    // };
-    // // await db.collection('tenants').doc(tenantConfig.tenantId).set(tenantData);
-    // console.log('Free Plan Tenant created successfully');
-    return tenantData;
+    return "free.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating Free Plan Tenant:', error);
     throw error;
@@ -320,16 +305,7 @@ async function handleFreePlan(tenantConfig) {
 
 async function handleStandardPlan(tenantConfig) {
   try {
-    const tenantData = {
-      ...tenantConfig,
-      clusterUrl: process.env.STANDARD_CLUSTER_URL,
-      plan: 'standard',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'active',
-    };
-    await db.collection('tenants').doc(tenantConfig.tenantId).set(tenantData);
-    console.log('Standard Plan Tenant created successfully');
-    return tenantData;
+    return "standard.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating Standard Plan Tenant:', error);
     throw error;
@@ -507,28 +483,21 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
     switch (plan) {
       case 'free':
         console.log("free");
-        // Trigger the workflow for free plan
-        await handleFreePlan({ tenantId, tenantName: tenantId });
-        break;
+        return await handleFreePlan({ tenantName: tenantId });
       case 'standard':
         console.log("standard");
-        await handleStandardPlan({ tenantId, tenantName: tenantId });
-        // Create a document for standard plan
-        // await createTenantDocument({ tenantId, plan });
-        break;
+        return await handleStandardPlan({ tenantName: tenantId });
       case 'enterprise':
         console.log("enterprise");
-        await triggerWorkflow({ tenantId, tenantName: tenantId });
-        // Create a document for enterprise plan
-        await createTenantDocument({ tenantId, plan });
-        break;
+        await triggerWorkflow({ tenantName: tenantId });
+        return `${tenantId}.trabantparking.ninja`;
+
       default:
         return res.status(400).json({
           error: 'Invalid plan selected',
         });
     }
 
-    res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error changing plan:', error);
     res.status(500).json({ error: error.message });
