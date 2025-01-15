@@ -229,18 +229,13 @@ jobs:
         RETRIES=0
         while true; do
           INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null)
-          
-          # Fehlerbehandlung: Wenn der Befehl fehlschlägt, gehe weiter mit der Schleife
-          if [ $? -ne 0 ]; then
-            echo "Error occurred while checking ingress, retrying..."
-          fi
 
           if [ ! -z "$INGRESS_IP" ]; then
             echo "Ingress IP Address: $INGRESS_IP"
             echo "INGRESS_IP=$INGRESS_IP" >> $GITHUB_ENV
             break
           fi
-          
+
           if [ $RETRIES -ge $MAX_RETRIES ]; then
             echo "Timed out waiting for ingress IP."
             exit 1
@@ -248,7 +243,7 @@ jobs:
           RETRIES=$((RETRIES + 1))
           sleep $RETRY_INTERVAL
         done
-
+      continue-on-error: true
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."
