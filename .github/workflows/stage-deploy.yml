@@ -1,81 +1,117 @@
 name: Build and Deploy to Google Cloud Run
 
 on:
-  push:
-    branches:
-      - never-run
+  workflow_run:
+    workflows: ["Stage Cluster Creation"]
+    types:
+      - completed
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
 
-    - name: Set up Google Cloud SDK
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
+      - name: Get the latest tag
+        id: get_latest_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
+          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-    - name: Authenticate Docker with Google Cloud
-      run: |
-        gcloud auth configure-docker europe-west1-docker.pkg.dev
+      - name: Get changed files
+        id: changed-files
+        run: |
+          echo "::set-output name=frontend::$(git diff --name-only HEAD^ HEAD | grep ^frontend/ || true)"
+          echo "::set-output name=backend::$(git diff --name-only HEAD^ HEAD | grep ^backend/ || true)"
+          echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
+          echo "::set-output name=backend_reporting::$(git diff --name-only HEAD^ HEAD | grep ^backend-reporting/ || true)"
+          echo "::set-output name=backend_parking::$(git diff --name-only HEAD^ HEAD | grep ^backend-parking/ || true)"
+        working-directory: microservices
 
-    # Build and push Docker image for Backend
-    - name: Build Backend Docker image
-      run: |
-        docker build --build-arg BUCKET_ENV=_stage -t backend-server:latest -f backend/Dockerfile ./backend
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
 
-    - name: Tag Backend Docker Image
-      run: |
-        docker tag backend-server:latest europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
+      - name: Authenticate Docker with Google Cloud
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-    - name: Push Backend Docker image
-      run: |
-        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
+      # Frontend
+      - name: Build and Push Frontend
+        if: steps.changed-files.outputs.frontend != ''
+        run: |
+          docker build \
+            --build-arg REACT_APP_BACKEND_URL=/api \
+            --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+            -t frontend-server:${{ env.LATEST_TAG }} \
+            -f frontend/Dockerfile ./frontend
+          docker tag frontend-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
-    # Deploy Backend to Cloud Run
-    - name: Deploy Backend to Cloud Run
-      id: deploy-backend
-      run: |
-        gcloud run deploy trabbiback \
-          --image=europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest \
-          --platform=managed \
-          --region=europe-west1 \
-          --allow-unauthenticated \
-          --port=3015 \
-          --memory=1Gi
+      # Backend
+      - name: Build and Push Backend
+        if: steps.changed-files.outputs.backend != ''
+        run: |
+          docker build \
+            --build-arg BUCKET_ENV=_stage \
+            -t backend-server:latest \
+            -f backend/Dockerfile ./backend
+          docker tag backend-server:latest \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
-    # Get Backend URL
-    - name: Get Backend URL
-      id: get-backend-url
-      run: |
-        BACKEND_URL=$(gcloud run services describe trabbiback --platform managed --region europe-west1 --format 'value(status.url)')
-        echo "BACKEND_URL=${BACKEND_URL}" >> $GITHUB_ENV
+      # Backend E-Charging
+      - name: Build and Push Backend E-Charging
+        if: steps.changed-files.outputs.backend_echarging != ''
+        run: |
+          docker build \
+            --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+            --build-arg PROJECT_ID=trabantparking-stage \
+            -t backend-echarging-server:${{ env.LATEST_TAG }} \
+            -f backend-echarging/Dockerfile ./backend-echarging
+          docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
-    # Build Frontend Docker image with Backend URL as build argument
-    - name: Build Frontend Docker image
-      run: |
-        docker build --build-arg REACT_APP_BACKEND_URL=/api --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }}  -t frontend-server:1.1.1 -f frontend/Dockerfile ./frontend
+      # Backend Reporting
+      - name: Build and Push Backend Reporting
+        if: steps.changed-files.outputs.backend_reporting != ''
+        run: |
+          docker build \
+            --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+            --build-arg PROJECT_ID=trabantparking-stage \
+            -t backend-reporting-server:${{ env.LATEST_TAG }} \
+            -f backend-reporting/Dockerfile ./backend-reporting
+          docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+        working-directory: microservices
 
-    # Tag and push the image as before
-    - name: Tag Frontend Docker Image
-      run: |
-        docker tag frontend-server:1.1.1 europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
-
-    - name: Push Frontend Docker image
-      run: |
-        docker push europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
-
-    # Deploy Frontend to Cloud Run with Backend URL as environment variable
-    - name: Deploy Frontend to Cloud Run
-      run: |
-        gcloud run deploy trabbifront \
-          --image=europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1 \
-          --platform=managed \
-          --region=europe-west1 \
-          --allow-unauthenticated \
-          --port=3000 \
-          --memory=1Gi \
-          --set-env-vars REACT_APP_API_URL=${{ env.REACT_APP_API_URL }}
+      # Backend Parking
+      - name: Build and Push Backend Parking
+        if: steps.changed-files.outputs.backend_parking != ''
+        run: |
+          docker build \
+            --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+            --build-arg PROJECT_ID=trabantparking-stage \
+            -t backend-parking-server:${{ env.LATEST_TAG }} \
+            -f backend-parking/Dockerfile ./backend-parking
+          docker tag backend-parking-server:${{ env.LATEST_TAG }} \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+          docker push \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+        working-directory: microservices

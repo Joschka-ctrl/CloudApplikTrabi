@@ -1,0 +1,43 @@
+name: Tag New Version
+
+on:
+  push:
+    branches:
+      - never-run
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install semver
+        run: npm install -g semver
+
+      - name: Get the latest tag
+        id: get_latest_tag
+        run: |
+          git fetch --tags
+          echo "LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_ENV
+
+      - name: Increment the version
+        id: increment_version
+        run: |
+          if [ -z "${{ env.LATEST_TAG }}" ]; then
+            echo "NEW_TAG=0.1.0" >> $GITHUB_ENV
+          else
+            NEW_TAG=$(semver semver -i --patch ${{ env.LATEST_TAG }})
+            echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          fi
+
+      - name: Create new tag
+        run: |
+          git tag ${{ env.NEW_TAG }}
+          git push origin ${{ env.NEW_TAG }}

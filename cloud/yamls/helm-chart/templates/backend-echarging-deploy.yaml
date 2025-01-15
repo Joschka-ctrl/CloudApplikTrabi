@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend-echarging
-        image: "{{ .Values.backendEcharging.image.repository }}:{{ .Values.backendEcharging.image.tag }}"
+        image: "{{ .Values.backendEcharging.image.repository }}:{{ .Values.global.tag }}"
         imagePullPolicy: {{ .Values.backendEcharging.image.pullPolicy }}
         ports:
         - containerPort: {{ .Values.backendEcharging.containerPort }}
