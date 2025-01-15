@@ -223,12 +223,12 @@ jobs:
         helm repo update
         helm install my-nginx-ingress ingress-nginx/ingress-nginx --set controller.admissionWebhooks.enabled=true
 
-  - name: Wait for NGINX Ingress Controller to be Ready
+    - name: Wait for NGINX Ingress Controller to be Ready
       run: |
         kubectl wait --namespace ingress-nginx \
-        --for=condition=ready pod \
-        --selector=app.kubernetes.io/name=ingress-nginx \
-        --timeout=120s
+          --for=condition=ready pod \
+          --selector=app.kubernetes.io/name=ingress-nginx \
+          --timeout=120s
     
     - name: Deploy Helm Chart
       run: |
