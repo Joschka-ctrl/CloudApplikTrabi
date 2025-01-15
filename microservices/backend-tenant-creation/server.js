@@ -406,7 +406,7 @@ app.get('/api/tenants', async (req, res) => {
 });
 
 // Get all users for a tenant
-app.get('/api/tenants/users', async (req, res) => {
+app.get('/api/tenants/users', authenticateToken, async (req, res) => {
   try {
     const { tenantId } = req.query;
 
@@ -433,7 +433,7 @@ app.get('/api/tenants/users', async (req, res) => {
 });
 
 // Add a new user to a tenant
-app.post('/api/tenants/users', async (req, res) => {
+app.post('/api/tenants/users', authenticateToken, async (req, res) => {
   try {
     const { tenantId, email, name } = req.body;
 
@@ -450,7 +450,7 @@ app.post('/api/tenants/users', async (req, res) => {
 });
 
 // Delete a user from a tenant
-app.delete('/api/tenants/users/:userId', async (req, res) => {
+app.delete('/api/tenants/users/:userId', authenticateToken, async (req, res) => {
   try {
     const { tenantId } = req.query;
     const { userId } = req.params;
@@ -468,7 +468,7 @@ app.delete('/api/tenants/users/:userId', async (req, res) => {
 });
 
 // Get tenant details
-app.get('/api/tenants/:tenantId', async (req, res) => {
+app.get('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
   try {
     const { tenantId } = req.params;
 
@@ -490,7 +490,7 @@ app.get('/api/tenants/:tenantId', async (req, res) => {
   }
 });
 
-app.put('/api/tenants/:tenantId/changePlan', async (req, res) => {
+app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res) => {
   try {
     const { tenantId } = req.params;
     const { plan } = req.body;
