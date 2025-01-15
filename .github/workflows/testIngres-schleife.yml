@@ -22,7 +22,7 @@ jobs:
         continue-on-error: true
         run: |
             echo "Waiting for ingress to be ready..."
-            MAX_RETRIES=30  # Set the maximum number of retries (adjustable)
+            MAX_RETRIES=3  # Set the maximum number of retries (adjustable)
             RETRY_INTERVAL=20  # Interval between retries in seconds
             RETRIES=0
             while true; do
