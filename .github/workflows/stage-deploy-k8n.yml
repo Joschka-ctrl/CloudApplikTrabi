@@ -217,6 +217,18 @@ jobs:
           fi
           sleep 10
         done
+
+    - name: Create DNS Subdomain Record for Tenant
+      run: |
+        echo "Creating DNS record for tenant ${TENANT_NAME}..."
+        SUBDOMAIN="${TENANT_NAME}.trabantparking.ninja"
+        gcloud dns record-sets transaction start --zone=my-dns-zone
+        gcloud dns record-sets transaction add ${INGRESS_IP} \
+          --name=${SUBDOMAIN} --ttl=300 --type=A --zone=my-dns-zone
+        gcloud dns record-sets transaction execute --zone=my-dns-zone
+      env:
+        TENANT_NAME: ${{ secrets.TENANT_NAME }}
+
       
     - name: Verify Deployment
       run: |
