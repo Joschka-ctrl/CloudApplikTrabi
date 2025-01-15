@@ -224,14 +224,22 @@ jobs:
     - name: Verify Ingress IP
       run: |
         echo "Waiting for ingress to be ready..."
+        MAX_RETRIES=30  # Set the maximum number of retries (adjustable)
+        RETRY_INTERVAL=20  # Interval between retries in seconds
+        RETRIES=0
         while true; do
-          INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
+          INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null)
           if [ ! -z "$INGRESS_IP" ]; then
             echo "Ingress IP Address: $INGRESS_IP"
             echo "INGRESS_IP=$INGRESS_IP" >> $GITHUB_ENV
             break
           fi
-          sleep 10
+          if [ $RETRIES -ge $MAX_RETRIES ]; then
+            echo "Timed out waiting for ingress IP."
+            exit 1
+          fi
+          RETRIES=$((RETRIES + 1))
+          sleep $RETRY_INTERVAL
         done
 
     - name: Create DNS Subdomain Record for Tenant
