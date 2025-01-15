@@ -198,7 +198,7 @@ jobs:
 
     - name: Set Firebase Credentials Secret
       run: |
-        echo ${{ secrets.GOOGLE_CREDENTIALS_STAGE }} > firebase-credentials.json
+        echo "${{ secrets.GOOGLE_CREDENTIALS_STAGE }}" > firebase-credentials.json
         kubectl create secret generic firebase-credentials --from-file=firebase-credentials.json -n default
 
     - name: Set up Helm
