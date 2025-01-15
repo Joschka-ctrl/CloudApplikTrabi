@@ -229,7 +229,8 @@ jobs:
         RETRY_INTERVAL=20  # Interval between retries in seconds
         RETRIES=0
         while true; do
-          INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null)
+          # Versuche, die Ingress-IP abzurufen, und fange Fehler ab
+          INGRESS_IP=$(kubectl get ingress -n ${{env.GKE_CLUSTER }}-o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "Not Found")
 
           if [ ! -z "$INGRESS_IP" ]; then
             echo "Ingress IP Address: $INGRESS_IP"
@@ -241,10 +242,12 @@ jobs:
             echo "Timed out waiting for ingress IP."
             exit 1
           fi
+
           RETRIES=$((RETRIES + 1))
+          echo "Retry $RETRIES/$MAX_RETRIES: Ingress IP not ready yet. Retrying in $RETRY_INTERVAL seconds..."
           sleep $RETRY_INTERVAL
-        done
-     
+          done
+
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."

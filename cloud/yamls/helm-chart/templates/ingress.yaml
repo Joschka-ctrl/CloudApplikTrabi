@@ -5,6 +5,11 @@ metadata:
   annotations: 
     kubernetes.io/ingress.class: "gce"
 spec:
+  defaultBackend:
+      service:
+        name: {{ .Release.Name }}-frontend
+        port:
+          number: 80
   rules:
   - http:
       paths:
