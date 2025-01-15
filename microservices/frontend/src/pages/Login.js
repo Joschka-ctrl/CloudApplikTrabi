@@ -5,6 +5,7 @@ import { useAuth } from "../components/AuthProvider";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [tenantId, setTenantId] = useState("");
   const [error, setError] = useState(null);
   const { onLogin } = useAuth();
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await onLogin(email, password);
+      await onLogin(email, password, tenantId);
       navigate("/defects");
     } catch (err) {
       setError("Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.");
@@ -24,6 +25,16 @@ const Login = () => {
       <div className="card p-4 shadow-sm" style={{ maxWidth: "400px", width: "100%" }}>
         <h2 className="text-center mb-4">Anmelden</h2>
         <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Tentant ID"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+              required
+            />
+          </div>
           <div className="mb-3">
             <input
               type="email"

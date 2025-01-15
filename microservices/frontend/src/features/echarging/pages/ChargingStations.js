@@ -20,7 +20,7 @@ const ChargingStations = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [selectedGarage, setSelectedGarage] = useState('');
   const [garages, setGarages] = useState([]);
-  const { user } = useAuth();
+  const { user, tenantId } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
@@ -28,8 +28,8 @@ const ChargingStations = () => {
     try {
       const token = await user.getIdToken();
       const url = selectedGarage 
-        ? `${HOST_URL}/charging-stations?garage=${encodeURIComponent(selectedGarage)}`
-        : `${HOST_URL}/charging-stations`;
+        ? `${HOST_URL}/charging-stations?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(tenantId)}`
+        : `${HOST_URL}/charging-stations?tenantId=${encodeURIComponent(tenantId)}`;
       
       const response = await fetch(url, {
         headers: {
@@ -73,6 +73,7 @@ const ChargingStations = () => {
   const handleSave = async (stationData) => {
     try {
       const token = await user.getIdToken();
+      
       const url = selectedStation
         ? `${HOST_URL}/charging-stations/${selectedStation.id}`
         : `${HOST_URL}/charging-stations`;

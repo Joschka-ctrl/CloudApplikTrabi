@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ .Release.Name }}-backend-parking
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
   labels:
     app: backend-parking
 spec:

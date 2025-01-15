@@ -24,7 +24,7 @@ const ChargingSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedGarage, setSelectedGarage] = useState('');
   const [garages, setGarages] = useState([]);
-  const { user } = useAuth();
+  const { user, tenantId } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
@@ -32,8 +32,8 @@ const ChargingSessions = () => {
     try {
       const token = await user.getIdToken();
       const url = selectedGarage 
-        ? `${HOST_URL}/charging-sessions?garage=${encodeURIComponent(selectedGarage)}`
-        : `${HOST_URL}/charging-sessions`;
+        ? `${HOST_URL}/charging-sessions?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(tenantId)}`
+        : `${HOST_URL}/charging-sessions?tenantId=${encodeURIComponent(tenantId)}`;
       
       const response = await fetch(url, {
         headers: {

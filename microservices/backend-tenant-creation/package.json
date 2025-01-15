@@ -8,6 +8,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@google-cloud/container": "^5.19.0",
     "@octokit/rest": "^20.0.2",
     "axios": "^1.6.2",
     "cors": "^2.8.5",

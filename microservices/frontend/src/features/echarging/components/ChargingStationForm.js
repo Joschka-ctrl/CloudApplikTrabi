@@ -9,8 +9,10 @@ import {
   MenuItem,
   Grid
 } from '@mui/material';
+import { useAuth } from '../../../components/AuthProvider';
 
 const ChargingStationForm = ({ open, onClose, onSave, station }) => {
+  const { tenantId } = useAuth();
   const [formData, setFormData] = useState({
     location: '',
     power: '',
@@ -26,7 +28,8 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
         power: station.power || '',
         connectorType: station.connectorType || '',
         status: station.status || 'available',
-        garage: station.garage || ''
+        garage: station.garage || '',
+        tenantId: tenantId
       });
     } else {
       setFormData({
@@ -34,7 +37,8 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
         power: '',
         connectorType: '',
         status: 'available',
-        garage: ''
+        garage: '',
+        tenantId: tenantId
       });
     }
   }, [station]);

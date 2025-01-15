@@ -221,6 +221,42 @@ jobs:
       run: |
         helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
 
+    - name: Verify Ingress IP
+      continue-on-error: true
+      run: |
+        echo "Waiting for ingress to be ready..."
+        MAX_RETRIES=30  # Set the maximum number of retries (adjustable)
+        RETRY_INTERVAL=20  # Interval between retries in seconds
+        RETRIES=0
+        while true; do
+          INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null)
+
+          if [ ! -z "$INGRESS_IP" ]; then
+            echo "Ingress IP Address: $INGRESS_IP"
+            echo "INGRESS_IP=$INGRESS_IP" >> $GITHUB_ENV
+            break
+          fi
+
+          if [ $RETRIES -ge $MAX_RETRIES ]; then
+            echo "Timed out waiting for ingress IP."
+            exit 1
+          fi
+          RETRIES=$((RETRIES + 1))
+          sleep $RETRY_INTERVAL
+        done
+     
+    - name: Create DNS Subdomain Record for Tenant
+      run: |
+        echo "Creating DNS record for tenant ${TENANT_NAME}..."
+        SUBDOMAIN="${TENANT_NAME}.trabantparking.ninja"
+        gcloud dns record-sets transaction start --zone=default
+        gcloud dns record-sets transaction add ${INGRESS_IP} \
+          --name=${SUBDOMAIN} --ttl=5 --type=A --zone=default
+        gcloud dns record-sets transaction execute --zone=default
+      env:
+        TENANT_NAME: ${{ secrets.TENANT_NAME }}
+
+      
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app
