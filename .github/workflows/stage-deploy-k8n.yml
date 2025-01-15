@@ -196,6 +196,22 @@ jobs:
       run: |
         gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
 
+    - name: Check if Firebase Credentials Secret Exists
+      run: |
+        if kubectl get secret firebase-credentials -n default; then
+          echo "Firebase credentials secret already exists"
+          echo "SECRET_EXISTS=true" >> $GITHUB_ENV
+        else
+         echo "Firebase credentials secret does not exist"
+         echo "SECRET_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create Firebase Credentials Secret
+      if: env.SECRET_EXISTS == 'false'
+      run: |
+       echo "${{ secrets.GOOGLE_CREDENTIALS_STAGE }}" > firebase-credentials.json
+       kubectl create secret generic firebase-credentials --from-file=firebase-credentials.json -n default
+
     - name: Set up Helm
       uses: azure/setup-helm@v3
       with:

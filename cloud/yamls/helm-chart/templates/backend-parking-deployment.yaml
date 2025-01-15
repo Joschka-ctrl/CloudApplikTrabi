@@ -26,14 +26,3 @@ spec:
               port: {{ .Values.backendParking.containerPort }}
             initialDelaySeconds: {{ .Values.backendParking.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.backendParking.readinessProbe.periodSeconds }}
-          env:
-            - name: GOOGLE_APPLICATION_CREDENTIALS
-              value: /etc/firebase/service-account.json
-          volumeMounts:
-            - name: firebase-credentials
-              mountPath: /etc/firebase
-              readOnly: true
-      volumes:
-        - name: firebase-credentials
-          secret:
-            secretName: firebase-credentials
