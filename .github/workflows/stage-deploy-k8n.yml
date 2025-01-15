@@ -205,6 +205,19 @@ jobs:
       run: |
         helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
 
+    - name: Verify Ingress IP
+      run: |
+        echo "Waiting for ingress to be ready..."
+        while true; do
+          INGRESS_IP=$(kubectl get ingress -n trabi-app -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}")
+          if [ ! -z "$INGRESS_IP" ]; then
+            echo "Ingress IP Address: $INGRESS_IP"
+            echo "INGRESS_IP=$INGRESS_IP" >> $GITHUB_ENV
+            break
+          fi
+          sleep 10
+        done
+      
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app
