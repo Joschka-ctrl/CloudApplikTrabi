@@ -217,11 +217,14 @@ jobs:
       with:
         version: 'v3.12.3'
 
-    - name: Install NGINX Ingress Controller
-      run: |
+     - name: Install NGINX Ingress Controller
+        run: |
         helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
         helm repo update
-        helm install my-nginx-ingress ingress-nginx/ingress-nginx --set controller.admissionWebhooks.enabled=true
+        helm install my-nginx-ingress ingress-nginx/ingress-nginx \
+          --set controller.admissionWebhooks.enabled=true \
+          --set controller.resources.requests.cpu=50m \
+          --set controller.resources.requests.memory=64Mi
 
     - name: Wait for NGINX Ingress Controller to be Ready
       run: |
