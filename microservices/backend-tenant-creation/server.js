@@ -127,6 +127,12 @@ async function createTenantUser(tenantId, email, name) {
       displayName: name,
     });
 
+    // Set custom claims for user
+    await tenantAuth.setCustomUserClaims(userRecord.uid, {
+      tenantId: tenantId,
+      admin: false
+    });
+
     // Create a user document in Firestore
     const userData = {
       id: userRecord.uid,
@@ -201,11 +207,10 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
     }
 
     // Set custom claims for admin
-    /*
-    await admin.auth().setCustomUserClaims(uid, {
-      admin: true,
-      tenantId: tenantId
-    });*/
+    await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(uid, {
+      tenantId: tenantId,
+      admin: true
+    });
 
     // Update tenant document with admin UID
     await db.collection('tenants').doc(tenantId).update({
@@ -332,7 +337,7 @@ async function handleStandardPlan(tenantConfig) {
 }
 
 // Create new tenant endpoint
-app.post('/api/tenants', async (req, res) => {
+app.post('/api/tenants', authenticateToken, async (req, res) => {
   try {
     const { plan, tenantId, emails } = req.body;
 
@@ -499,6 +504,29 @@ app.put('/api/tenants/:tenantId/changePlan', async (req, res) => {
     });
 
     // Hier kommt später Joschkas workflow hin wenn Plan gewählt wird
+    switch (plan) {
+      case 'free':
+        console.log("free");
+        // Trigger the workflow for free plan
+        await handleFreePlan({ tenantId, tenantName: tenantId });
+        break;
+      case 'standard':
+        console.log("standard");
+        await handleStandardPlan({ tenantId, tenantName: tenantId });
+        // Create a document for standard plan
+        // await createTenantDocument({ tenantId, plan });
+        break;
+      case 'enterprise':
+        console.log("enterprise");
+        await triggerWorkflow({ tenantId, tenantName: tenantId });
+        // Create a document for enterprise plan
+        await createTenantDocument({ tenantId, plan });
+        break;
+      default:
+        return res.status(400).json({
+          error: 'Invalid plan selected',
+        });
+    }
 
     res.status(200).json({ success: true });
   } catch (error) {

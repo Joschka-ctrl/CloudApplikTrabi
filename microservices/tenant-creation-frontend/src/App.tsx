@@ -124,7 +124,13 @@ function App() {
       }
 
       try {
-        const response = await fetch(`${HOST}/${auth.tenantId}`);
+        const response = await fetch(`${HOST}/${auth.tenantId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch tenant details');
         }
@@ -150,7 +156,15 @@ function App() {
       if (!auth.tenantId) return;
       
       try {
-        const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`);
+        const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
+            },
+          }
+        );
         if (!response.ok) {
           throw new Error('Failed to fetch users');
         }
@@ -176,6 +190,7 @@ function App() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
           },
           body: JSON.stringify({ plan }),
         })
@@ -233,12 +248,15 @@ function App() {
         return;
       }
 
-      const response = await fetch(`${HOST}/users/${userId}?tenantId=${auth.tenantId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(`${HOST}/users/${userId}?tenantId=${auth.tenantId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
+          },
         },
-      });
+      );
 
       if (!response.ok) {
         throw new Error('Failed to delete user');
