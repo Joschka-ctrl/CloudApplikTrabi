@@ -17,6 +17,12 @@ resource "google_container_cluster" "gke" {
 
   deletion_protection = false
 
+  addons_config {
+    http_load_balancing {
+      disabled = false
+    }
+  }
+
   node_config {
     machine_type = "e2-micro"
     disk_size_gb = 30
