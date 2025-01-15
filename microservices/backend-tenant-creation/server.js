@@ -130,7 +130,7 @@ async function createTenantUser(tenantId, email, name) {
     // Set custom claims for user
     await tenantAuth.setCustomUserClaims(userRecord.uid, {
       tenantId: tenantId,
-      admin: false
+      role: 'user'
     });
 
     // Create a user document in Firestore
@@ -140,7 +140,8 @@ async function createTenantUser(tenantId, email, name) {
       name: name,
       tenantId: tenantId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      status: 'active'
+      status: 'active',
+      role: 'user',
     };
 
     await db.collection('tenants').doc(tenantId).collection('users').doc(userRecord.uid).set(userData);

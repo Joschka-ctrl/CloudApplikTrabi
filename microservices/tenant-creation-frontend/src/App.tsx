@@ -169,6 +169,7 @@ function App() {
           throw new Error('Failed to fetch users');
         }
         const data = await response.json();
+        console.log(data);
         setUsers(data);
       } catch (err) {
         console.error('Error fetching users:', err);
