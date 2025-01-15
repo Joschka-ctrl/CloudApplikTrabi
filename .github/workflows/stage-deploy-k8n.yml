@@ -222,6 +222,7 @@ jobs:
         helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
 
     - name: Verify Ingress IP
+      continue-on-error: true
       run: |
         echo "Waiting for ingress to be ready..."
         MAX_RETRIES=30  # Set the maximum number of retries (adjustable)
@@ -243,7 +244,7 @@ jobs:
           RETRIES=$((RETRIES + 1))
           sleep $RETRY_INTERVAL
         done
-      continue-on-error: true
+     
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."
