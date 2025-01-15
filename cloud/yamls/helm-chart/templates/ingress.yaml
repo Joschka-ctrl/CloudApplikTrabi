@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: api-gateway-ingress
 spec:
-  ingressClassName: "nginx"
+  ingressClassName: "gce"
   defaultBackend:
     service:
       name: default-http-backend
