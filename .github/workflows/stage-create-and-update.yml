@@ -16,7 +16,7 @@ jobs:
         with:
           script: |
             try {
-                const octokit = github.getOctokit('${{ secrets.GITHUB_TOKEN }}');
+                const octokit = github.getOctokit(process.env.GITHUB_TOKEN); // Der Token kommt automatisch aus der Umgebung
                 await octokit.actions.createWorkflowDispatch({
                 owner: context.repo.owner, // Dynamically fetch the repository owner
                 repo: context.repo.repo,
