@@ -242,7 +242,7 @@ jobs:
         RETRIES=0
         while true; do
           # Versuche, die Ingress-IP abzurufen, und fange Fehler ab
-          INGRESS_IP=$(kubectl get pi-gateway-ingress -n default -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "")
+          INGRESS_IP=$(kubectl get api-gateway-ingress -n default -o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "")
 
           if [ ! -z "$INGRESS_IP" ]; then
             echo "Ingress IP Address: $INGRESS_IP"
