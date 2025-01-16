@@ -47,9 +47,15 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Trigger GitHub Actions workflow
 async function triggerWorkflow(tenantConfig) {
   try {
+    console.log('Triggering workflow with the following details:');
+    console.log('Owner:', process.env.GITHUB_OWNER);
+    console.log('Repo:', process.env.GITHUB_REPO);
+    console.log('Workflow ID:', 'cluster-create-k8s.yml');
+    console.log('Branch/Ref:', 'stage-cluster');
+    console.log('Inputs:', { tenant_name: tenantConfig.tenantName });
+
     await octokit.actions.createWorkflowDispatch({
       owner: process.env.GITHUB_OWNER,
       repo: process.env.GITHUB_REPO,
@@ -57,14 +63,17 @@ async function triggerWorkflow(tenantConfig) {
       ref: 'stage-cluster',
       inputs: {
         tenant_name: tenantConfig.tenantName,
-      }
+      },
     });
+
+    console.log('Workflow triggered successfully.');
     return true;
   } catch (error) {
-    console.error('Error triggering workflow:', error);
+    console.error('Error triggering workflow:', error.response?.data || error.message);
     throw error;
   }
 }
+
 
 async function createTenantDocument(tenantConfig) {
   try {
@@ -338,7 +347,7 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
         break;
       case 'enterprise':
         console.log("enterprise");
-        await triggerWorkflow({ tenantId, tenantName: tenantId });
+        await triggerWorkflow({ tenantName: tenantId });
         // Create a document for enterprise plan
         await createTenantDocument({ tenantId, plan });
         break;
