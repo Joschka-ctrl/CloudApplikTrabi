@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_ID: trabantparking-stage
-  GKE_CLUSTER: test-cluster
+  GKE_CLUSTER: test-cluster-2
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
