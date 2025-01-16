@@ -27,4 +27,4 @@ jobs:
         run: |
           gh workflow run cluster-create-k8s.yml -f tenant_name=free -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          GH_TOKEN: ${{ secrets.TOKEN }}  
