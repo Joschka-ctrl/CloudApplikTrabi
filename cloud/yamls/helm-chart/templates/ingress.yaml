@@ -21,32 +21,32 @@ spec:
             name: {{ .Release.Name }}-backend-parking
             port:
               number: 80
-      - path: /api/echarging
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}-backend-echarging
-            port:
-              number: 80
-      - path: /api/reporting
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}-backend-reporting
-            port:
-              number: 80
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}-backend-service
-            port:
-              number: 80
+      # - path: /api/echarging
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: {{ .Release.Name }}-backend-echarging
+      #       port:
+      #         number: 80
+      # - path: /api/reporting
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: {{ .Release.Name }}-backend-reporting
+      #       port:
+      #         number: 80
+      # - path: /api
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: {{ .Release.Name }}-backend-service
+      #       port:
+      #         number: 80
               
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ .Release.Name }}-frontend
-            port:
-              number: 80
+      # - path: /
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: {{ .Release.Name }}-frontend
+      #       port:
+      #         number: 80
