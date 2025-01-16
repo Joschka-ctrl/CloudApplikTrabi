@@ -265,7 +265,7 @@ jobs:
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."
-        SUBDOMAIN="${TENANT_NAME}.trabantparking.ninja"
+        SUBDOMAIN="${{ env.GKE_CLUSTER }}.trabantparking.ninja"
         gcloud dns record-sets transaction start --zone=trabant
         gcloud dns record-sets transaction add ${INGRESS_IP} --name=${SUBDOMAIN} --ttl=5 --type=A --zone=trabant
         gcloud dns record-sets transaction execute --zone=trabant
