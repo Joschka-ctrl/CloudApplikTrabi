@@ -1,0 +1,35 @@
+name: Stage Cluster Creation
+
+on:
+  push:
+    tags:
+      - '0.*' 
+
+jobs:
+  build-and-deploy:
+    name: Deploy to GCP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Full Cluster Creation
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+                await octokit.actions.createWorkflowDispatch({
+                owner: context.repo.owner, // Dynamically fetch the repository owner
+                repo: context.repo.repo,
+                workflow_id: 'cluster-create-k8s.yml',
+                ref: 'create stage cluster',
+                inputs: {
+                    tenant_name: stage,
+                }
+                });
+                return true;
+            } catch (error) {
+                console.error('Error triggering workflow:', error);
+                throw error;
+            }
+
+
+    
