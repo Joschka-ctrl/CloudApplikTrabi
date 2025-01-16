@@ -7,7 +7,7 @@ on:
 
 env:
   PROJECT_ID: trabantparking-stage
-  GKE_CLUSTER: stage-cluster-2
+  GKE_CLUSTER: stage-cluster-3
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
@@ -76,7 +76,7 @@ jobs:
       run: |
         terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
         terraform show -json tfplan > plan.json
-        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
       working-directory: cloud/terraform
 
 
