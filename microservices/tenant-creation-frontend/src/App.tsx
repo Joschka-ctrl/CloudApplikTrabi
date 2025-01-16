@@ -53,6 +53,7 @@ function App() {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [tenantUrl, setTenantUrl] = useState<string | null>(null);
 
   const HOST = 'http://localhost:3023/api/tenants';
 
@@ -138,6 +139,7 @@ function App() {
         if (data.plan) {
           setCurrentPlan(data.plan.replace(/-/g, ' '));
         }
+        setTenantUrl(data.url);
       } catch (err) {
         console.error('Error fetching tenant details:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
@@ -325,7 +327,7 @@ function App() {
                 plan={currentPlan}
                 price={getPlanPrice(currentPlan)}
                 onChangePlan={handleChangePlan}
-                url={`https://${auth.tenantId}.trabantparking.ninja`}
+                url={`https://${auth.tenantId}.trabantparking.ninja`} // Noch falsch TODO
               />
             )}
 
