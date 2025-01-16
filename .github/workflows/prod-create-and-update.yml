@@ -25,6 +25,6 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run cluster-create-k8s.yml -f tenant_name=free -R Joschka-ctrl/CloudApplikTrabi
+          gh workflow run cluster-create-k8s.yml -f tenant_name=free -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
