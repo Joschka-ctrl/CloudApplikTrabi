@@ -16,8 +16,7 @@ jobs:
         with:
           script: |
             try {
-                const octokit = github.getOctokit(process.env.GITHUB_TOKEN); // Der Token kommt automatisch aus der Umgebung
-                await octokit.actions.createWorkflowDispatch({
+                await github.actions.createWorkflowDispatch({
                 owner: context.repo.owner, // Dynamically fetch the repository owner
                 repo: context.repo.repo,
                 workflow_id: 'cluster-create-k8s.yml',
