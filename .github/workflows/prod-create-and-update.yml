@@ -1,6 +1,18 @@
-name: Stage Cluster Creation
+name: Production Cluster Creation
 
 on:
   push:
     tags:
       - '1.*' 
+
+jobs:
+  create-free:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger another pipeline
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/Joschka-ctrl/CloudApplikTrabi/actions/workflows/cluster-create-k8s.yml/dispatches \
+          -d '{"ref":"main", "inputs": {"tenant_name": "free"}}'
