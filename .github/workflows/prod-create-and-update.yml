@@ -1,0 +1,6 @@
+name: Stage Cluster Creation
+
+on:
+  push:
+    tags:
+      - '1.*' 
