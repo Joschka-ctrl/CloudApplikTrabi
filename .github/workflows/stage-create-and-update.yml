@@ -3,7 +3,7 @@ name: Stage Cluster Creation
 on:
   push:
     tags:
-      - '0.*' 
+      - '0.*'
 
 jobs:
   build-and-deploy:
@@ -15,21 +15,24 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+
+            const octokit = github.getOctokit(process.env.TENANT_CREATION_CLOUD_TOKEN);  // Verwende dein benutzerdefiniertes Token aus den GitHub Secrets
+
             try {
-                await github.actions.createWorkflowDispatch({
-                owner: context.repo.owner, // Dynamically fetch the repository owner
-                repo: context.repo.repo,
-                workflow_id: 'cluster-create-k8s.yml',
-                ref: 'create stage cluster',
-                inputs: {
-                    tenant_name: stage,
-                }
+                // Trigger des Workflows
+                const response = await octokit.actions.createWorkflowDispatch({
+                    owner: context.repo.owner,  // Dynamisch den Repository Besitzer ermitteln
+                    repo: context.repo.repo,
+                    workflow_id: 'cluster-create-k8s.yml',  // Die zu startende Workflow-Datei
+                    ref: 'refs/heads/main',  // Branch, von dem der Workflow ausgelöst wird
+                    inputs: {
+                        tenant_name: 'stage'  // Eingabewert für den ausgelösten Workflow
+                    }
                 });
+
+                console.log('Workflow erfolgreich ausgelöst:', response);
                 return true;
             } catch (error) {
-                console.error('Error triggering workflow:', error);
+                console.error('Fehler beim Auslösen des Workflows:', error);
                 throw error;
             }
-
-
-    
