@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-echarging
+  name: {{ .Release.Name }}-backend-echarging
   annotations:
     cloud.google.com/neg: '{"ingress": true}'
-
 spec:
   type: {{ .Values.backendEcharging.service.type }}
   ports:

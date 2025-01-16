@@ -4,8 +4,6 @@ metadata:
   name: {{ .Release.Name }}-backend-parking
   annotations:
     cloud.google.com/neg: '{"ingress": true}'
-  labels:
-    app: backend-parking
 spec:
   type: {{ .Values.backendParking.service.type }}
   ports:
