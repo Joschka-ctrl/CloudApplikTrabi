@@ -20,7 +20,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
         run: |
-          echo $GH_TOKEN | gh auth login --with-token
+          gh auth login --with-token < $GH_TOKEN
 
       - name: Trigger another pipeline
         run: |
