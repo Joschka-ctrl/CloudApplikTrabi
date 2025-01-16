@@ -70,171 +70,171 @@ jobs:
       run: |
         echo ${{ env.GKE_CLUSTER }}
 
-#     - name: Import Bucket
-#       run: |
-#         terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
-#       working-directory: cloud/terraform  
+    - name: Import Bucket
+      run: |
+        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
+      working-directory: cloud/terraform  
 
-#     - name: Terraform Plan
-#       run: |
-#         terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
-#         terraform show -json tfplan > plan.json
-#         gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
-#       working-directory: cloud/terraform
+    - name: Terraform Plan
+      run: |
+        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
+        terraform show -json tfplan > plan.json
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
+      working-directory: cloud/terraform
 
 
-#     - name: Terraform Apply
-#       run: |
-#           if [ -f "tfplan" ]; then
-#             terraform apply tfplan
-#           else
-#             terraform apply -auto-approve
-#           fi
-#       working-directory: cloud/terraform
+    - name: Terraform Apply
+      run: |
+          if [ -f "tfplan" ]; then
+            terraform apply tfplan
+          else
+            terraform apply -auto-approve
+          fi
+      working-directory: cloud/terraform
 
-#     - name: Migrate Terraform State to Google Cloud Storage
-#       run: |
-#         terraform init -migrate-state
+    - name: Migrate Terraform State to Google Cloud Storage
+      run: |
+        terraform init -migrate-state
 
-# #DO CONTAINER THINGS
-#     - name: Checkout repository
-#       uses: actions/checkout@v2
-#       with:
-#         fetch-depth: 2
+#DO CONTAINER THINGS
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
 
-#     - name: Get the latest tag
-#       id: get_latest_tag
-#       run: |
-#         git fetch --tags
-#         LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
-#         echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+    - name: Get the latest tag
+      id: get_latest_tag
+      run: |
+        git fetch --tags
+        LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
+        echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
 
-#     - name: Set up Google Cloud SDK
-#       uses: google-github-actions/auth@v2
-#       with:
-#         credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS_STAGE }}'
 
-#     - name: Authenticate Docker with Google Cloud
-#       run: |
-#         gcloud auth configure-docker europe-west1-docker.pkg.dev
+    - name: Authenticate Docker with Google Cloud
+      run: |
+        gcloud auth configure-docker europe-west1-docker.pkg.dev
 
-#       # Frontend
-#     - name: Build and Push Frontend
-#       run: |
-#         docker build \
-#           --build-arg REACT_APP_BACKEND_URL=/api \
-#           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-#           -t frontend-server:${{ env.LATEST_TAG }} \
-#           -f frontend/Dockerfile ./frontend
-#         docker tag frontend-server:${{ env.LATEST_TAG }} \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
-#         docker push \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
-#       working-directory: microservices
+      # Frontend
+    - name: Build and Push Frontend
+      run: |
+        docker build \
+          --build-arg REACT_APP_BACKEND_URL=/api \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          -t frontend-server:${{ env.LATEST_TAG }} \
+          -f frontend/Dockerfile ./frontend
+        docker tag frontend-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
 
-#     # Backend
-#     - name: Build and Push Backend
-#       run: |
-#         docker build \
-#           --build-arg BUCKET_ENV=_stage \
-#           -t backend-server:latest \
-#           -f backend/Dockerfile ./backend
-#         docker tag backend-server:latest \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
-#         docker push \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
-#       working-directory: microservices
+    # Backend
+    - name: Build and Push Backend
+      run: |
+        docker build \
+          --build-arg BUCKET_ENV=_stage \
+          -t backend-server:latest \
+          -f backend/Dockerfile ./backend
+        docker tag backend-server:latest \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
 
-#     # Backend E-Charging
-#     - name: Build and Push Backend E-Charging
-#       run: |
-#         docker build \
-#           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-#           --build-arg PROJECT_ID=trabantparking-stage \
-#           -t backend-echarging-server:${{ env.LATEST_TAG }} \
-#           -f backend-echarging/Dockerfile ./backend-echarging
-#         docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
-#         docker push \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
-#       working-directory: microservices
+    # Backend E-Charging
+    - name: Build and Push Backend E-Charging
+      run: |
+        docker build \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          --build-arg PROJECT_ID=trabantparking-stage \
+          -t backend-echarging-server:${{ env.LATEST_TAG }} \
+          -f backend-echarging/Dockerfile ./backend-echarging
+        docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
 
-#     # Backend Reporting
-#     - name: Build and Push Backend Reporting
-#       run: |
-#         docker build \
-#           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-#           --build-arg PROJECT_ID=trabantparking-stage \
-#           -t backend-reporting-server:${{ env.LATEST_TAG }} \
-#           -f backend-reporting/Dockerfile ./backend-reporting
-#         docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
-#         docker push \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
-#       working-directory: microservices
+    # Backend Reporting
+    - name: Build and Push Backend Reporting
+      run: |
+        docker build \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          --build-arg PROJECT_ID=trabantparking-stage \
+          -t backend-reporting-server:${{ env.LATEST_TAG }} \
+          -f backend-reporting/Dockerfile ./backend-reporting
+        docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
 
-#     # Backend Parking
-#     - name: Build and Push Backend Parking
-#       run: |
-#         docker build \
-#           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-#           --build-arg PROJECT_ID=trabantparking-stage \
-#           -t backend-parking-server:${{ env.LATEST_TAG }} \
-#           -f backend-parking/Dockerfile ./backend-parking
-#         docker tag backend-parking-server:${{ env.LATEST_TAG }} \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
-#         docker push \
-#           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
-#       working-directory: microservices
+    # Backend Parking
+    - name: Build and Push Backend Parking
+      run: |
+        docker build \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          --build-arg PROJECT_ID=trabantparking-stage \
+          -t backend-parking-server:${{ env.LATEST_TAG }} \
+          -f backend-parking/Dockerfile ./backend-parking
+        docker tag backend-parking-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
 
-# # APPLY HELM
-#     - name: Install GKE Auth Plugin
-#       run: |
-#         echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-#         curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-#         sudo apt-get update
-#         sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+# APPLY HELM
+    - name: Install GKE Auth Plugin
+      run: |
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
     - name: Get GKE Credentials
       run: |
         gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
 
-    # - name: Check if Firebase Credentials Secret Exists
-    #   run: |
-    #     if kubectl get secret firebase-credentials -n default; then
-    #       echo "Firebase credentials secret already exists"
-    #       echo "SECRET_EXISTS=true" >> $GITHUB_ENV
-    #     else
-    #      echo "Firebase credentials secret does not exist"
-    #      echo "SECRET_EXISTS=false" >> $GITHUB_ENV
-    #     fi
+    - name: Check if Firebase Credentials Secret Exists
+      run: |
+        if kubectl get secret firebase-credentials -n default; then
+          echo "Firebase credentials secret already exists"
+          echo "SECRET_EXISTS=true" >> $GITHUB_ENV
+        else
+         echo "Firebase credentials secret does not exist"
+         echo "SECRET_EXISTS=false" >> $GITHUB_ENV
+        fi
 
-    # - name: Create Firebase Credentials Secret
-    #   if: env.SECRET_EXISTS == 'false'
-    #   run: |
-    #    echo "${{ secrets.GOOGLE_CREDENTIALS_STAGE }}" > firebase-credentials.json
-    #    kubectl create secret generic firebase-credentials --from-file=firebase-credentials.json -n default
+    - name: Create Firebase Credentials Secret
+      if: env.SECRET_EXISTS == 'false'
+      run: |
+       echo "${{ secrets.GOOGLE_CREDENTIALS_STAGE }}" > firebase-credentials.json
+       kubectl create secret generic firebase-credentials --from-file=firebase-credentials.json -n default
 
-    # - name: Set up Helm
-    #   uses: azure/setup-helm@v3
-    #   with:
-    #     version: 'v3.12.3'
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'v3.12.3'
 
-    # - name: Install NGINX Ingress Controller
-    #   run: |
-    #     helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-    #     helm repo update
-    #     helm upgrade --install my-nginx-ingress ingress-nginx/ingress-nginx \
-    #       --set controller.admissionWebhooks.enabled=true \
-    #       --set controller.resources.requests.cpu=50m \
-    #       --set controller.resources.requests.memory=64Mi
+    - name: Install NGINX Ingress Controller
+      run: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+        helm upgrade --install my-nginx-ingress ingress-nginx/ingress-nginx \
+          --set controller.admissionWebhooks.enabled=true \
+          --set controller.resources.requests.cpu=50m \
+          --set controller.resources.requests.memory=64Mi
 
-    # - name: Wait for 10 seconds
-    #   run: sleep 10
+    - name: Wait for 10 seconds
+      run: sleep 10
     
-    # - name: Deploy Helm Chart
-    #   run: |
-    #     helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
+    - name: Deploy Helm Chart
+      run: |
+        helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
 
     - name: Verify Ingress IP
       continue-on-error: true
