@@ -1,4 +1,4 @@
-name: Stage Cluster Creation
+name: Full Cluster Creation
 
 on:
   workflow_dispatch:
