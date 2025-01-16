@@ -54,7 +54,7 @@ async function triggerWorkflow(tenantConfig) {
       owner: process.env.GITHUB_OWNER,
       repo: process.env.GITHUB_REPO,
       workflow_id: 'gcp-k8s-deploy.yml',
-      ref: 'kubernetes-creation-pipeline',
+      ref: 'feature_login_with_tenantId',
       inputs: {
         tenant_name: tenantConfig.tenantName,
       }

@@ -1,9 +1,6 @@
 name: GCP Kubernetes Deployment
 
 on:
-  push:
-    branches:
-      - kubernetes-creation-pipeline
   workflow_dispatch:
     inputs:
       tenant_name:
