@@ -20,6 +20,14 @@ FROM nginx:alpine AS final
 # Copy the built app to the nginx html directory
 COPY --from=builder /usr/src/app/build /usr/share/nginx/html
 
+RUN echo 'server { \
+    listen 3000; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 # Expose port 80 and use the default nginx command
 EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]
