@@ -1,0 +1,22 @@
+name: Stage Cluster Creation
+
+on:
+  push:
+    tags:
+      - 'never-run' 
+
+env:
+  PROJECT_ID: trabantparking-stage
+  GKE_CLUSTER: stage-cluster-3
+  GKE_REGION: europe-west1
+  TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
+  TF_PLAN_FILE: terraform.tfstate
+  BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
+
+jobs:
+  build-and-deploy:
+    name: Deploy to GCP
+    runs-on: ubuntu-latest
+
+    steps:
+    

@@ -24,7 +24,7 @@ resource "google_container_cluster" "gke" {
   }
 
   node_config {
-    machine_type = "e2-micro"
+    machine_type = "e2-small"
     disk_size_gb = 30
   }
 

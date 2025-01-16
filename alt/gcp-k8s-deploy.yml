@@ -1,0 +1,28 @@
+name: GCP Kubernetes Deployment
+
+on:
+  push:
+    branches:
+      - never-run
+#  workflow_dispatch:
+#    inputs:
+#      tenant_name:
+#        description: "Tenant Name"
+#        required: true
+#        default: "default-cluster"  
+
+env:
+  PROJECT_ID: trabantparking-stage
+  GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
+  GKE_REGION: europe-west1
+  TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
+  TF_PLAN_FILE: terraform.tfstate
+  BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
+
+jobs:
+  deploy:
+    name: Deploy to GCP
+    runs-on: ubuntu-latest
+
+    steps:
+    

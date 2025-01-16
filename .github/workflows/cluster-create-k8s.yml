@@ -1,21 +1,24 @@
-name: Stage Cluster Creation
+name: Full Cluster Creation
 
 on:
-  push:
-    tags:
-      - '0.*' 
+  workflow_dispatch:
+    inputs:
+      tenant_name:
+        description: "Tenant Name"
+        required: true
+        default: "default-cluster"   
 
 env:
   PROJECT_ID: trabantparking-stage
-  GKE_CLUSTER: test-cluster
+  GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
   GKE_REGION: europe-west1
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
 
 jobs:
-  build-and-deploy:
-    name: Deploy to GCP
+  deploy:
+    name: Full Cluster Creation
     runs-on: ubuntu-latest
 
     steps:
@@ -76,7 +79,7 @@ jobs:
       run: |
         terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
         terraform show -json tfplan > plan.json
-        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
       working-directory: cloud/terraform
 
 
@@ -217,6 +220,18 @@ jobs:
       with:
         version: 'v3.12.3'
 
+    - name: Install NGINX Ingress Controller
+      run: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+        helm upgrade --install my-nginx-ingress ingress-nginx/ingress-nginx \
+          --set controller.admissionWebhooks.enabled=true \
+          --set controller.resources.requests.cpu=50m \
+          --set controller.resources.requests.memory=64Mi
+
+    - name: Wait for 10 seconds
+      run: sleep 10
+    
     - name: Deploy Helm Chart
       run: |
         helm upgrade --install trabant-app ./cloud/yamls/helm-chart --namespace default --create-namespace --set global.tag=${{ env.LATEST_TAG }}
@@ -230,7 +245,7 @@ jobs:
         RETRIES=0
         while true; do
           # Versuche, die Ingress-IP abzurufen, und fange Fehler ab
-          INGRESS_IP=$(kubectl get ingress -n ${{env.GKE_CLUSTER }}-o jsonpath="{.items[0].status.loadBalancer.ingress[0].ip}" 2>/dev/null || echo "")
+          INGRESS_IP=$(kubectl get ingress api-gateway-ingress -n default -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
 
           if [ ! -z "$INGRESS_IP" ]; then
             echo "Ingress IP Address: $INGRESS_IP"
@@ -247,7 +262,6 @@ jobs:
           echo "Retry $RETRIES/$MAX_RETRIES: Ingress IP not ready yet. Retrying in $RETRY_INTERVAL seconds..."
           sleep $RETRY_INTERVAL
           done
-
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."

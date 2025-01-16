@@ -3,7 +3,7 @@ name: Deploy to GCP
 on:
   push:
     branches:
-      - Helmut
+      - never-run
 
 env:
   PROJECT_ID: trabantparking-stage

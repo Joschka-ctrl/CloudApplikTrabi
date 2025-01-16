@@ -3,7 +3,6 @@ kind: Ingress
 metadata:
   name: api-gateway-ingress
 spec:
-  ingressClassName: "nginx"
   defaultBackend:
     service:
       name: default-http-backend
@@ -16,7 +15,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ .Release.Name }}-backend-parking
+            name: trabant-app-backend-parking
             port:
               number: 80
       - path: /api/echarging
@@ -30,14 +29,14 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ .Release.Name }}-backend-reporting
+            name: trabant-app-backend-reporting
             port:
               number: 80
       - path: /api
         pathType: Prefix
         backend:
           service:
-            name: {{ .Release.Name }}-backend-service
+            name: trabant-app-backend-service
             port:
               number: 80
               
@@ -45,6 +44,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ .Release.Name }}-frontend
+            name: trabant-app-frontend
             port:
               number: 80

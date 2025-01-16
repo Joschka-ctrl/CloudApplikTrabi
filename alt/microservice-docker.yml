@@ -1,10 +1,16 @@
 name: Build and Deploy to Google Cloud Run
 
 on:
-  workflow_run:
-    workflows: ["Stage Cluster Creation"]
-    types:
-      - completed
+  push:
+    branches:
+      - never-run
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - 'backend-echarging/**'
+      - 'backend-reporting/**'
+      - 'backend-parking/**'
+      - '.github/workflows/microservice-docker.yml'
 
 jobs:
   build-and-deploy:
@@ -16,13 +22,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Get the latest tag
-        id: get_latest_tag
-        run: |
-          git fetch --tags
-          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-
       - name: Get changed files
         id: changed-files
         run: |
@@ -31,7 +30,6 @@ jobs:
           echo "::set-output name=backend_echarging::$(git diff --name-only HEAD^ HEAD | grep ^backend-echarging/ || true)"
           echo "::set-output name=backend_reporting::$(git diff --name-only HEAD^ HEAD | grep ^backend-reporting/ || true)"
           echo "::set-output name=backend_parking::$(git diff --name-only HEAD^ HEAD | grep ^backend-parking/ || true)"
-        working-directory: microservices
 
       - name: Set up Google Cloud SDK
         uses: google-github-actions/auth@v2
@@ -49,13 +47,12 @@ jobs:
           docker build \
             --build-arg REACT_APP_BACKEND_URL=/api \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
-            -t frontend-server:${{ env.LATEST_TAG }} \
+            -t frontend-server:1.1.1 \
             -f frontend/Dockerfile ./frontend
-          docker tag frontend-server:${{ env.LATEST_TAG }} \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
+          docker tag frontend-server:1.1.1 \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:${{ env.LATEST_TAG }}
-        working-directory: microservices
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/frontend-server:1.1.1
 
       # Backend
       - name: Build and Push Backend
@@ -66,10 +63,9 @@ jobs:
             -t backend-server:latest \
             -f backend/Dockerfile ./backend
           docker tag backend-server:latest \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:${{ env.LATEST_TAG }}
-        working-directory: microservices
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server:latest
 
       # Backend E-Charging
       - name: Build and Push Backend E-Charging
@@ -78,13 +74,12 @@ jobs:
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-echarging-server:${{ env.LATEST_TAG }} \
+            -t backend-echarging-server:1.1.1 \
             -f backend-echarging/Dockerfile ./backend-echarging
-          docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
+          docker tag backend-echarging-server:1.1.1 \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:${{ env.LATEST_TAG }}
-        working-directory: microservices
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server:1.1.1
 
       # Backend Reporting
       - name: Build and Push Backend Reporting
@@ -93,13 +88,12 @@ jobs:
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-reporting-server:${{ env.LATEST_TAG }} \
+            -t backend-reporting-server:1.1.1 \
             -f backend-reporting/Dockerfile ./backend-reporting
-          docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
+          docker tag backend-reporting-server:1.1.1 \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
-        working-directory: microservices
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:1.1.1
 
       # Backend Parking
       - name: Build and Push Backend Parking
@@ -108,10 +102,9 @@ jobs:
           docker build \
             --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             --build-arg PROJECT_ID=trabantparking-stage \
-            -t backend-parking-server:${{ env.LATEST_TAG }} \
+            -t backend-parking-server:1.1.1 \
             -f backend-parking/Dockerfile ./backend-parking
-          docker tag backend-parking-server:${{ env.LATEST_TAG }} \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
+          docker tag backend-parking-server:1.1.1 \
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1
           docker push \
-            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:${{ env.LATEST_TAG }}
-        working-directory: microservices
+            europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server:1.1.1

@@ -1,0 +1,30 @@
+name: Production Cluster Creation
+
+on:
+  push:
+    tags:
+      - '1.*' 
+
+jobs:
+  create-free:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt install gh -y
+
+      # - name: Authenticate GitHub CLI
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: |
+      #     echo ${{ secrets.GITHUB_TOKEN }} > token.txt
+      #     gh auth login --with-token < token.txt
+
+      - name: Trigger another pipeline
+        run: |
+          gh workflow run cluster-create-k8s.yml -f tenant_name=free -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
