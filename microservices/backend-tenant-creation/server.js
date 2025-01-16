@@ -53,7 +53,7 @@ async function triggerWorkflow(tenantConfig) {
     await octokit.actions.createWorkflowDispatch({
       owner: process.env.GITHUB_OWNER,
       repo: process.env.GITHUB_REPO,
-      workflow_id: 'kluster-create-k8s.yml',
+      workflow_id: 'cluster-create-k8s.yml',
       ref: 'stage-cluster',
       inputs: {
         tenant_name: tenantConfig.tenantName,
