@@ -3,7 +3,7 @@ name: Build and Deploy to Google Cloud Run
 on:
   push:
     branches:
-      - stage
+      - never-run
     paths:
       - 'frontend/**'
       - 'backend/**'

@@ -1,10 +1,10 @@
 name: Build and Deploy to Google Cloud Run
 
 on:
-  workflow_run:
-    workflows: ["Stage Cluster Creation"]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: ["Stage Cluster Creation"]
+  #   types:
+  #     - completed
 
 jobs:
   build-and-deploy:
