@@ -18,9 +18,9 @@ jobs:
 
       - name: Authenticate GitHub CLI
         env:
-          GH_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo $GH_TOKEN > token.txt
+          echo ${{ secrets.GITHUB_TOKEN }} > token.txt
           gh auth login --with-token < token.txt
 
       - name: Trigger another pipeline
