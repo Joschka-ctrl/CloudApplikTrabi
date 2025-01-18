@@ -45,15 +45,16 @@ jobs:
       # Deploy backend to Cloud Run
       - name: Deploy Backend to Cloud Run
         id: deploy-backend
-        uses: google-github-actions/deploy-cloudrun@v1
-        with:
-          service: backend-tenant-creation
-          region: ${{ env.REGION }}
-          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-          flags: --allow-unauthenticated
-          env_vars: |
-            GITHUB_TOKEN=${{ secrets.TOKEN }}
-            GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }}
+        run: |
+          gcloud run deploy backend-tenant-creation \
+                --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+                --platform=managed \
+                --region=${{ env.REGION }} \
+                --allow-unauthenticated \
+                --port= 3023 \
+                --memory=1Gi \
+                --env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }} \
+                --env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }}
 
       # Build frontend with backend URL
       - name: Build Frontend
@@ -71,12 +72,15 @@ jobs:
 
       # Deploy frontend to Cloud Run
       - name: Deploy Frontend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v1
-        with:
-          service: tenant-creation-frontend
-          region: ${{ env.REGION }}
-          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          flags: --allow-unauthenticated
+        id: deploy-frontend
+        run: |
+          gcloud run deploy tenant-creation-frontend \
+                --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+                --platform=managed \
+                --region=${{ env.REGION }} \
+                --allow-unauthenticated \
+                --port= 8080 \
+                --memory=1Gi
 
       # Output the URLs
       - name: Output Service URLs
