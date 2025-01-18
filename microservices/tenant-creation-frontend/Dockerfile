@@ -24,13 +24,22 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy built files from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
 
+# Create nginx cache directory with proper permissions
+RUN mkdir -p /var/cache/nginx && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
+
 # Make port 8080 available
 EXPOSE 8080
+
+# Switch to non-root user
+USER nginx
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
