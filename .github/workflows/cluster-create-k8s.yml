@@ -266,10 +266,21 @@ jobs:
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."
         SUBDOMAIN="${{ env.GKE_CLUSTER }}.trabantparking.ninja"
-        gcloud dns record-sets transaction start --zone=trabant
-        gcloud dns record-sets transaction add ${INGRESS_IP} --name=${SUBDOMAIN} --ttl=5 --type=A --zone=trabant
-        gcloud dns record-sets transaction execute --zone=trabant
 
+        # Überprüfen, ob der DNS-Record bereits existiert
+        existing_record=$(gcloud dns record-sets list --zone=trabant --name=${SUBDOMAIN} --type=A --format="value(name)")
+
+        if [ -z "$existing_record" ]; then
+          echo "DNS record does not exist, creating a new one..."
+          
+          # Start DNS transaction
+          gcloud dns record-sets transaction start --zone=trabant
+          gcloud dns record-sets transaction add ${INGRESS_IP} --name=${SUBDOMAIN} --ttl=5 --type=A --zone=trabant
+          gcloud dns record-sets transaction execute --zone=trabant
+        else
+          echo "DNS record already exists for ${SUBDOMAIN}, skipping creation."
+        fi
+    
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app

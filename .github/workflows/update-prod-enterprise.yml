@@ -6,7 +6,7 @@ on:
       - '2.*' 
 
 jobs:
-  create-Stage-free:
+  update-Enterprise-tenants:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Google Cloud SDK
