@@ -3,7 +3,7 @@ name: Production Cluster Creation
 on:
   push:
     tags:
-      - '1.100.*' 
+      - '2.*' 
 
 jobs:
   create-Stage-free:
