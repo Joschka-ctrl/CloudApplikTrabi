@@ -8,9 +8,12 @@ import {
   Modal,
   Box,
   Button,
-  Typography
+  Typography,
+  Grid,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+
+
 
 const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
@@ -20,6 +23,7 @@ const ParkingLots = ({ tenantId }) => {
   const [parkingSpots, setParkingSpots] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedSpotId, setSelectedSpotId] = useState(null);
+  const [floorStats, setFloorStats] = useState([]);
 
   useEffect(() => {
     tenantId = tenantId || '15';
@@ -36,8 +40,18 @@ const ParkingLots = ({ tenantId }) => {
         .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch parking spots: ${response.status}`))
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
+
+      const startDate = "2023-01-01"; // Beispiel: Startdatum
+      const endDate = "2023-12-31"; // Beispiel: Enddatum
+
+      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`)
+        .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch floor stats: ${response.status}`))
+        .then(data => setFloorStats(data.floorStats || []))
+        .catch(error => console.error(error));
+
     } else {
       setParkingSpots([]);
+      setFloorStats([]);
     }
   }, [selectedFacilityId, tenantId]);
 
@@ -75,9 +89,9 @@ const ParkingLots = ({ tenantId }) => {
         const updatedSpots = parkingSpots.map((spot) =>
           spot.id === selectedSpotId
             ? {
-                ...spot,
-                avalibilityStatus: newStatus, // Set the status
-              }
+              ...spot,
+              avalibilityStatus: newStatus, // Set the status
+            }
             : spot
         );
         setParkingSpots(updatedSpots);
@@ -85,7 +99,7 @@ const ParkingLots = ({ tenantId }) => {
       })
       .catch((error) => console.error(error));
   };
-  
+
 
 
   const columns = [
@@ -111,7 +125,7 @@ const ParkingLots = ({ tenantId }) => {
             statusColor = '#9E9E9E'; // Gray for unknown
             break;
         }
-  
+
         return (
           <Button
             variant="contained"
@@ -134,10 +148,13 @@ const ParkingLots = ({ tenantId }) => {
       },
     },
   ];
-  
+
 
   return (
-    <Container style={{ marginTop: '50px' }}>
+    <Container style={{ marginTop: '60px' }}>
+      <Typography variant="h4" component="h1" align="center" gutterBottom>
+        Parking Management
+      </Typography>
       <FormControl fullWidth margin="normal">
         <Select
           labelId="facility-id-label"
@@ -160,8 +177,92 @@ const ParkingLots = ({ tenantId }) => {
         </Select>
       </FormControl>
 
+      {/* /* Stats Section */}
+      {floorStats.length > 0 && (
+        <Paper
+          sx={{
+            padding: '10px',
+            marginBottom: '20px',
+            backgroundColor: '#f7f9fc',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            height: 'auto', // Flexible height
+            width: '100%',
+            overflow: 'hidden', // Verhindert das Überlaufen des Inhalts
+          }}
+        >
+          <Typography
+            variant="h6"
+            component="h2"
+            gutterBottom
+            sx={{
+              fontWeight: 'bold',
+              color: '#2c3e50',
+              textAlign: 'center',
+              marginBottom: '10px', // Kleinere Margen
+              fontSize: '18px', // Kleinere Schriftgröße
+            }}
+          >
+            Floor Statistics
+          </Typography>
+          <Grid container spacing={1}>
+            {floorStats.map((floor) => (
+              <Grid item xs={12} sm={6} md={4} key={floor.floor}>
+                <Paper
+                  sx={{
+                    padding: '10px',
+                    textAlign: 'center',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    backgroundColor: '#ffffff',
+                    height: '100%', // Volle Höhe innerhalb des Grid
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between', // Verteilt den Inhalt innerhalb der Kachel
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    component="h3"
+                    sx={{ fontWeight: 'bold', color: '#34495e', fontSize: '16px' }} // Kleinere Schriftgröße
+                  >
+                    Floor {floor.floor}
+                  </Typography>
+                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                    Total Spots: <strong>{floor.totalSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                    Closed Spots: <strong>{floor.closedSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                    Occupied Spots: <strong>{floor.occupiedSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                    Available Spots: <strong>{floor.availibleSpots}</strong>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: floor.occupancyPercentage > 75 ? '#e74c3c' : '#2ecc71',
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                    }}
+                  >
+                    Occupancy: {floor.occupancyPercentage}%
+                  </Typography>
+                  {/* Optional: Durchschnittliche Belegungszeit */}
+                  {/* <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+              Avg. Occupancy Time: <strong>{Math.round(floor.averageOccupancyTime)} sec</strong>
+            </Typography> */}
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
+      )}
+
+
       {parkingSpots.length > 0 && (
-        <Paper sx={{ height: 400, width: '100%' }}>
+        <Paper sx={{ height: 800, width: '100%' }}>
           <DataGrid
             rows={parkingSpots}
             columns={columns}

@@ -914,23 +914,17 @@ const getFloorStats = async (tenantId, facilityId, startDate, endDate) => {
 
         // Initialisierung der Ergebnisse
         const floorStats = facility.parkingSpacesOnFloor.map((floor, index) => {
-            const totalSpots = floor.spots.length;
+            const totalSpots = floor.spots.length - floor.spots.filter(spot => spot.isClosed).length;
             const occupiedSpots = floor.spots.filter(spot => spot.occupied).length;
-            const occupancyPercentage = (occupiedSpots / totalSpots) * 100;
-
-            // Durchschnittliche Belegungszeit berechnen
-            const averageOccupancyTime = calculateAverageParkingDuration(
-                facility.carsInParkingFacility,
-                startDate,
-                endDate
-            );
-
+            const occupancyPercentage = Math.ceil((occupiedSpots / totalSpots) * 100);
+            const closedSpots = floor.spots.filter(spot => spot.isClosed).length;
             return {
-                floor: index + 1,
+                floor: index,
                 totalSpots,
                 occupiedSpots,
+                closedSpots: closedSpots,
+                availibleSpots: totalSpots - occupiedSpots - closedSpots,
                 occupancyPercentage,
-                averageOccupancyTime,
             };
         });
         return floorStats;
