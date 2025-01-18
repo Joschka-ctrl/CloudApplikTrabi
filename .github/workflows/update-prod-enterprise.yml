@@ -1,4 +1,4 @@
-name: Production Cluster Creation
+name: Production Cluster Update Enterprise Tenants
 
 on:
   push:
