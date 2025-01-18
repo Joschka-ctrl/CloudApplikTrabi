@@ -102,6 +102,22 @@ async function createAdminUserAndTenant(adminData) {
     
     const tenant = await admin.auth().tenantManager().createTenant(tenantConfig);
 
+    // Create admin user in Firebase Auth
+    const adminAuth = admin.auth().tenantManager().authForTenant(tenant.tenantId);
+    const adminUser = await adminAuth.createUser({
+      email: adminData.email,
+      password: adminData.password,
+      emailVerified: false,
+      disabled: false,
+      displayName: adminData.fullName,
+    });
+
+    // Set custom claims for admin user
+    await adminAuth.setCustomUserClaims(adminUser.uid, {
+      tenantId: tenant.tenantId,
+      role: 'admin'
+    });
+
     // Create tenant document in Firestore
     const tenantData = {
       tenantId: tenant.tenantId,
@@ -219,7 +235,8 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
     // Set custom claims for admin
     await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(uid, {
       tenantId: tenantId,
-      admin: true
+      admin: true,
+      role: 'admin'
     });
 
     // Update tenant document with admin UID

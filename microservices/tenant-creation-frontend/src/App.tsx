@@ -32,7 +32,7 @@ const theme = createTheme({
 });
 
 function App() {
-  const { isAuthenticated, loading, error: authError, initialLoadComplete, logout } = useAuth();
+  const { isAuthenticated, loading: authLoading, error: authError, initialLoadComplete, logout } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [showSignUp, setShowSignUp] = useState(false);
@@ -47,6 +47,7 @@ function App() {
   const [changingPlan, setChangingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tenantUrl, setTenantUrl] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
 
   const HOST = 'http://localhost:3023/api/tenants';
 
@@ -96,10 +97,12 @@ function App() {
   useEffect(() => {
     const fetchTenantDetails = async () => {
       if (!auth.tenantId || !isAuthenticated) {
+        setPlanLoading(false);
         return;
       }
 
       try {
+        setPlanLoading(true);
         const response = await fetch(`${HOST}/${auth.tenantId}`, {
           method: 'GET',
           headers: {
@@ -119,6 +122,7 @@ function App() {
         console.error('Error fetching tenant details:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
       } finally {
+        setPlanLoading(false);
       }
     };
 
@@ -248,7 +252,7 @@ function App() {
     }
   };
 
-  if (!initialLoadComplete || loading) {
+  if (!initialLoadComplete || authLoading) {
     return (
       <ThemeProvider theme={theme}>
         <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -261,17 +265,33 @@ function App() {
   if (!isAuthenticated) {
     return (
       <ThemeProvider theme={theme}>
-        {showSignUp ? (
-          <AdminSignUp 
-            onSignUpSuccess={() => setShowSignUp(false)} 
-            onSwitchToLogin={() => setShowSignUp(false)}
-          />
-        ) : (
-          <AdminLogin
-            onLoginSuccess={() => null}
-            onSwitchToSignUp={() => setShowSignUp(true)}
-          />
-        )}
+        <Box sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: 2
+        }}>
+          {authError && (
+            <Box sx={{ mb: 3 }}>
+              <Typography color="error" align="center" gutterBottom>
+                {authError}
+              </Typography>
+            </Box>
+          )}
+          {showSignUp ? (
+            <AdminSignUp 
+              onSignUpSuccess={() => setShowSignUp(false)} 
+              onSwitchToLogin={() => setShowSignUp(false)}
+            />
+          ) : (
+            <AdminLogin
+              onLoginSuccess={() => null}
+              onSwitchToSignUp={() => setShowSignUp(true)}
+            />
+          )}
+        </Box>
       </ThemeProvider>
     );
   }
@@ -290,7 +310,11 @@ function App() {
         <Navbar onLogout={logout} />
         <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {!currentPlan || changingPlan ? (
+            {planLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                <CircularProgress />
+              </Box>
+            ) : !currentPlan || changingPlan ? (
               <PlanSelection
                 currentPlan={currentPlan}
                 changingPlan={changingPlan}
@@ -302,10 +326,9 @@ function App() {
                 plan={currentPlan}
                 price={getPlanPrice(currentPlan)}
                 onChangePlan={handleChangePlan}
-                url={`https://${auth.tenantId}.trabantparking.ninja`} // Noch falsch TODO
+                url={`https://${auth.tenantId}.trabantparking.ninja`}
               />
             )}
-
             <UserManagement
               users={users}
               userError={userError}

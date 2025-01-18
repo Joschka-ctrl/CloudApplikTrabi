@@ -23,13 +23,56 @@ export const useAuth = () => {
       auth.tenantId = storedTenantId;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setState(prev => ({
-        ...prev,
-        isAuthenticated: !!user,
-        loading: false,
-        initialLoadComplete: true,
-      }));
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: false,
+          loading: false,
+          initialLoadComplete: true,
+          error: null
+        }));
+        return;
+      }
+
+      try {
+        // Get the ID token with claims
+        const idTokenResult = await user.getIdTokenResult();
+        console.log('ID token claims result:', idTokenResult.claims);
+        const isAdmin = idTokenResult.claims.role === 'admin';
+
+        if (!isAdmin) {
+          // If not admin, sign out and set error
+          await auth.signOut();
+          setState(prev => ({
+            ...prev,
+            isAuthenticated: false,
+            loading: false,
+            initialLoadComplete: true,
+            error: 'Access denied. Admin privileges required.'
+          }));
+          return;
+        }
+
+        // If admin, set authenticated state
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: true,
+          loading: false,
+          initialLoadComplete: true,
+          error: null
+        }));
+      } catch (err) {
+        console.error('Error checking admin status:', err);
+        await auth.signOut();
+        setState(prev => ({
+          ...prev,
+          isAuthenticated: false,
+          loading: false,
+          initialLoadComplete: true,
+          error: 'Failed to verify admin privileges.'
+        }));
+      }
     });
 
     return () => unsubscribe();
