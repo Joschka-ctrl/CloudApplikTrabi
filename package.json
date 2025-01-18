@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install-all": "npm run install-backend && npm run install-backend-echarging && npm run install-backend-parking && npm run install-backend-reporting && npm run install-backend-tenant-creation && npm run install-facility-management && npm run install-tenant-creation-frontend",
+    "install-all": "npm run install-backend && npm run install-backend-echarging && npm run install-backend-parking && npm run install-backend-reporting && npm run install-backend-tenant-creation && npm run install-facility-management && npm run install-tenant-creation-frontend && npm run install-frontend",
     "install-backend": "cd microservices/backend && npm install",
     "install-backend-echarging": "cd microservices/backend-echarging && npm install",
     "install-backend-parking": "cd microservices/backend-parking && npm install",
