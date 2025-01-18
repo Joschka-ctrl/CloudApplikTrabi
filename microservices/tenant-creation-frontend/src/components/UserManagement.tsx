@@ -16,14 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { DeleteUserDialog } from './DeleteUserDialog';
 import { useState } from 'react';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
-  role: string;
-}
+import { User } from '../types/User';
 
 interface UserManagementProps {
   users: User[];

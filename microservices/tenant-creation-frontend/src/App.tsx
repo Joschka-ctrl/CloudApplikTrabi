@@ -17,7 +17,8 @@ import { UserManagement } from './components/UserManagement';
 import { AddUserDialog } from './components/AddUserDialog';
 import { PaymentDialog } from './components/PaymentDialog';
 import { auth } from './firebase';
-import { onAuthStateChanged } from '@firebase/auth';
+import { User } from './types/User';
+import { useAuth } from './hooks/useAuth';
 
 const theme = createTheme({
   palette: {
@@ -30,19 +31,11 @@ const theme = createTheme({
   },
 });
 
-interface User {
-  id: string;
-  email: string;
-  createdAt: string;
-}
-
 function App() {
+  const { isAuthenticated, loading: authLoading, error: authError, initialLoadComplete, logout } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -52,7 +45,10 @@ function App() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tenantUrl, setTenantUrl] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
   const HOST = 'http://localhost:3023/api/tenants';
 
@@ -69,9 +65,22 @@ function App() {
     }
   };
 
+  const generateTenantUrl = (plan: string, tenantId: string|null): string => {
+    switch (plan.toLowerCase()) {
+      case 'free':
+        return 'http://free.trabantparking.ninja';
+      case 'standard':
+        return 'http://parking.trabantparking.ninja';
+      case 'enterprise':
+        return `http://${tenantId}.trabantparking.ninja`;
+      default:
+        return '';
+    }
+  };
+
   const handlePayment = async () => {
     setIsProcessingPayment(true);
-    await changePlan();
+    changePlan();
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsProcessingPayment(false);
@@ -98,32 +107,34 @@ function App() {
     setChangingPlan(false);
   };
 
-  // Auth state effect
-  useEffect(() => {
-    const storedTenantId = localStorage.getItem('tenantId');
-    if (storedTenantId) {
-      auth.tenantId = storedTenantId;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      if (!user) {
-        setLoading(false);
-        setInitialLoadComplete(true);
+  const checkDeploymentStatus = async (url: string) => {
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD'
+      });
+      
+      if (response.status === 500) {
+        setDeploymentStatus('failed');
+      } else if (response.ok) {
+        setDeploymentStatus('deployed');
+      } else {
+        setDeploymentStatus('pending');
       }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    } catch (error) {
+      setDeploymentStatus('pending');
+    }
+  };
 
   // Fetch tenant details effect
   useEffect(() => {
     const fetchTenantDetails = async () => {
       if (!auth.tenantId || !isAuthenticated) {
+        setPlanLoading(false);
         return;
       }
 
       try {
+        setPlanLoading(true);
         const response = await fetch(`${HOST}/${auth.tenantId}`, {
           method: 'GET',
           headers: {
@@ -142,8 +153,7 @@ function App() {
         console.error('Error fetching tenant details:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
       } finally {
-        setLoading(false);
-        setInitialLoadComplete(true);
+        setPlanLoading(false);
       }
     };
 
@@ -182,6 +192,21 @@ function App() {
     }
   }, [isAuthenticated]);
 
+  // Effect to check deployment status every 15 seconds
+  useEffect(() => {
+    if (!currentPlan) return;
+
+    const url = generateTenantUrl(currentPlan, auth.tenantId);
+    if (!url) return;
+
+    const checkStatus = () => checkDeploymentStatus(url);
+    checkStatus(); // Initial check
+
+    const intervalId = setInterval(checkStatus, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [currentPlan, auth.tenantId]);
+
   const changePlan = async () => {
     if (isAuthenticated) {
       const plan = selectedPlan;
@@ -198,9 +223,11 @@ function App() {
           .then(response => response.json())
           .then(data => {
             console.log('Plan changed successfully:', data);
+            return data;
           });
       } else {
         setShowSignUp(true);
+        return;
       }
     }
   };
@@ -271,7 +298,7 @@ function App() {
     }
   };
 
-  if (!initialLoadComplete || loading) {
+  if (!initialLoadComplete || authLoading) {
     return (
       <ThemeProvider theme={theme}>
         <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -284,17 +311,33 @@ function App() {
   if (!isAuthenticated) {
     return (
       <ThemeProvider theme={theme}>
-        {showSignUp ? (
-          <AdminSignUp 
-            onSignUpSuccess={() => setIsAuthenticated(true)} 
-            onSwitchToLogin={() => setShowSignUp(false)}
-          />
-        ) : (
-          <AdminLogin 
-            onLoginSuccess={() => setIsAuthenticated(true)}
-            onSwitchToSignUp={() => setShowSignUp(true)}
-          />
-        )}
+        <Box sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          padding: 2
+        }}>
+          {authError && (
+            <Box sx={{ mb: 3 }}>
+              <Typography color="error" align="center" gutterBottom>
+                {authError}
+              </Typography>
+            </Box>
+          )}
+          {showSignUp ? (
+            <AdminSignUp 
+              onSignUpSuccess={() => setShowSignUp(false)} 
+              onSwitchToLogin={() => setShowSignUp(false)}
+            />
+          ) : (
+            <AdminLogin
+              onLoginSuccess={() => null}
+              onSwitchToSignUp={() => setShowSignUp(true)}
+            />
+          )}
+        </Box>
       </ThemeProvider>
     );
   }
@@ -310,10 +353,14 @@ function App() {
         margin: 0,
         padding: 0,
       }}>
-        <Navbar onLogout={() => setIsAuthenticated(false)} />
+        <Navbar onLogout={logout} />
         <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {!currentPlan || changingPlan ? (
+            {planLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                <CircularProgress />
+              </Box>
+            ) : !currentPlan || changingPlan ? (
               <PlanSelection
                 currentPlan={currentPlan}
                 changingPlan={changingPlan}
@@ -325,10 +372,10 @@ function App() {
                 plan={currentPlan}
                 price={getPlanPrice(currentPlan)}
                 onChangePlan={handleChangePlan}
-                url={`https://${auth.tenantId}.trabantparking.ninja`}
+                url={generateTenantUrl(currentPlan, auth.tenantId)}
+                deploymentStatus={deploymentStatus}
               />
             )}
-
             <UserManagement
               users={users}
               userError={userError}
