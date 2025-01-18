@@ -18,6 +18,7 @@ import { AddUserDialog } from './components/AddUserDialog';
 import { PaymentDialog } from './components/PaymentDialog';
 import { auth } from './firebase';
 import { onAuthStateChanged } from '@firebase/auth';
+import { User } from './types/User';
 
 const theme = createTheme({
   palette: {
@@ -29,12 +30,6 @@ const theme = createTheme({
     },
   },
 });
-
-interface User {
-  id: string;
-  email: string;
-  createdAt: string;
-}
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -72,7 +67,7 @@ function App() {
 
   const handlePayment = async () => {
     setIsProcessingPayment(true);
-    await changePlan();
+    changePlan();
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsProcessingPayment(false);
@@ -200,9 +195,11 @@ function App() {
           .then(response => response.json())
           .then(data => {
             console.log('Plan changed successfully:', data);
+            return data;
           });
       } else {
         setShowSignUp(true);
+        return;
       }
     }
   };
