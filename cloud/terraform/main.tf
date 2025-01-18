@@ -65,3 +65,14 @@ resource "local_file" "default" {
   }
   EOT
 }
+
+resource "google_firestore_database" "firestore" {
+  project = "trabantparking-stage"
+  region  = "europe-west1"
+  type    = "CLOUD_FIRESTORE"
+  database_id = var.cluster_name 
+}
+
+output "firestore_database_id" {
+  value = google_firestore_database.firestore.id
+}
