@@ -54,8 +54,8 @@ jobs:
                 --allow-unauthenticated \
                 --port=3023 \
                 --memory=1Gi \
-                --env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }} \
-                --env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }}
+                --set-env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }} \
+                --set-env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }}
 
       # Build frontend with backend URL
       - name: Build Frontend
