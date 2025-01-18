@@ -48,6 +48,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [tenantUrl, setTenantUrl] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
   const HOST = 'http://localhost:3023/api/tenants';
 
@@ -61,6 +62,19 @@ function App() {
         return 50;
       default:
         return 0;
+    }
+  };
+
+  const generateTenantUrl = (plan: string, tenantId: string|null): string => {
+    switch (plan.toLowerCase()) {
+      case 'free':
+        return 'http://free.trabantparking.ninja';
+      case 'standard':
+        return 'http://parking.trabantparking.ninja';
+      case 'enterprise':
+        return `http://${tenantId}.trabantparking.ninja`;
+      default:
+        return '';
     }
   };
 
@@ -93,6 +107,24 @@ function App() {
     setChangingPlan(false);
   };
 
+  const checkDeploymentStatus = async (url: string) => {
+    try {
+      const response = await fetch(url, {
+        method: 'HEAD'
+      });
+      
+      if (response.status === 500) {
+        setDeploymentStatus('failed');
+      } else if (response.ok) {
+        setDeploymentStatus('deployed');
+      } else {
+        setDeploymentStatus('pending');
+      }
+    } catch (error) {
+      setDeploymentStatus('pending');
+    }
+  };
+
   // Fetch tenant details effect
   useEffect(() => {
     const fetchTenantDetails = async () => {
@@ -117,7 +149,6 @@ function App() {
         if (data.plan) {
           setCurrentPlan(data.plan.replace(/-/g, ' '));
         }
-        setTenantUrl(data.url);
       } catch (err) {
         console.error('Error fetching tenant details:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
@@ -160,6 +191,21 @@ function App() {
       fetchUsers();
     }
   }, [isAuthenticated]);
+
+  // Effect to check deployment status every 15 seconds
+  useEffect(() => {
+    if (!currentPlan) return;
+
+    const url = generateTenantUrl(currentPlan, auth.tenantId);
+    if (!url) return;
+
+    const checkStatus = () => checkDeploymentStatus(url);
+    checkStatus(); // Initial check
+
+    const intervalId = setInterval(checkStatus, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [currentPlan, auth.tenantId]);
 
   const changePlan = async () => {
     if (isAuthenticated) {
@@ -326,7 +372,8 @@ function App() {
                 plan={currentPlan}
                 price={getPlanPrice(currentPlan)}
                 onChangePlan={handleChangePlan}
-                url={`https://${auth.tenantId}.trabantparking.ninja`}
+                url={generateTenantUrl(currentPlan, auth.tenantId)}
+                deploymentStatus={deploymentStatus}
               />
             )}
             <UserManagement
