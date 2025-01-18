@@ -21,16 +21,18 @@ ARG VITE_AUTH_API_KEY
 RUN npm run build
 
 # Production stage
-FROM nginx:alpine
+FROM node:20-alpine
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+
+# Install serve package
+RUN npm install -g serve
 
 # Copy built files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist .
 
-# Make port 8080 available
+# Expose port 8080 (Cloud Run requirement)
 EXPOSE 8080
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the server
+CMD ["serve", "-s", ".", "-l", "8080"]
