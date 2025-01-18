@@ -67,10 +67,10 @@ resource "local_file" "default" {
 }
 
 resource "google_firestore_database" "firestore" {
-  name        = var.cluster_name # Der Name der Firestore-Datenbank
-  location_id = "europe-west1"   # Region der Firestore-Datenbank (z.B. "us-central1")
+  name        = var.cluster_name  # Der Name der Firestore-Datenbank
+  location_id = "europe-west1"    # Region der Firestore-Datenbank (z.B. "us-central1")
 
-  type = "CLOUD_FIRESTORE" # Typ der Firestore-Datenbank (Cloud Firestore)
+  type = "FIRESTORE_NATIVE"  # Korrigierter Typ für Cloud Firestore
 }
 
 
