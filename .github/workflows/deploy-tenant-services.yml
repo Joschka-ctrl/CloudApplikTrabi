@@ -58,10 +58,12 @@ jobs:
       - name: Build Frontend
         env:
           VITE_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
+          VITE_AUTH_API_KEY: ${{ secrets.AUTH_API_KEY_STAGE }}
         run: |
           cd microservices/tenant-creation-frontend
           docker build \
             --build-arg VITE_BACKEND_URL=${{ steps.deploy-backend.outputs.url }} \
+            --build-arg VITE_AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             -t ${{ env.FRONTEND_IMAGE }} .
           docker tag ${{ env.FRONTEND_IMAGE }} gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
