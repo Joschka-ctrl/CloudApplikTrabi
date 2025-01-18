@@ -1,0 +1,81 @@
+name: Deploy Tenant Services
+
+on:
+  push:
+    branches: [ stage ]
+    paths:
+      - 'microservices/tenant-creation-frontend/**'
+      - 'microservices/backend-tenant-creation/**'
+      - '.github/workflows/deploy-tenant-services.yml'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  BACKEND_IMAGE: backend-tenant-creation
+  FRONTEND_IMAGE: tenant-creation-frontend
+  REGION: europe-west1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      # Build and push backend
+      - name: Build Backend
+        run: |
+          cd microservices/backend-tenant-creation
+          docker build -t ${{ env.BACKEND_IMAGE }} .
+          docker tag ${{ env.BACKEND_IMAGE }} gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+
+      # Deploy backend to Cloud Run
+      - name: Deploy Backend to Cloud Run
+        id: deploy-backend
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: backend-tenant-creation
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          env_vars: |
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }}
+
+      # Build frontend with backend URL
+      - name: Build Frontend
+        env:
+          VITE_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
+        run: |
+          cd microservices/tenant-creation-frontend
+          docker build \
+            --build-arg VITE_BACKEND_URL=${{ steps.deploy-backend.outputs.url }} \
+            -t ${{ env.FRONTEND_IMAGE }} .
+          docker tag ${{ env.FRONTEND_IMAGE }} gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+
+      # Deploy frontend to Cloud Run
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: tenant-creation-frontend
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+
+      # Output the URLs
+      - name: Output Service URLs
+        run: |
+          echo "Backend URL: ${{ steps.deploy-backend.outputs.url }}"
+          echo "Frontend service deployed successfully"

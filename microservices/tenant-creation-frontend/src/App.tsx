@@ -46,11 +46,10 @@ function App() {
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tenantUrl, setTenantUrl] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
-  const HOST = 'http://localhost:3023/api/tenants';
+  const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
 
   const getPlanPrice = (plan: string): number => {
     switch (plan.toLowerCase()) {
@@ -179,7 +178,6 @@ function App() {
           throw new Error('Failed to fetch users');
         }
         const data = await response.json();
-        console.log(data);
         setUsers(data);
       } catch (err) {
         console.error('Error fetching users:', err);
