@@ -31,8 +31,9 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
           project_id: trabantparking-stage
 
-      - name: Configure Docker
-        run: gcloud auth configure-docker
+      - name: Authenticate Docker with Google Cloud
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev
 
       # Build and push backend
       - name: Build Backend
