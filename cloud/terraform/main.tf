@@ -67,11 +67,12 @@ resource "local_file" "default" {
 }
 
 resource "google_firestore_database" "firestore" {
-  project = "trabantparking-stage"
-  region  = "europe-west1"
-  type    = "CLOUD_FIRESTORE"
-  database_id = var.cluster_name 
+  name        = var.cluster_name # Der Name der Firestore-Datenbank
+  location_id = "europe-west1"   # Region der Firestore-Datenbank (z.B. "us-central1")
+
+  type = "CLOUD_FIRESTORE" # Typ der Firestore-Datenbank (Cloud Firestore)
 }
+
 
 output "firestore_database_id" {
   value = google_firestore_database.firestore.id
