@@ -93,6 +93,7 @@ export const PlanSelection = ({
                     variant="contained"
                     fullWidth
                     onClick={() => onSelectPlan(planId)}
+                    disabled={isCurrentPlan}
                     {...(isCurrentPlan && {
                       startIcon: <CheckIcon />,
                       children: 'Current Plan',

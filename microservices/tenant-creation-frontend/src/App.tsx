@@ -17,8 +17,8 @@ import { UserManagement } from './components/UserManagement';
 import { AddUserDialog } from './components/AddUserDialog';
 import { PaymentDialog } from './components/PaymentDialog';
 import { auth } from './firebase';
-import { onAuthStateChanged } from '@firebase/auth';
 import { User } from './types/User';
+import { useAuth } from './hooks/useAuth';
 
 const theme = createTheme({
   palette: {
@@ -32,12 +32,10 @@ const theme = createTheme({
 });
 
 function App() {
+  const { isAuthenticated, loading, error: authError, initialLoadComplete, logout } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -47,7 +45,7 @@ function App() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [tenantUrl, setTenantUrl] = useState<string | null>(null);
 
   const HOST = 'http://localhost:3023/api/tenants';
@@ -94,24 +92,6 @@ function App() {
     setChangingPlan(false);
   };
 
-  // Auth state effect
-  useEffect(() => {
-    const storedTenantId = localStorage.getItem('tenantId');
-    if (storedTenantId) {
-      auth.tenantId = storedTenantId;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      if (!user) {
-        setLoading(false);
-        setInitialLoadComplete(true);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   // Fetch tenant details effect
   useEffect(() => {
     const fetchTenantDetails = async () => {
@@ -139,8 +119,6 @@ function App() {
         console.error('Error fetching tenant details:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch tenant details');
       } finally {
-        setLoading(false);
-        setInitialLoadComplete(true);
       }
     };
 
@@ -285,12 +263,12 @@ function App() {
       <ThemeProvider theme={theme}>
         {showSignUp ? (
           <AdminSignUp 
-            onSignUpSuccess={() => setIsAuthenticated(true)} 
+            onSignUpSuccess={() => setShowSignUp(false)} 
             onSwitchToLogin={() => setShowSignUp(false)}
           />
         ) : (
-          <AdminLogin 
-            onLoginSuccess={() => setIsAuthenticated(true)}
+          <AdminLogin
+            onLoginSuccess={() => null}
             onSwitchToSignUp={() => setShowSignUp(true)}
           />
         )}
@@ -309,7 +287,7 @@ function App() {
         margin: 0,
         padding: 0,
       }}>
-        <Navbar onLogout={() => setIsAuthenticated(false)} />
+        <Navbar onLogout={logout} />
         <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             {!currentPlan || changingPlan ? (
