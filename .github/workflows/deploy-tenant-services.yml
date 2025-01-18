@@ -39,19 +39,19 @@ jobs:
         run: |
           cd microservices/backend-tenant-creation
           docker build -t ${{ env.BACKEND_IMAGE }} .
-          docker tag ${{ env.BACKEND_IMAGE }} gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          docker tag ${{ env.BACKEND_IMAGE }} ${{ env.PROJECT_ID }}/docker-repo/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.PROJECT_ID }}/docker-repo/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
 
       # Deploy backend to Cloud Run
       - name: Deploy Backend to Cloud Run
         id: deploy-backend
         run: |
           gcloud run deploy backend-tenant-creation \
-                --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+                --image=${{ env.PROJECT_ID }}/docker-repo/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
                 --platform=managed \
                 --region=${{ env.REGION }} \
                 --allow-unauthenticated \
-                --port= 3023 \
+                --port=3023 \
                 --memory=1Gi \
                 --env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }} \
                 --env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }}
@@ -67,19 +67,19 @@ jobs:
             --build-arg VITE_BACKEND_URL=${{ steps.deploy-backend.outputs.url }} \
             --build-arg VITE_AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             -t ${{ env.FRONTEND_IMAGE }} .
-          docker tag ${{ env.FRONTEND_IMAGE }} gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          docker tag ${{ env.FRONTEND_IMAGE }} ${{ env.PROJECT_ID }}/docker-repo/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          docker push ${{ env.PROJECT_ID }}/docker-repo/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
       # Deploy frontend to Cloud Run
       - name: Deploy Frontend to Cloud Run
         id: deploy-frontend
         run: |
           gcloud run deploy tenant-creation-frontend \
-                --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+                --image=${{ env.PROJECT_ID }}/docker-repo/${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
                 --platform=managed \
                 --region=${{ env.REGION }} \
                 --allow-unauthenticated \
-                --port= 8080 \
+                --port=8080 \
                 --memory=1Gi
 
       # Output the URLs
