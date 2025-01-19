@@ -15,7 +15,7 @@ resource "google_container_cluster" "gke" {
   name     = var.cluster_name
   location = "europe-west1-b"
 
-  deletion_protection = false
+  # deletion_protection = false
 
   addons_config {
     http_load_balancing {
