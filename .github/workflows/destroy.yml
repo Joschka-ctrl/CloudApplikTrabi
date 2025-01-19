@@ -48,12 +48,19 @@ jobs:
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
         fi
 
+
+    - name: updateGKE Cluster
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
+      run: |
+        gcloud container clusters update ${{env.GKE_CLUSTER }} --region ${{env.GKE_REGION}} --no-enable-deletion-protection
+          
     - name: Import Terraform Resources
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
 
+ 
     - name: Destroy Terraform Resources
       run: |
         terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}" 
