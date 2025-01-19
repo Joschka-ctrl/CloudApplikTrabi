@@ -40,6 +40,7 @@ function App() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
   const [userError, setUserError] = useState<string | null>(null);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -249,6 +250,7 @@ function App() {
           tenantId: auth.tenantId,
           email: newUserEmail.toLowerCase(),
           name: newUserName.trim(),
+          role: newUserRole,
         }),
       });
 
@@ -262,6 +264,7 @@ function App() {
       setShowAddUserModal(false);
       setNewUserEmail('');
       setNewUserName('');
+      setNewUserRole('user');
     } catch (err) {
       console.error('Error adding user:', err);
       setUserError(err instanceof Error ? err.message : 'Failed to add user');
@@ -398,13 +401,16 @@ function App() {
         open={showAddUserModal}
         email={newUserEmail}
         name={newUserName}
+        role={newUserRole}
         onClose={() => {
           setShowAddUserModal(false);
           setNewUserEmail('');
           setNewUserName('');
+          setNewUserRole('user');
         }}
         onEmailChange={setNewUserEmail}
         onNameChange={setNewUserName}
+        onRoleChange={setNewUserRole}
         onSubmit={handleAddUser}
       />
 

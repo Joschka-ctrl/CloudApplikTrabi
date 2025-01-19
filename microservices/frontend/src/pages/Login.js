@@ -13,7 +13,6 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
-    
     if (!tenantId.trim()) {
       setError("Bitte geben Sie eine Tenant ID ein.");
       return;
