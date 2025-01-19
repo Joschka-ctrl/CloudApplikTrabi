@@ -4,12 +4,12 @@ on:
     tags:
       - '5.*' 
 env:
-PROJECT_ID: trabantparking-stage
-GKE_CLUSTER: free
-GKE_REGION: europe-west1-b
-TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
-# TF_PLAN_FILE: terraform.tfstate
-DNS_ZONE_NAME: trabant
+    PROJECT_ID: trabantparking-stage
+    GKE_CLUSTER: free
+    GKE_REGION: europe-west1-b
+    TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
+    # TF_PLAN_FILE: terraform.tfstate
+    DNS_ZONE_NAME: trabant
 
 
 jobs:
@@ -20,8 +20,8 @@ jobs:
     - name: Set up Google Cloud SDK
       uses: google-github-actions/auth@v2
       with:
-      credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
-      project_id: ${{ secrets.GCP_PROJECT_ID }}
+        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Install Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
