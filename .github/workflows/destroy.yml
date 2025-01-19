@@ -1,11 +1,11 @@
-on:
-push:
-    branches:
-    - never Run
 
+on:
+  push:
+    tags:
+      - '5.*' 
 env:
 PROJECT_ID: trabantparking-stage
-GKE_CLUSTER: test-cluster
+GKE_CLUSTER: free
 GKE_REGION: europe-west1-b
 TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
 TF_PLAN_FILE: terraform.tfstate
