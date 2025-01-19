@@ -8,7 +8,7 @@ PROJECT_ID: trabantparking-stage
 GKE_CLUSTER: free
 GKE_REGION: europe-west1-b
 TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
-TF_PLAN_FILE: terraform.tfstate
+# TF_PLAN_FILE: terraform.tfstate
 DNS_ZONE_NAME: trabant
 
 
@@ -54,9 +54,9 @@ jobs:
             -var="region=${{ env.GKE_REGION }}"
         working-directory: cloud/terraform
 
-    - name: Delete Terraform State from Bucket
-      run: |
-        gsutil rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+    # - name: Delete Terraform State from Bucket
+    #   run: |
+    #     gsutil rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
 
     - name: Delete DNS Record
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
