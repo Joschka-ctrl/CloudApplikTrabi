@@ -56,10 +56,8 @@ jobs:
 
     - name: Destroy Terraform Resources
       run: |
-        terraform destroy -auto-approve \
-            -var="project_id=${{ env.PROJECT_ID }}" \
-            -var="cluster_name=${{ env.GKE_CLUSTER }}" \
-            -var="region=${{ env.GKE_REGION }}"
+        terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}" 
+           
       working-directory: cloud/terraform
 
     # - name: Delete Terraform State from Bucket
