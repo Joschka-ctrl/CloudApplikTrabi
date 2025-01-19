@@ -1,4 +1,4 @@
-
+name: destroy-Cluster
 on:
   push:
     tags:
