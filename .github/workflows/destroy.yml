@@ -26,6 +26,16 @@ jobs:
     - name: Install Google Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
 
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: "1.5.7"
+
+    - name: Initialize Terraform
+      run: |
+        terraform init
+      working-directory: cloud/terraform
+
     - name: Check if Cluster Exists
       id: check_cluster
       run: |
@@ -34,11 +44,6 @@ jobs:
         else
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
         fi
-
-    - name: Initialize Terraform
-      run: |
-          terraform init
-      working-directory: cloud/terraform
 
     - name: Import Terraform Resources
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
