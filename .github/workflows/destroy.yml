@@ -47,13 +47,7 @@ jobs:
         else
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
         fi
-
-
-    - name: updateGKE Cluster
-      if: ${{ env.CLUSTER_EXISTS == 'true' }}
-      run: |
-        gcloud container clusters update ${{env.GKE_CLUSTER }} --region ${{env.GKE_REGION}} --enable-deletion-protection=false
-          
+  
     - name: Import Terraform Resources
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
