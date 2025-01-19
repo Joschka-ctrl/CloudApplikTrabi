@@ -1,0 +1,76 @@
+on:
+push:
+    branches:
+    - never Run
+
+env:
+PROJECT_ID: trabantparking-stage
+GKE_CLUSTER: test-cluster
+GKE_REGION: europe-west1
+TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
+TF_PLAN_FILE: terraform.tfstate
+DNS_ZONE_NAME: trabant
+
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/auth@v2
+      with:
+      credentials_json: ${{ secrets.GOOGLE_CREDENTIALS_STAGE }}
+      project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Install Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Check if Cluster Exists
+      id: check_cluster
+      run: |
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+            echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
+        else
+            echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Initialize Terraform
+      run: |
+          terraform init
+      working-directory: cloud/terraform
+
+    - name: Import Terraform Resources
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
+      run: |
+        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+        working-directory: cloud/terraform
+
+    - name: Destroy Terraform Resources
+      run: |
+        terraform destroy -auto-approve \
+            -var="project_id=${{ env.PROJECT_ID }}" \
+            -var="cluster_name=${{ env.GKE_CLUSTER }}" \
+            -var="region=${{ env.GKE_REGION }}"
+        working-directory: cloud/terraform
+
+    - name: Delete Terraform State from Bucket
+      run: |
+        gsutil rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
+
+    - name: Delete DNS Record
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
+      run: |
+        if gcloud dns record-sets list --zone=${{ env.DNS_ZONE_NAME }} | grep -q ${{ env.GKE_CLUSTER }}.trabantparking.ninja; then
+        echo "DNS record found. Deleting..."
+        gcloud dns record-sets delete ${{ env.GKE_CLUSTER }}.trabantparking.ninja \
+            --type=A \
+            --zone=${{ env.DNS_ZONE_NAME }}
+        else
+        echo "DNS record not found. Skipping deletion."
+        fi
+
+    - name: Delete GKE Cluster (Fallback)
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
+      run: |
+        gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }} --quiet
