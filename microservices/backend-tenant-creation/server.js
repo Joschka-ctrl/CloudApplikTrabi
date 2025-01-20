@@ -3,6 +3,7 @@ const { Octokit } = require('@octokit/rest');
 const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
+const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3023;
@@ -388,12 +389,53 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
   }
 });
 
+// Get all tenants with health status
+app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
+  try {
+    const tenantsSnapshot = await db.collection('tenants').get();
+    const tenants = [];
+
+    for (const doc of tenantsSnapshot.docs) {
+      const tenantData = doc.data();
+      let status = 'pending';
+
+      // Check if tenant has a URL (indicating deployment)
+      if (tenantData.url) {
+        try {
+          // Try to fetch the tenant's URL to check health
+          const response = await axios.get(`https://${tenantData.url}/health`, {
+            timeout: 5000 // 5 second timeout
+          });
+          status = response.status === 200 ? 'healthy' : 'unhealthy';
+        } catch (error) {
+          console.error(`Health check failed for tenant ${doc.id}:`, error.message);
+          status = 'unhealthy';
+        }
+      }
+
+      tenants.push({
+        tenantId: doc.id,
+        displayName: tenantData.displayName || doc.id,
+        plan: tenantData.plan || 'free',
+        status: status,
+        createdAt: tenantData.createdAt ? tenantData.createdAt.toDate().toISOString() : new Date().toISOString(),
+        url: tenantData.url
+      });
+    }
+
+    res.json(tenants);
+  } catch (error) {
+    console.error('Error fetching tenants:', error);
+    res.status(500).json({ error: 'Failed to fetch tenants' });
+  }
+});
+
 // Get all tenants endpoint
 app.get('/api/tenants', async (req, res) => {
   try {
     const tenantsSnapshot = await db.collection('tenants').get();
     const tenants = [];
-    
+
     tenantsSnapshot.forEach(doc => {
       tenants.push({
         id: doc.id,
@@ -407,7 +449,6 @@ app.get('/api/tenants', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch tenants' });
   }
 });
-
 // Get all users for a tenant
 app.get('/api/tenants/users', authenticateToken, async (req, res) => {
   try {
