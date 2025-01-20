@@ -102,6 +102,7 @@ jobs:
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }} --quiet
+
     - name: Delete DNS Record
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
@@ -113,5 +114,12 @@ jobs:
         else
         echo "DNS record not found. Skipping deletion."
         fi
+
+    - name: Delete file from GCS bucket
+      run: |
+        BUCKET_NAME="trabantparking-stage-terraform-plans"
+        FILE_TO_DELETE="${{ env.GKE_CLUSTER }}"
+        echo "Deleting file $FILE_TO_DELETE from bucket $BUCKET_NAME"
+        gsutil rm gs://$BUCKET_NAME/$FILE_TO_DELETE
 
   
