@@ -336,7 +336,8 @@ router.get("/billing-summary", authenticateToken, async (req, res) => {
     
     // Get all completed charging sessions
     let query = db.collection("charging-sessions")
-      .where("status", "==", "completed");
+      .where("status", "==", "completed")
+      .where("tenantId", "==", tenantId);
     
     if (garageFilter) {
       query = query.where("garage", "==", garageFilter);
@@ -383,8 +384,13 @@ router.get("/billing-summary", authenticateToken, async (req, res) => {
 // Get charging statistics for reporting
 router.get("/charging-stats", authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, garage } = req.query;
-    let query = db.collection("charging-sessions");
+    const { startDate, endDate, garage, tenantId } = req.query;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
+    
+    let query = db.collection("charging-sessions")
+      .where("tenantId", "==", tenantId);
     
     if (garage) {
       query = query.where("garage", "==", garage);
