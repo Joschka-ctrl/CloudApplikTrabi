@@ -11,6 +11,7 @@
     "@google-cloud/firestore": "^7.10.0",
     "@google-cloud/storage": "^7.13.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "firebase-admin": "^12.6.0",
     "google-auth-library": "^9.14.2",

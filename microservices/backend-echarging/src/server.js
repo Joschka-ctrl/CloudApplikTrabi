@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require("express");
 const cors = require("cors");
 const admin = require('firebase-admin');
@@ -16,6 +18,8 @@ app.use(express.json());
 
 app.use('/api/echarging', router)
 app.use('/', router)
+
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -42,6 +46,29 @@ const authenticateToken = async (req, res, next) => {
 app.get("/api/echarging/health", (req, res) => {
   res.status(200).json({ status: 'healthy' });
 });
+
+router.get("/garages", authenticateToken, async (req, res) => {
+  try {
+    const tenantId = req.query.tenantId;
+    const token = req.headers.authorization.split(' ')[1];
+    const snapshot = await fetch(`${PARKING_SERVICE_URL}/facilities/${tenantId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      }
+    );
+    const garages = await snapshot.json();
+const mappedGarages = garages.map(garage => garage.facilityId);
+console.log(mappedGarages);
+    res.json(mappedGarages);
+  } catch (error) {
+    console.error("Error getting garages:", error);
+    res.status(500).json({ error: "Failed to get garages" });
+  }
+})
 
 // Get all charging stations
 router.get("/charging-stations", authenticateToken, async (req, res) => {
@@ -149,16 +176,27 @@ router.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
 router.get("/charging-sessions", authenticateToken, async (req, res) => {
   try {
     const tenantId = req.query.tenantId;
+    const garage = req.query.garage; 
     if (!tenantId) {
       return res.status(400).json({ error: "Invalid tenant ID" });
     }
     
+    if (garage) {
+      const snapshot = await db.collection("charging-sessions")
+        .where("garage", "==", garage)
+        .where("tenantId", "==", tenantId)
+        .get();
+      const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(sessions);
+    }
+    else{
     const snapshot = await db.collection("charging-sessions")
       .where("tenantId", "==", tenantId)
       .get();
 
     const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(sessions);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -167,7 +205,7 @@ router.get("/charging-sessions", authenticateToken, async (req, res) => {
 // Start charging session
 router.post("/charging-sessions", async (req, res) => {
   try {
-    const { stationId, userId, chargingCardProvider } = req.body;
+    const { stationId, userId, chargingCardProvider,tenantId } = req.body;
 
     // Check station status first
     const stationRef = db.collection("charging-stations").doc(stationId);
@@ -194,7 +232,8 @@ router.post("/charging-sessions", async (req, res) => {
       status: 'active',
       endTime: null,
       energyConsumed: 0,
-      garage: stationData.garage
+      garage: stationData.garage,
+      tenantId: String(tenantId)
     };
     
     // Update charging station status to occupied
@@ -297,7 +336,8 @@ router.get("/billing-summary", authenticateToken, async (req, res) => {
     
     // Get all completed charging sessions
     let query = db.collection("charging-sessions")
-      .where("status", "==", "completed");
+      .where("status", "==", "completed")
+      .where("tenantId", "==", tenantId);
     
     if (garageFilter) {
       query = query.where("garage", "==", garageFilter);
@@ -344,8 +384,13 @@ router.get("/billing-summary", authenticateToken, async (req, res) => {
 // Get charging statistics for reporting
 router.get("/charging-stats", authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, garage } = req.query;
-    let query = db.collection("charging-sessions");
+    const { startDate, endDate, garage, tenantId } = req.query;
+    if (!tenantId) {
+      return res.status(400).json({ error: "Invalid tenant ID" });
+    }
+    
+    let query = db.collection("charging-sessions")
+      .where("tenantId", "==", tenantId);
     
     if (garage) {
       query = query.where("garage", "==", garage);
