@@ -297,9 +297,9 @@ jobs:
         else
           echo "DNS record already exists for ${SUBDOMAIN}, skipping creation."
         fi
-        
+
     - name: migrate data from plan to plan
-      if: ${{ env.CLUSTER_EXISTS == 'true' && env.Firebase_credentials == 'true' }}
+      if: ${{ env.CLUSTER_EXISTS == 'true' && env.SECRET_EXISTS == 'true' }}
       run: |
         if firebase database:get /${{env.GKE_CLUSTER}} --project=trabantparking-stage > ${{env.GKE_CLUSTER}}-data.json; then
           echo "Database '${{env.GKE_CLUSTER}}' exists. Exporting data..."
