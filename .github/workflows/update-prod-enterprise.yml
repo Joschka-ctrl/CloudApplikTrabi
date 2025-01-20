@@ -43,7 +43,7 @@ jobs:
         run: |
           while read -r cluster_name; do
             echo "Triggering workflow for cluster: $cluster_name"
-          gh workflow run cluster-create-k8s.yml -f tenant_name=${cluster_name} -R Joschka-ctrl/CloudApplikTrabi -r ${{env.LATEST_TAG}}
+          gh workflow run cluster-create-k8s.yml -f tenant_name=${cluster_name} -f tag=$LATEST_TAG -R Joschka-ctrl/CloudApplikTrabi
           done < clusters.txt
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
