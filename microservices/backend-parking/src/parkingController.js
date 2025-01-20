@@ -55,7 +55,7 @@ router.post('/parkingSpotsAuthenticated', authenticateToken, (req, res) => {
 
 // tested with postman
 // Create a new parking spot
-router.post('/parkingSpots', async (req, res) => {
+router.post('/parkingSpots', authenticateToken, async (req, res) => {
     try {
         const { facilityId, tenantId, floor } = req.body;
         const newSpot = await parkingService.createParkingSpot(facilityId, tenantId, floor);
@@ -66,7 +66,7 @@ router.post('/parkingSpots', async (req, res) => {
 });
 
 // Get all parking spots
-router.get('/parkingSpots/:tenantid/:facilityid', async (req, res) => {
+router.get('/parkingSpots/:tenantid/:facilityid', authenticateToken, async (req, res) => {
     try {
         // Extract path parameters
         const { facilityid, tenantid } = req.params;
@@ -84,7 +84,7 @@ router.get('/parkingSpots/:tenantid/:facilityid', async (req, res) => {
 
 // tested with postman
 // Get a specific parking spot
-router.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
+router.get('/parkingSpot/:id/:tenantid/:facilityid', authenticateToken, async (req, res) => {
     try {
         const { id, facilityid, tenantid } = req.params;
         const spot = await parkingService.getParkingSpotById(facilityid, tenantid, id);
@@ -97,7 +97,7 @@ router.get('/parkingSpot/:id/:tenantid/:facilityid', async (req, res) => {
 
 // tested with postman
 // Current occupancy of the parking garage
-router.get("/currentOccupancy/:tenantid/:facilityid", async (req, res) => {
+router.get("/currentOccupancy/:tenantid/:facilityid", authenticateToken, async (req, res) => {
     try {
         const { facilityid, tenantid } = req.params;
         const occupancy = await parkingService.getCurrentOccupancy(tenantid, facilityid);
@@ -124,7 +124,7 @@ router.post("/reserveParkingSpot", async (req, res) => {
 });
 
 // Add a car to tone specific parking spot
-router.post("/reverseOccupancy", async (req, res) => {
+router.post("/reverseOccupancy", authenticateToken, async (req, res) => {
 
     try {
         const id = req.body.id;
@@ -139,7 +139,7 @@ router.post("/reverseOccupancy", async (req, res) => {
 });
 
 // Add a car to tone specific parking spot
-router.post("/handleSpotAvalibilityStatus", async (req, res) => {
+router.post("/handleSpotAvalibilityStatus", authenticateToken, async (req, res) => {
 
     try {
         console.log(req.body);
@@ -156,7 +156,7 @@ router.post("/handleSpotAvalibilityStatus", async (req, res) => {
 });
 
 // Release a specific parking spot
-router.post("/releaseParkingSpot", async (req, res) => {
+router.post("/releaseParkingSpot", authenticateToken, async (req, res) => {
     try {
         const id = req.body.id;
         const facilityID = req.body.facilityID;
@@ -170,7 +170,7 @@ router.post("/releaseParkingSpot", async (req, res) => {
 });
 
 // Get the duration of a car's stay in the parking garage
-router.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
+router.get("/duration/:tenantid/:facilityid/:carId", authenticateToken, async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         const result = await parkingService.getParkingDurationREST(carId, tenantid, facilityid);
@@ -181,7 +181,7 @@ router.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
 });
 
 // Ruten für reporting
-router.get('/facilities/:tenantId', async (req, res) => {
+router.get('/facilities/:tenantId', authenticateToken, async (req, res) => {
     try {
         const { tenantId } = req.params;
         const facilities = await parkingService.getFacilitiesOfTenant(tenantId);
@@ -192,7 +192,7 @@ router.get('/facilities/:tenantId', async (req, res) => {
 
 });
 
-router.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/usage/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     try {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
@@ -208,7 +208,7 @@ router.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
     }
 });
 
-router.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
     console.log('Query Params:', { startDate, endDate });
@@ -230,7 +230,7 @@ router.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
 });
 
 
-router.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/duration/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
 
@@ -246,7 +246,7 @@ router.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
     }
 });
 
-router.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
+router.get('/parkingStats/revenue/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
 
@@ -280,7 +280,7 @@ router.get('/parkingStats/revenue/:tenantId/:facilityId', async (req, res) => {
 }
 
  */
-router.post('/createParkingSpotsForFacility', async (req, res) => {
+router.post('/createParkingSpotsForFacility', authenticateToken, async (req, res) => {
     const facility = req.body;
     try {
         const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute, facility.maxCapacity);
@@ -292,7 +292,7 @@ router.post('/createParkingSpotsForFacility', async (req, res) => {
 });
 
 // in Parkhaus fahren
-router.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
+router.get("/getTicketNr/:tenantid/:facilityid", authenticateToken, async (req, res) => {
     try {
         const { tenantid, facilityid } = req.params;
         const ticketNr = await parkingService.getTicketNumber(tenantid, facilityid);

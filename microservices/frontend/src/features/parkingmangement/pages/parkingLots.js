@@ -12,12 +12,17 @@ import {
   Grid,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import { useAuth } from '../../../components/AuthProvider';
+
 
 
 
 const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
-const ParkingLots = ({ tenantId }) => {
+const ParkingLots = () => {
+  const { user, currentTenantId } = useAuth();
+  const tenantId = currentTenantId;
+  const token = user.accessToken;
   const [facilities, setFacilities] = useState([]);
   const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [parkingSpots, setParkingSpots] = useState([]);
@@ -25,18 +30,32 @@ const ParkingLots = ({ tenantId }) => {
   const [selectedSpotId, setSelectedSpotId] = useState(null);
   const [floorStats, setFloorStats] = useState([]);
 
+
   useEffect(() => {
-    tenantId = tenantId || '15';
-    fetch(`${HOST_URL}/facilities/${tenantId}`)
+    // tenantId = tenantId || '15';
+
+    fetch(`${HOST_URL}/facilities/${tenantId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch facilities: ${response.status}`))
       .then(data => setFacilities(data))
       .catch(error => console.error(error));
   }, [tenantId]);
 
   useEffect(() => {
-    tenantId = tenantId || '15';
+    // tenantId = tenantId || '15';
     if (selectedFacilityId) {
-      fetch(`${HOST_URL}/parkingSpots/${tenantId}/${selectedFacilityId}`)
+      fetch(`${HOST_URL}/parkingSpots/${tenantId}/${selectedFacilityId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
         .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch parking spots: ${response.status}`))
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
@@ -44,7 +63,13 @@ const ParkingLots = ({ tenantId }) => {
       const startDate = "2023-01-01"; // Beispiel: Startdatum
       const endDate = "2023-12-31"; // Beispiel: Enddatum
 
-      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`)
+      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
         .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch floor stats: ${response.status}`))
         .then(data => setFloorStats(data.floorStats || []))
         .catch(error => console.error(error));
@@ -70,10 +95,12 @@ const ParkingLots = ({ tenantId }) => {
   };
 
   const handleChangeSpotAvailabilityStatus = (newStatus) => {
-    tenantId = tenantId || '15';
     return fetch(`${HOST_URL}/handleSpotAvalibilityStatus`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         id: selectedSpotId,
         tenantID: tenantId,
