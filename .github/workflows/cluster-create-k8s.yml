@@ -70,18 +70,18 @@ jobs:
       run: |
         echo ${{ env.GKE_CLUSTER }}
 
-    # - name: Import Bucket
-    #   run: |
-    #     terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
-    #   working-directory: cloud/terraform  
+    - name: Import Bucket
+      run: |
+        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
+      working-directory: cloud/terraform  
 
     - name: Terraform Plan
       run: |
         terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
         terraform show -json tfplan > plan.json
-      
+        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
       working-directory: cloud/terraform
-# gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
+
 
     - name: Terraform Apply
       run: |
@@ -92,9 +92,9 @@ jobs:
           fi
       working-directory: cloud/terraform
 
-    # - name: Migrate Terraform State to Google Cloud Storage
-    #   run: |
-    #     terraform init -migrate-state
+    - name: Migrate Terraform State to Google Cloud Storage
+      run: |
+        terraform init -migrate-state
 
 #DO CONTAINER THINGS
     - name: Checkout repository
