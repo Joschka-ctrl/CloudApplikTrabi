@@ -62,7 +62,7 @@ const ParkingLots = () => {
 
       
 
-      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}}`, {
+      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

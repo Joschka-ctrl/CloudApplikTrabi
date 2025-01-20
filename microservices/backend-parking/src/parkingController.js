@@ -210,13 +210,6 @@ router.get('/parkingStats/usage/:tenantId/:facilityId', authenticateToken, async
 
 router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     const { tenantId, facilityId } = req.params;
-    // const { startDate, endDate } = req.query;
-    console.log('Query Params:', { startDate, endDate });
-
-    // Validierung der Query-Parameter
-    if (!startDate || !endDate) {
-        return res.status(400).json({ error: 'startDate und endDate sind erforderlich.' });
-    }
 
     try {
         // Service-Aufruf zur Berechnung der Stockwerk-Statistiken
