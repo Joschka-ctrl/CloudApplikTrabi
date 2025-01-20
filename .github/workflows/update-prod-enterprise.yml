@@ -29,10 +29,12 @@ jobs:
 
           echo "Clusters found: $clusters"
           echo "$clusters" > clusters.txt
+
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 2
+          
       - name: Get latest tag
         id: get_latest_tag
         run: |
