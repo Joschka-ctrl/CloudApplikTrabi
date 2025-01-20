@@ -90,7 +90,7 @@ jobs:
     - name: Destroy Terraform Resources
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
-        echo "yes" | terraform init -reconfigure -migrate-state
+        echo "yes" | terraform init -reconfigure
         terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}"     
       working-directory: cloud/terraform
 
