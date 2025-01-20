@@ -14,9 +14,6 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import { useAuth } from '../../../components/AuthProvider';
 
-
-
-
 const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
 const ParkingLots = () => {
@@ -60,6 +57,14 @@ const ParkingLots = () => {
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
 
+    } else {
+      setParkingSpots([]);
+
+    }
+  }, [selectedFacilityId, tenantId]);
+
+  useEffect(() => {
+    if (selectedFacilityId) {
       fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}`, {
         method: 'GET',
         headers: {
@@ -70,12 +75,10 @@ const ParkingLots = () => {
         .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch floor stats: ${response.status}`))
         .then(data => setFloorStats(data.floorStats || []))
         .catch(error => console.error(error));
-
     } else {
-      setParkingSpots([]);
       setFloorStats([]);
     }
-  }, [selectedFacilityId, tenantId]);
+  }, [selectedFacilityId, tenantId, parkingSpots]);
 
   const handleFacilityChange = (event) => {
     setSelectedFacilityId(event.target.value);
@@ -255,13 +258,13 @@ const ParkingLots = () => {
                   <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
                     Total Spots: <strong>{floor.totalSpots}</strong>
                   </Typography>
-                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                  <Typography sx={{ color: '#F44336', fontSize: '14px' }}>
                     Closed Spots: <strong>{floor.closedSpots}</strong>
                   </Typography>
-                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                  <Typography sx={{ color: '#FFCC00', fontSize: '14px' }}>
                     Occupied Spots: <strong>{floor.occupiedSpots}</strong>
                   </Typography>
-                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                  <Typography sx={{ color: '#4CAF50', fontSize: '14px' }}>
                     Available Spots: <strong>{floor.availibleSpots}</strong>
                   </Typography>
                   <Typography
@@ -305,7 +308,7 @@ const ParkingLots = () => {
         aria-labelledby="change-status-modal"
         aria-describedby="change-spot-status"
       >
-        <Box sx={{ ...style, width: 300 }}>
+        <Box sx={{ ...style, width: 300, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography variant="h6" component="h2" align="center">
             Change Parking Spot Status
           </Typography>
@@ -314,28 +317,26 @@ const ParkingLots = () => {
           </Typography>
           <Button
             variant="contained"
-            color="primary"
             onClick={() => handleChangeSpotAvailabilityStatus("occupied")}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, backgroundColor: '#FFCC00', color: 'white' }}
           >
             Mark as Occupied
           </Button>
           <Button
             variant="contained"
-            color="secondary"
+            sx={{ mt: 2, backgroundColor: '#4CAF50', color: 'white' }}
             onClick={() => handleChangeSpotAvailabilityStatus("free")}
-            sx={{ mt: 2 }}
           >
             Release Spot
           </Button>
           <Button
             variant="contained"
-            color="error"
             onClick={() => handleChangeSpotAvailabilityStatus("closed")}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, backgroundColor: '#F44336', color: 'white' }}
           >
             Close Spot
           </Button>
+
           <Button
             variant="outlined"
             color="secondary"

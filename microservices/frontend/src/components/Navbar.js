@@ -5,6 +5,11 @@ import "../Navbar.css";
 
 const Navbar = () => {
   const { user, onLogout } = useAuth();
+  const currentPath = window.location.pathname;
+  console.log(currentPath);
+  // Überprüfen, ob der Pfad mit "/free" beginnt
+  const shouldShowReports = !currentPath.startsWith('/free');
+  console.log(shouldShowReports);
   return (
     <nav className="Navbar">
       <ul className="NavbarList">
@@ -18,9 +23,10 @@ const Navbar = () => {
               <Link to="/defects">Defects</Link>
             </li>
             <div className="VerticalDivider" />
-            <li className="NavbarItem r">
-              <Link to="/reports">Reports</Link>
-            </li>
+            {shouldShowReports && (
+              <li className="NavbarItem r">
+                <Link to="/reports">Reports</Link>
+              </li>)}
             <div className="VerticalDivider" />
             <li className="NavbarItem r">
               <Link to="/e-charging">E-Charging</Link>

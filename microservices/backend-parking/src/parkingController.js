@@ -273,7 +273,7 @@ router.get('/parkingStats/revenue/:tenantId/:facilityId', authenticateToken, asy
 }
 
  */
-router.post('/createParkingSpotsForFacility', authenticateToken, async (req, res) => {
+router.post('/createParkingSpotsForFacility', async (req, res) => {
     const facility = req.body;
     try {
         const createParkingSpotObject = parkingService.createParkingSpotObject(facility.tenantId, facility.facilityId, facility.floors, facility.pricePerMinute, facility.maxCapacity);
