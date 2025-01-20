@@ -50,7 +50,7 @@ const Reports = () => {
   const [tabValue, setTabValue] = useState(0);
   const { user } = useAuth();
 
-  const HOST_URL = 'http://localhost:3004';
+  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reports';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
