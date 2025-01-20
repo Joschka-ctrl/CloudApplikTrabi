@@ -60,8 +60,6 @@ const ParkingLots = () => {
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
 
-      
-
       fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}`, {
         method: 'GET',
         headers: {
