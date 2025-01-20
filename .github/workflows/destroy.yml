@@ -48,14 +48,31 @@ jobs:
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
         fi
   
-    - name: Import Terraform Resources
+    # - name: Import Terraform Resources
+    #   if: ${{ env.CLUSTER_EXISTS == 'true' }}
+    #   run: |
+    #     terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+    #   working-directory: cloud/terraform
+
+    # - name: Download Terraform Plan
+    #   run: |
+    #     gcloud storage cp gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfplan tfplan
+    #   working-directory: cloud/terraform
+
+    # - name: Apply Terraform Plan
+    #   run: |
+    #     terraform apply -auto-approve tfplan
+    #   working-directory: cloud/terraform
+
+    - name: Disable Deletion Protection via Terraform
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+        terraform apply -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}"
       working-directory: cloud/terraform
 
- 
+
     - name: Destroy Terraform Resources
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}" 
            
