@@ -5,7 +5,7 @@ on:
       - '5.*' 
 env:
     PROJECT_ID: trabantparking-stage
-    GKE_CLUSTER: wegmachen-ij57r
+    GKE_CLUSTER: metaa-8uurq
     GKE_REGION: europe-west1-b
     TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
     # TF_PLAN_FILE: terraform.tfstate
@@ -47,57 +47,61 @@ jobs:
         else
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
         fi
-    - name: Import Existing Cluster
-      if: env.CLUSTER_EXISTS == 'true'
-      run: |
-        echo ${{ env.PROJECT_ID }}
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
-      working-directory: cloud/terraform
+    # - name: Import Existing Cluster
+    #   if: env.CLUSTER_EXISTS == 'true'
+    #   run: |
+    #     echo ${{ env.PROJECT_ID }}
+    #     terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+    #   working-directory: cloud/terraform
   
-    - name: Cluster Name
-      run: |
-        echo ${{ env.GKE_CLUSTER }}
+    # - name: Cluster Name
+    #   run: |
+    #     echo ${{ env.GKE_CLUSTER }}
 
-    - name: Import Bucket
-      run: |
-        terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
-      working-directory: cloud/terraform  
-
-
-    - name: Import Firestore Database
-      run: |
-        terraform import google_firestore_database.firestore projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
-      working-directory: cloud/terraform
+    # - name: Import Bucket
+    #   run: |
+    #     terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
+    #   working-directory: cloud/terraform  
 
 
-    - name: Terraform Plan
-      run: |
-        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
-        terraform show -json tfplan > plan.json
-        gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
-      working-directory: cloud/terraform
+    # - name: Import Firestore Database
+    #   run: |
+    #     terraform import google_firestore_database.firestore projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
+    #   working-directory: cloud/terraform
 
 
-    - name: Terraform Apply
-      run: |
-          if [ -f "tfplan" ]; then
-            terraform apply tfplan
-          else
-            terraform apply -auto-approve
-          fi
-      working-directory: cloud/terraform
+    # - name: Terraform Plan
+    #   run: |
+    #     terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
+    #     terraform show -json tfplan > plan.json
+    #     gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
+    #   working-directory: cloud/terraform
 
-    - name: Destroy Terraform Resources
-      if: ${{ env.CLUSTER_EXISTS == 'true' }}
-      run: |
-        echo "yes" | terraform init -reconfigure
-        terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}"     
-      working-directory: cloud/terraform
+
+    # - name: Terraform Apply
+    #   run: |
+    #       if [ -f "tfplan" ]; then
+    #         terraform apply tfplan
+    #       else
+    #         terraform apply -auto-approve
+    #       fi
+    #   working-directory: cloud/terraform
+
+    # - name: Destroy Terraform Resources
+    #   if: ${{ env.CLUSTER_EXISTS == 'true' }}
+    #   run: |
+    #     echo "yes" | terraform init -reconfigure
+    #     terraform destroy -auto-approve -var="cluster_name=${{ env.GKE_CLUSTER }}"     
+    #   working-directory: cloud/terraform
 
     # - name: Delete Terraform State from Bucket
     #   run: |
     #     gsutil rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.TF_PLAN_FILE }}
 
+    - name: Delete GKE Cluster (Fallback)
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
+      run: |
+        gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }} --quiet
     - name: Delete DNS Record
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
@@ -110,7 +114,4 @@ jobs:
         echo "DNS record not found. Skipping deletion."
         fi
 
-    - name: Delete GKE Cluster (Fallback)
-      if: ${{ env.CLUSTER_EXISTS == 'true' }}
-      run: |
-        gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }} --quiet
+  
