@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AdminSignUp } from './components/AdminSignUp';
 import { AdminLogin } from './components/AdminLogin';
 import { Navbar } from './components/Navbar';
@@ -16,6 +17,7 @@ import { CurrentPlan } from './components/CurrentPlan';
 import { UserManagement } from './components/UserManagement';
 import { AddUserDialog } from './components/AddUserDialog';
 import { PaymentDialog } from './components/PaymentDialog';
+import SuperAdmin from './pages/super-admin';
 import { auth } from './firebase';
 import { User } from './types/User';
 import { useAuth } from './hooks/useAuth';
@@ -40,17 +42,17 @@ function App() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
   const [userError, setUserError] = useState<string | null>(null);
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tenantUrl, setTenantUrl] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(true);
   const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
-  const HOST = 'http://localhost:3023/api/tenants';
+  const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
 
   const getPlanPrice = (plan: string): number => {
     switch (plan.toLowerCase()) {
@@ -179,7 +181,6 @@ function App() {
           throw new Error('Failed to fetch users');
         }
         const data = await response.json();
-        console.log(data);
         setUsers(data);
       } catch (err) {
         console.error('Error fetching users:', err);
@@ -251,6 +252,7 @@ function App() {
           tenantId: auth.tenantId,
           email: newUserEmail.toLowerCase(),
           name: newUserName.trim(),
+          role: newUserRole,
         }),
       });
 
@@ -264,6 +266,7 @@ function App() {
       setShowAddUserModal(false);
       setNewUserEmail('');
       setNewUserName('');
+      setNewUserRole('user');
     } catch (err) {
       console.error('Error adding user:', err);
       setUserError(err instanceof Error ? err.message : 'Failed to add user');
@@ -308,123 +311,138 @@ function App() {
     );
   }
 
+  const MainContent = () => (
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {planLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+          <CircularProgress />
+        </Box>
+      ) : !currentPlan || changingPlan ? (
+        <PlanSelection
+          currentPlan={currentPlan}
+          changingPlan={changingPlan}
+          onSelectPlan={handleSelectPlan}
+          onKeepCurrentPlan={handleKeepCurrentPlan}
+        />
+      ) : (
+        <CurrentPlan
+          plan={currentPlan}
+          price={getPlanPrice(currentPlan)}
+          onChangePlan={handleChangePlan}
+          url={generateTenantUrl(currentPlan, auth.tenantId)}
+          deploymentStatus={deploymentStatus}
+        />
+      )}
+      <UserManagement
+        users={users}
+        userError={userError}
+        onAddUser={() => setShowAddUserModal(true)}
+        onDeleteUser={handleDeleteUser}
+      />
+    </Container>
+  );
+
   if (!isAuthenticated) {
     return (
       <ThemeProvider theme={theme}>
-        <Box sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          padding: 2
-        }}>
-          {authError && (
-            <Box sx={{ mb: 3 }}>
-              <Typography color="error" align="center" gutterBottom>
-                {authError}
-              </Typography>
-            </Box>
-          )}
-          {showSignUp ? (
-            <AdminSignUp 
-              onSignUpSuccess={() => setShowSignUp(false)} 
-              onSwitchToLogin={() => setShowSignUp(false)}
-            />
-          ) : (
-            <AdminLogin
-              onLoginSuccess={() => null}
-              onSwitchToSignUp={() => setShowSignUp(true)}
-            />
-          )}
-        </Box>
+        <BrowserRouter>
+          <Box sx={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            padding: 2
+          }}>
+            {authError && (
+              <Box sx={{ mb: 3 }}>
+                <Typography color="error" align="center" gutterBottom>
+                  {authError}
+                </Typography>
+              </Box>
+            )}
+            {showSignUp ? (
+              <AdminSignUp 
+                onSignUpSuccess={() => setShowSignUp(false)} 
+                onSwitchToLogin={() => setShowSignUp(false)}
+              />
+            ) : (
+              <AdminLogin
+                onLoginSuccess={() => null}
+                onSwitchToSignUp={() => setShowSignUp(true)}
+              />
+            )}
+          </Box>
+        </BrowserRouter>
       </ThemeProvider>
     );
   }
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        minHeight: '100vh',
-        width: '100vw',
-        overflow: 'hidden',
-        margin: 0,
-        padding: 0,
-      }}>
-        <Navbar onLogout={logout} />
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            {planLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                <CircularProgress />
-              </Box>
-            ) : !currentPlan || changingPlan ? (
-              <PlanSelection
-                currentPlan={currentPlan}
-                changingPlan={changingPlan}
-                onSelectPlan={handleSelectPlan}
-                onKeepCurrentPlan={handleKeepCurrentPlan}
-              />
-            ) : (
-              <CurrentPlan
-                plan={currentPlan}
-                price={getPlanPrice(currentPlan)}
-                onChangePlan={handleChangePlan}
-                url={generateTenantUrl(currentPlan, auth.tenantId)}
-                deploymentStatus={deploymentStatus}
-              />
-            )}
-            <UserManagement
-              users={users}
-              userError={userError}
-              onAddUser={() => setShowAddUserModal(true)}
-              onDeleteUser={handleDeleteUser}
-            />
-          </Container>
+      <BrowserRouter>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: '100vh',
+          width: '100vw',
+          overflow: 'hidden',
+          margin: 0,
+          padding: 0,
+        }}>
+          <Navbar onLogout={logout} />
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', width: '100%' }}>
+            <Routes>
+              <Route path="/super-admin" element={<SuperAdmin />} />
+              <Route path="/" element={<MainContent />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Box>
         </Box>
-      </Box>
 
-      <PaymentDialog
-        open={showModal}
-        selectedPlan={selectedPlan}
-        tenantId={auth.tenantId || ''}
-        error={error}
-        isProcessing={isProcessingPayment}
-        onClose={() => setShowModal(false)}
-        onSubmit={handlePayment}
-      />
+        <PaymentDialog
+          open={showModal}
+          selectedPlan={selectedPlan}
+          tenantId={auth.tenantId || ''}
+          error={error}
+          isProcessing={isProcessingPayment}
+          onClose={() => setShowModal(false)}
+          onSubmit={handlePayment}
+        />
 
-      <AddUserDialog
-        open={showAddUserModal}
-        email={newUserEmail}
-        name={newUserName}
-        onClose={() => {
-          setShowAddUserModal(false);
-          setNewUserEmail('');
-          setNewUserName('');
-        }}
-        onEmailChange={setNewUserEmail}
-        onNameChange={setNewUserName}
-        onSubmit={handleAddUser}
-      />
+        <AddUserDialog
+          open={showAddUserModal}
+          email={newUserEmail}
+          name={newUserName}
+          role={newUserRole}
+          onClose={() => {
+            setShowAddUserModal(false);
+            setNewUserEmail('');
+            setNewUserName('');
+            setNewUserRole('user');
+          }}
+          onEmailChange={setNewUserEmail}
+          onNameChange={setNewUserName}
+          onRoleChange={setNewUserRole}
+          onSubmit={handleAddUser}
+        />
 
-      <Dialog
-        open={showPaymentSuccess}
-        aria-labelledby="payment-success-dialog"
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogContent sx={{ textAlign: 'center', py: 4 }}>
-          <Typography variant="h6" gutterBottom color="primary">
-            Payment Successful!
-          </Typography>
-          <Typography>
-            Your tenant will be created momentarily...
-          </Typography>
-        </DialogContent>
-      </Dialog>
+        <Dialog
+          open={showPaymentSuccess}
+          aria-labelledby="payment-success-dialog"
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogContent sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="h6" gutterBottom color="primary">
+              Payment Successful!
+            </Typography>
+            <Typography>
+              Your tenant will be created momentarily...
+            </Typography>
+          </DialogContent>
+        </Dialog>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }

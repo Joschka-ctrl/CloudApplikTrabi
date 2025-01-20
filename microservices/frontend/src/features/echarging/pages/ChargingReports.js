@@ -41,13 +41,10 @@ const ChargingReports = () => {
   const fetchChargingStats = async () => {
     try {
       setLoading(prev => ({ ...prev, stats: true }));
-      if (selectedGarage == ''){
-        selectedGarage = 'All'
-      }
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage && { garage: selectedGarage })
+        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
       });
 
       const response = await fetchWithAuth(
@@ -68,7 +65,7 @@ const ChargingReports = () => {
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage && { garage: selectedGarage })
+        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
       });
 
       const response = await fetchWithAuth(
@@ -78,6 +75,7 @@ const ChargingReports = () => {
       setUtilizationData(data);
     } catch (error) {
       console.error('Error fetching utilization data:', error);
+      setUtilizationData(null);  // Set to null on error to prevent UI crashes
     } finally {
       setLoading(prev => ({ ...prev, utilization: false }));
     }
@@ -89,7 +87,7 @@ const ChargingReports = () => {
       const params = new URLSearchParams({
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage && { garage: selectedGarage })
+        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
       });
 
       const response = await fetchWithAuth(
@@ -99,6 +97,7 @@ const ChargingReports = () => {
       setProviderRevenue(data);
     } catch (error) {
       console.error('Error fetching provider revenue:', error);
+      setProviderRevenue(null);  // Set to null on error to prevent UI crashes
     } finally {
       setLoading(prev => ({ ...prev, revenue: false }));
     }

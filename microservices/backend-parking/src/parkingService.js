@@ -907,7 +907,7 @@ const calculateParkingStats = (facility, startDate, endDate) => {
     return Object.values(dailyStats);
 };
 
-const getFloorStats = async (tenantId, facilityId, startDate, endDate) => {
+const getFloorStats = async (tenantId, facilityId) => {
     try {
         // Facility-Daten abrufen
         const facility = await getFacilityData(facilityId, tenantId);
