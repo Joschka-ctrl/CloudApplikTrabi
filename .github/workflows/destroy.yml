@@ -68,6 +68,7 @@ jobs:
         fi
 
     - name: Delete file from GCS bucket
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         BUCKET_NAME="trabantparking-stage-terraform-plans"
         FILE_TO_DELETE="${{ env.GKE_CLUSTER }}"
