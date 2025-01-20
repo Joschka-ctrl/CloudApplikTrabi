@@ -71,11 +71,13 @@ jobs:
         echo ${{ env.GKE_CLUSTER }}
 
     - name: Import Bucket
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
       working-directory: cloud/terraform  
       
     - name: Import Firestore Database
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         terraform import google_firestore_database.firestore projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
