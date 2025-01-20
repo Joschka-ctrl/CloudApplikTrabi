@@ -54,7 +54,7 @@ const Reports = () => {
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
-      const token = await user.getIdToken(); // Fetch the token from the user object
+      const token = user.accessToken;
       const headers = {
         ...options.headers,
         Authorization: `Bearer ${token}`,
@@ -104,9 +104,10 @@ const Reports = () => {
     fetchData();
   }, [selectedParkingPlace, startDate, endDate, minUsage, maxUsage]);
 
+  
   const fetchParkingPlaces = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/parking-places`);
+      const response = await fetchWithAuth(`${HOST_URL}/facilities?tenantId=${encodeURIComponent(user.tenantId)}`);
       const data = await response.json();
       setParkingPlaces(data);
       if (data.length > 0) {
