@@ -13,7 +13,7 @@ provider "kubernetes" {
 
 resource "google_container_cluster" "gke" {
   name     = var.cluster_name
-  location = "europe-west1"
+  location = "europe-west1-b"
 
   deletion_protection = false
 
@@ -64,4 +64,16 @@ resource "local_file" "default" {
     }
   }
   EOT
+}
+
+resource "google_firestore_database" "firestore" {
+  name        = var.cluster_name  # Der Name der Firestore-Datenbank
+  location_id = "europe-west1"    # Region der Firestore-Datenbank (z.B. "us-central1")
+
+  type = "FIRESTORE_NATIVE"     # Typ der Firestore-Datenbank (FIRESTORE_NATIVE oder CLOUD_DATASTORE_COMPATIBILITY)
+}
+
+
+output "firestore_database_id" {
+  value = google_firestore_database.firestore.id
 }

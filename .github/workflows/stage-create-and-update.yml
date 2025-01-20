@@ -6,7 +6,7 @@ on:
       - '0.*' 
 
 jobs:
-  create-Stage-free:
+  create-prod-free:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}  
 
-  create-Stage-standard:
+  create-prod-standard:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
