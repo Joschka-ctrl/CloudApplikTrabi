@@ -34,6 +34,11 @@ jobs:
       with:
         terraform_version: "1.5.7"
 
+    - name: Initialize Terraform
+      run: |
+        terraform init -reconfigure
+      working-directory: cloud/terraform
+
     - name: Check if Cluster Exists
       id: check_cluster
       run: |
@@ -82,11 +87,6 @@ jobs:
           fi
       working-directory: cloud/terraform
 
-    - name: Initialize Terraform
-      run: |
-        terraform init
-      working-directory: cloud/terraform
-      
     - name: Destroy Terraform Resources
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
