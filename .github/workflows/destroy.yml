@@ -5,7 +5,7 @@ on:
       - '5.*' 
 env:
     PROJECT_ID: trabantparking-stage
-    GKE_CLUSTER: metaa-8uurq
+    GKE_CLUSTER: wegmachen-ij57r
     GKE_REGION: europe-west1-b
     TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
     # TF_PLAN_FILE: terraform.tfstate
