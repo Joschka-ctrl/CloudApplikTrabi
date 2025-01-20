@@ -32,23 +32,23 @@ resource "google_container_cluster" "gke" {
 }
 
 
-resource "google_storage_bucket" "default" {
-  name     = "trabantparking-stage-terraform-plans"
-  location = "europe-west1"
+# resource "google_storage_bucket" "default" {
+#   name     = "trabantparking-stage-terraform-plans"
+#   location = "europe-west1"
 
-  force_destroy               = false
-  public_access_prevention    = "enforced"
-  uniform_bucket_level_access = true
+#   force_destroy               = false
+#   public_access_prevention    = "enforced"
+#   uniform_bucket_level_access = true
 
-  versioning {
-    enabled = true
-  }
+#   versioning {
+#     enabled = true
+#   }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes  = all
-  }
-}
+#   lifecycle {
+#     prevent_destroy = true
+#     ignore_changes  = all
+#   }
+# }
 
 resource "local_file" "default" {
   file_permission = "0644"
