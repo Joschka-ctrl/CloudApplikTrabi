@@ -204,9 +204,9 @@ router.get('/metrics', authenticateToken, async (req, res) => {
 });
 
 // Get list of parking places (facilities)
-router.get('/parking-places', authenticateToken, async (req, res) => {
+router.get('/facilities', authenticateToken, async (req, res) => {
   try {
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.user.tenantId;
     const facilities = await parkingServiceRequest(
       `/facilities/${tenantId}`,
       req.headers.authorization.split(' ')[1]

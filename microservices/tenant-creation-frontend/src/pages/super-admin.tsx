@@ -13,7 +13,14 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
@@ -31,6 +38,8 @@ export default function SuperAdmin() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -84,6 +93,45 @@ export default function SuperAdmin() {
     }
   };
 
+  const handleDeleteClick = (tenant: Tenant) => {
+    setTenantToDelete(tenant);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!tenantToDelete) return;
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError('You must be logged in to delete a tenant');
+        return;
+      }
+
+      const idToken = await currentUser.getIdToken();
+      await axios.delete(`http://localhost:3023/api/tenants/${tenantToDelete.tenantId}`, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      setTenants(tenants.filter(t => t.tenantId !== tenantToDelete.tenantId));
+      setDeleteDialogOpen(false);
+      setTenantToDelete(null);
+    } catch (err: any) {
+      console.error('Error deleting tenant:', err);
+      setError(err.response?.data?.error || 'Failed to delete tenant');
+      if (err.response?.status === 401) {
+        navigate('/');
+      }
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setTenantToDelete(null);
+  };
+
   if (loading) {
     return (
       <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -116,6 +164,7 @@ export default function SuperAdmin() {
                   <TableCell>Status</TableCell>
                   <TableCell>Created At</TableCell>
                   <TableCell>URL</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -149,12 +198,36 @@ export default function SuperAdmin() {
                         '-'
                       )}
                     </TableCell>
+                    <TableCell>
+                      <IconButton
+                        onClick={() => handleDeleteClick(tenant)}
+                        color="error"
+                        size="small"
+                        aria-label="delete tenant"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
         )}
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+        >
+          <DialogTitle>Delete Tenant</DialogTitle>
+          <DialogContent>
+            Are you sure you want to delete tenant "{tenantToDelete?.displayName}"? This action cannot be undone.
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteCancel}>Cancel</Button>
+            <Button onClick={handleDeleteConfirm} color="error">Delete</Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Container>
   );
