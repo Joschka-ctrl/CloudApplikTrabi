@@ -64,18 +64,10 @@ jobs:
     #     terraform apply -auto-approve tfplan
     #   working-directory: cloud/terraform
 
-      # Importiere den Storage Bucket
-    - name: Import Storage Bucket to Terraform State
+    - name: delete File from Bucket
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
-        terraform import google_storage_bucket.default projects/trabantparking-stage/buckets/trabantparking-stage-terraform-plans
-      working-directory: cloud/terraform
-    
-    # Importiere die Firestore-Datenbank
-    - name: Import Firestore Database to Terraform State
-      run: |
-        terraform import google_firestore_database.firestore \
-          projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
-      working-directory: cloud/terraform
+       gcloud storage rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfplan tfplan
 
     - name: Disable Deletion Protection via Terraform
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
