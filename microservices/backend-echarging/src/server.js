@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require("express");
 const cors = require("cors");
 const admin = require('firebase-admin');
@@ -16,6 +18,8 @@ app.use(express.json());
 
 app.use('/api/echarging', router)
 app.use('/', router)
+
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -42,6 +46,29 @@ const authenticateToken = async (req, res, next) => {
 app.get("/api/echarging/health", (req, res) => {
   res.status(200).json({ status: 'healthy' });
 });
+
+router.get("/garages", authenticateToken, async (req, res) => {
+  try {
+    const tenantId = req.query.tenantId;
+    const token = req.headers.authorization.split(' ')[1];
+    const snapshot = await fetch(`${PARKING_SERVICE_URL}/facilities/${tenantId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      }
+    );
+    const garages = await snapshot.json();
+const mappedGarages = garages.map(garage => garage.facilityId);
+console.log(mappedGarages);
+    res.json(mappedGarages);
+  } catch (error) {
+    console.error("Error getting garages:", error);
+    res.status(500).json({ error: "Failed to get garages" });
+  }
+})
 
 // Get all charging stations
 router.get("/charging-stations", authenticateToken, async (req, res) => {

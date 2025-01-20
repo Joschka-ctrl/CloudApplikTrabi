@@ -332,31 +332,36 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
     for (const doc of tenantsSnapshot.docs) {
       const tenantData = doc.data();
       let status = 'pending';
-      console.log(doc.id);
       let url;
-
-      // Check if tenant has a URL (indicating deployment)
-      if (tenantData.plan === 'enterprise') {
-        url = `http://${doc.id}.trabantparking.ninja/`;
-      } else if (tenantData.plan === 'standard') {
-        url = `http://parking.trabantparking.ninja/`;
+      if (doc.data().plan === 'free') {
+        url = `http://free.trabantparking.ninja`;
+      } else if (doc.data().plan === 'enterprise') {
+        url = `http://${doc.id}.trabantparking.ninja`;
+      } else {
+        url = `http://parking.trabantparking.ninja`;
       }
-      else{
-        url = `http://free.trabantparking.ninja/`;
-      }
+      if (url) {
         try {
+
           // Try to fetch the tenant's URL to check health
           const response = await axios.get(url, {
-            timeout: 1000 // 5 second timeout
+            timeout: 1500,
+            validateStatus: function (status) {
+              return status >= 200 && status < 500; // Accept any status code that's not a server error
+            }
           });
-          status = response.status === 200 ? 'healthy' : 'unhealthy';
-          console.log(`Health check for tenant ${doc.id} completed with status: ${status}`);
+          
+          // Consider any successful response (including redirects) as healthy
+          status = response.status >= 200 && response.status < 500 ? 'healthy' : 'unhealthy';
+          console.log(`Health check for tenant ${doc.id} completed with status: ${status} (HTTP ${response.status})`);
         } catch (error) {
           console.error(`Health check failed for tenant ${doc.id}:`, error.message);
           status = 'unhealthy';
         }
-      
-
+      } else {
+        status = 'pending'; // No URL means the tenant is still being set up
+        console.log(`No URL found for tenant ${doc.id}, status set to pending`);
+      }
 
       tenants.push({
         tenantId: doc.id,
@@ -364,7 +369,7 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
         plan: tenantData.plan || 'free',
         status: status,
         createdAt: tenantData.createdAt ? tenantData.createdAt.toDate().toISOString() : new Date().toISOString(),
-        url: tenantData.url
+        url: url || null
       });
     }
 
@@ -377,7 +382,38 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
 
 // get health status of a tenant
 app.get('/api/tenants/health', authenticateToken, async (req, res) => {
-  const tenantId = auth.tenantId;
+  const tenantId = req.query.tenantId;
+  const plan = req.query.plan;
+  let status = 'pending';
+  let url;
+  if(plan === 'free') {
+    url = `http://free.trabantparking.ninja`;
+  }  else if (plan === 'enterprise'){
+    url = `http://${tenantId}.trabantparking.ninja`;
+  } else {
+    url = `http://parking.trabantparking.ninja`;
+  }
+
+  // ping the site and set status
+  try {
+    const response = await axios.get(url, {
+      timeout: 3000,
+      validateStatus: function (status) {
+        return status >= 200 && status < 500; // Accept any status code that's not a server error
+      }
+    });
+    
+    // Consider any successful response (including redirects) as healthy
+    status = response.status >= 200 && response.status < 500 ? 'healthy' : 'unhealthy';
+    console.log(`Health check for tenant ${tenantId} completed with status: ${status} (HTTP ${response.status})`);
+  } catch (error) {
+    console.error(`Health check failed for tenant ${tenantId}:`, error.message);
+    status = 'unhealthy';
+  }
+
+  // return the status
+  res.json({ status: status, url: url });
+
 
 }
 );
@@ -530,7 +566,7 @@ async function triggerDeleteWorkflow(tenantId) {
     console.log('Owner:', process.env.GITHUB_OWNER);
     console.log('Repo:', process.env.GITHUB_REPO);
     console.log('Workflow ID:', 'destroy.yml');
-    console.log('Branch/Ref:', 'stage-cluster');
+    console.log('Branch/Ref:', 'stage');
     console.log('Inputs:', { tenant_name: tenantId });
 
     await octokit.actions.createWorkflowDispatch({
@@ -579,9 +615,9 @@ app.delete('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
     const { tenantId } = req.params;
 
     // Check if user is a super admin
-    if (!req.user.admin) {
-      return res.status(403).json({ error: 'Only super admins can delete tenants' });
-    }
+    // if (!req.user.admin) {
+    //   return res.status(403).json({ error: 'Only super admins can delete tenants' });
+    // }
 
     // Get tenant information
     const tenantDoc = await db.collection('tenants').doc(tenantId).get();

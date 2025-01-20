@@ -191,7 +191,7 @@ export default function SuperAdmin() {
                     </TableCell>
                     <TableCell>
                       {tenant.url ? (
-                        <a href={`https://${tenant.url}`} target="_blank" rel="noopener noreferrer">
+                        <a href={`${tenant.url}`} target="_blank" rel="noopener noreferrer">
                           {tenant.url}
                         </a>
                       ) : (

@@ -11,8 +11,8 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../../components/AuthProvider';
 
-const ChargingStationForm = ({ open, onClose, onSave, station }) => {
-  const { tenantId } = useAuth();
+const ChargingStationForm = ({ open, onClose, onSave, station, garages }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     location: '',
     power: '',
@@ -29,7 +29,7 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
         connectorType: station.connectorType || '',
         status: station.status || 'available',
         garage: station.garage || '',
-        tenantId: tenantId
+        tenantId: user.tenantId
       });
     } else {
       setFormData({
@@ -38,7 +38,7 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
         connectorType: '',
         status: 'available',
         garage: '',
-        tenantId: tenantId
+        tenantId: user.tenantId
       });
     }
   }, [station]);
@@ -53,13 +53,14 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({ ...formData, tenantId: user.tenantId });
     setFormData({
       location: '',
       power: '',
       connectorType: '',
       status: 'available',
-      garage: ''
+      garage: '',
+      tenantId: user.tenantId
     });
   };
 
@@ -97,13 +98,20 @@ const ChargingStationForm = ({ open, onClose, onSave, station }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
+                select
                 label="Garage"
                 name="garage"
                 value={formData.garage}
                 onChange={handleChange}
                 required
-                helperText="Enter the garage name where this station is located"
-              />
+                helperText="Select the garage where this station is located"
+              >
+                {garages.map((garage) => (
+                  <MenuItem key={garage} value={garage}>
+                    {garage}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={12}>
               <TextField
