@@ -97,7 +97,7 @@ router.get('/parkingSpot/:id/:tenantid/:facilityid', authenticateToken, async (r
 
 // tested with postman
 // Current occupancy of the parking garage
-router.get("/currentOccupancy/:tenantid/:facilityid", authenticateToken, async (req, res) => {
+router.get("/currentOccupancy/:tenantid/:facilityid", async (req, res) => {
     try {
         const { facilityid, tenantid } = req.params;
         const occupancy = await parkingService.getCurrentOccupancy(tenantid, facilityid);
@@ -170,7 +170,7 @@ router.post("/releaseParkingSpot", authenticateToken, async (req, res) => {
 });
 
 // Get the duration of a car's stay in the parking garage
-router.get("/duration/:tenantid/:facilityid/:carId", authenticateToken, async (req, res) => {
+router.get("/duration/:tenantid/:facilityid/:carId", async (req, res) => {
     try {
         const { carId, facilityid, tenantid } = req.params;
         const result = await parkingService.getParkingDurationREST(carId, tenantid, facilityid);
@@ -285,7 +285,7 @@ router.post('/createParkingSpotsForFacility', authenticateToken, async (req, res
 });
 
 // in Parkhaus fahren
-router.get("/getTicketNr/:tenantid/:facilityid", authenticateToken, async (req, res) => {
+router.get("/getTicketNr/:tenantid/:facilityid", async (req, res) => {
     try {
         const { tenantid, facilityid } = req.params;
         const ticketNr = await parkingService.getTicketNumber(tenantid, facilityid);
