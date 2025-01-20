@@ -73,12 +73,12 @@ jobs:
     - name: Check if bucket exists
       run: |
         BUCKET_NAME="trabantparking-stage-terraform-plans"
-        if gcloud storage buckets describe $BUCKET_NAME --project=trabantparking-stage >/dev/null 2>&1; then
+        if gcloud storage buckets describe gs://$BUCKET_NAME --project=trabantparking-stage >/dev/null 2>&1; then
           echo "BUCKET_EXISTS=true" >> $GITHUB_ENV
         else
           echo "BUCKET_EXISTS=false" >> $GITHUB_ENV
         fi
-        
+
     - name: Import Bucket
       if: ${{ env.BUCKET_EXISTS == 'true' }}
       run: |
