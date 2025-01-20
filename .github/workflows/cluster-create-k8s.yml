@@ -60,7 +60,7 @@ jobs:
         fi
 
     - name: Import Existing Cluster
-      if: env.CLUSTER_EXISTS == 'true'
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         echo ${{ env.PROJECT_ID }}
         terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
@@ -70,12 +70,32 @@ jobs:
       run: |
         echo ${{ env.GKE_CLUSTER }}
 
+    - name: Check if bucket exists
+      run: |
+        BUCKET_NAME="trabantparking-stage-terraform-plans"
+        if gcloud storage buckets describe gs://$BUCKET_NAME --project=trabantparking-stage >/dev/null 2>&1; then
+          echo "BUCKET_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "BUCKET_EXISTS=false" >> $GITHUB_ENV
+        fi
+
     - name: Import Bucket
+      if: ${{ env.BUCKET_EXISTS == 'true' }}
       run: |
         terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
       working-directory: cloud/terraform  
-      
+
+    - name: Check if Firestore Database exists
+      run: |
+        if [ -n "${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "${{ env.GKE_CLUSTER }}"; then
+          echo "FIRESTORE_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "FIRESTORE_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+   
     - name: Import Firestore Database
+      if: ${{ env.FIRESTORE_EXISTS == 'true' }}
       run: |
         terraform import google_firestore_database.firestore projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
@@ -107,7 +127,7 @@ jobs:
       with:
         fetch-depth: 2
 
-    - name: Get the latest tag
+    - name: Get latest tag
       id: get_latest_tag
       run: |
         git fetch --tags
@@ -285,7 +305,20 @@ jobs:
         else
           echo "DNS record already exists for ${SUBDOMAIN}, skipping creation."
         fi
-    
+
+    # - name: migrate data from plan to plan
+    #   if: ${{ env.CLUSTER_EXISTS == 'true' && env.SECRET_EXISTS == 'true' }}
+    #   run: |
+    #     if firebase database:get /${{env.GKE_CLUSTER}} --project=trabantparking-stage > ${{env.GKE_CLUSTER}}-data.json; then
+    #       echo "Database '${{env.GKE_CLUSTER}}' exists. Exporting data..."
+    #       # Import data into 'free'
+    #       firebase database:set /migrate ${{env.GKE_CLUSTER}}-data.json --project=trabantparking-stage
+    #       echo "Data migrated to 'migrate'."
+    #     else
+    #       echo "Database '${{env.GKE_CLUSTER}}' does not exist."
+    #     fi
+
+
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app
