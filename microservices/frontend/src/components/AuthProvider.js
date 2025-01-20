@@ -12,11 +12,18 @@ export const useAuth = () => {
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentTenantId, setCurrentTenantId] = useState(null);
+  const [currentTenantId, setCurrentTenantId] = useState(() => {
+    return localStorage.getItem('currentTenantId');
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (!currentUser) {
+        // Clear tenant ID when user logs out
+        localStorage.removeItem('currentTenantId');
+        setCurrentTenantId(null);
+      }
       setLoading(false);
     });
 
@@ -30,6 +37,7 @@ const AuthProvider = ({ children }) => {
         throw new Error("Tenant ID is required");
       }
       setAuthTenant(tenantId);
+      localStorage.setItem('currentTenantId', tenantId);
       setCurrentTenantId(tenantId);
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -41,6 +49,7 @@ const AuthProvider = ({ children }) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem('currentTenantId');
       setCurrentTenantId(null);
     } catch (error) {
       console.error("Fehler beim Abmelden:", error);

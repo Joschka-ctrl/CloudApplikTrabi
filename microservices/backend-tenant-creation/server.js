@@ -398,20 +398,31 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
     for (const doc of tenantsSnapshot.docs) {
       const tenantData = doc.data();
       let status = 'pending';
+      console.log(doc.id);
+      let url;
 
       // Check if tenant has a URL (indicating deployment)
-      if (tenantData.url) {
+      if (tenantData.plan === 'enterprise') {
+        url = `http://${doc.id}.trabantparking.ninja/`;
+      } else if (tenantData.plan === 'standard') {
+        url = `http://parking.trabantparking.ninja/`;
+      }
+      else{
+        url = `http://free.trabantparking.ninja/`;
+      }
         try {
           // Try to fetch the tenant's URL to check health
-          const response = await axios.get(`https://${tenantData.url}/health`, {
-            timeout: 5000 // 5 second timeout
+          const response = await axios.get(url, {
+            timeout: 1000 // 5 second timeout
           });
           status = response.status === 200 ? 'healthy' : 'unhealthy';
+          console.log(`Health check for tenant ${doc.id} completed with status: ${status}`);
         } catch (error) {
           console.error(`Health check failed for tenant ${doc.id}:`, error.message);
           status = 'unhealthy';
         }
-      }
+      
+
 
       tenants.push({
         tenantId: doc.id,
@@ -429,6 +440,13 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch tenants' });
   }
 });
+
+// get health status of a tenant
+app.get('/api/tenants/health', authenticateToken, async (req, res) => {
+  const tenantId = auth.tenantId;
+
+}
+);
 
 // Get all tenants endpoint
 app.get('/api/tenants', async (req, res) => {
