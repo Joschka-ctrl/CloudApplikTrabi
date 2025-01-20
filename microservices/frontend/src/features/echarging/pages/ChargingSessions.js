@@ -24,16 +24,31 @@ const ChargingSessions = () => {
   const [sessions, setSessions] = useState([]);
   const [selectedGarage, setSelectedGarage] = useState('');
   const [garages, setGarages] = useState([]);
-  const { user, tenantId } = useAuth();
+  const { user } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
+
+  const fetchGarages = async () => {
+    try {
+      const response = await fetch(`${HOST_URL}/garages?tenantId=${encodeURIComponent(user.tenantId)}`, {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      const data = await response.json();
+      console.log(data);
+      setGarages(data);
+    } catch (error) {
+      console.error('Error fetching garages:', error);
+    }
+  };
 
   const fetchSessions = async () => {
     try {
       const token = await user.getIdToken();
       const url = selectedGarage 
-        ? `${HOST_URL}/charging-sessions?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(tenantId)}`
-        : `${HOST_URL}/charging-sessions?tenantId=${encodeURIComponent(tenantId)}`;
+        ? `${HOST_URL}/charging-sessions?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(user.tenantId)}`
+        : `${HOST_URL}/charging-sessions?tenantId=${encodeURIComponent(user.tenantId)}`;
       
       const response = await fetch(url, {
         headers: {
@@ -42,14 +57,14 @@ const ChargingSessions = () => {
       });
       const data = await response.json();
       setSessions(data);
-
-      // Extract unique garages from the sessions
-      const uniqueGarages = [...new Set(data.map(session => session.garage))].filter(Boolean);
-      setGarages(uniqueGarages);
     } catch (error) {
       console.error('Error fetching charging sessions:', error);
     }
   };
+
+  useEffect(() => {
+    fetchGarages();
+  }, []);
 
   useEffect(() => {
     fetchSessions();

@@ -176,16 +176,27 @@ router.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
 router.get("/charging-sessions", authenticateToken, async (req, res) => {
   try {
     const tenantId = req.query.tenantId;
+    const garage = req.query.garage; 
     if (!tenantId) {
       return res.status(400).json({ error: "Invalid tenant ID" });
     }
     
+    if (garage) {
+      const snapshot = await db.collection("charging-sessions")
+        .where("garage", "==", garage)
+        .where("tenantId", "==", tenantId)
+        .get();
+      const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(sessions);
+    }
+    else{
     const snapshot = await db.collection("charging-sessions")
       .where("tenantId", "==", tenantId)
       .get();
 
     const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(sessions);
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -194,7 +205,7 @@ router.get("/charging-sessions", authenticateToken, async (req, res) => {
 // Start charging session
 router.post("/charging-sessions", async (req, res) => {
   try {
-    const { stationId, userId, chargingCardProvider } = req.body;
+    const { stationId, userId, chargingCardProvider,tenantId } = req.body;
 
     // Check station status first
     const stationRef = db.collection("charging-stations").doc(stationId);
@@ -221,7 +232,8 @@ router.post("/charging-sessions", async (req, res) => {
       status: 'active',
       endTime: null,
       energyConsumed: 0,
-      garage: stationData.garage
+      garage: stationData.garage,
+      tenantId: String(tenantId)
     };
     
     // Update charging station status to occupied
