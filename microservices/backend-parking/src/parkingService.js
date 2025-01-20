@@ -366,8 +366,8 @@ const getTicketNumber = async (tenantID, facilityID) => {
 const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
         const facilityData = await getFacilityData(facilityID, tenantID);
-        const { currentOccupancy } = facilityData;
-        return currentOccupancy;
+        const { currentOccupancy, maxCapacity } = facilityData;
+        return {"currentOccupancy": currentOccupancy, "maxCapacity": maxCapacity};
     }
     catch (error) {
         console.error('Error fetching current occupancy:', error);
