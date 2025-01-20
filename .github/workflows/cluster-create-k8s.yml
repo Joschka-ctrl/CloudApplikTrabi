@@ -87,12 +87,12 @@ jobs:
 
     - name: Check if Firestore Database exists
       run: |
-        DATABASE_NAME="projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}"
-        if gcloud firestore databases describe $DATABASE_NAME --project=${{ env.PROJECT_ID }} >/dev/null 2>&1; then
+        if [ -n "${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "${{ env.GKE_CLUSTER }}"; then
           echo "FIRESTORE_EXISTS=true" >> $GITHUB_ENV
         else
           echo "FIRESTORE_EXISTS=false" >> $GITHUB_ENV
         fi
+
    
     - name: Import Firestore Database
       if: ${{ env.FIRESTORE_EXISTS == 'true' }}
