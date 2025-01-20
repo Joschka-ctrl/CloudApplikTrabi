@@ -6,9 +6,10 @@ import "../Navbar.css";
 const Navbar = () => {
   const { user, onLogout } = useAuth();
   const currentPath = window.location.pathname;
+  const currentHost = window.location.hostname;
   console.log(currentPath);
   // Überprüfen, ob der Pfad mit "/free" beginnt
-  const shouldShowReports = !currentPath.startsWith('/free');
+  const shouldShowReports = !currentHost.startsWith('free');
   console.log(shouldShowReports);
   return (
     <nav className="Navbar">
