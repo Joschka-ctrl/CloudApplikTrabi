@@ -64,11 +64,11 @@ jobs:
     #     terraform apply -auto-approve tfplan
     #   working-directory: cloud/terraform
 
-    - name: delete File from Bucket
-      if: ${{ env.CLUSTER_EXISTS == 'true' }}
-      run: |
-       gcloud storage rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfplan tfplan
-      working-directory: cloud/terraform
+    # - name: delete File from Bucket
+    #   if: ${{ env.CLUSTER_EXISTS == 'true' }}
+    #   run: |
+    #    gcloud storage rm gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfplan tfplan
+    #   working-directory: cloud/terraform
 
     - name: Disable Deletion Protection via Terraform
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
