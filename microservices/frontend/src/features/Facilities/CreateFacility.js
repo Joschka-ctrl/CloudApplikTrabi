@@ -10,8 +10,11 @@ import {
 import { Add, Delete } from "@mui/icons-material";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../components/AuthProvider";
 
 export default function CreateFacility({ edit }) {
+  const { user, currentTenantId } = useAuth();
+
   const [facilityName, setFacilityName] = useState("");
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
@@ -27,7 +30,13 @@ export default function CreateFacility({ edit }) {
   useEffect(() => {
     if (edit) {
       // Fetch facility data from backend
-      fetch("http://localhost:3021/api/facilities/" + id)
+      fetch(`http://localhost:3021/api/facilities/${currentTenantId}/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user.accessToken}`,
+        },
+      })
         .then((response) => response.json())
         .then((data) => {
           setFacilityName(data.name);
@@ -82,21 +91,23 @@ export default function CreateFacility({ edit }) {
       city: city,
       postalCode: zipcode,
       country: country,
-      floor: floors,
+      floors: floors,
       maxCapacity: maxCapacity,
+      pricePerMinute: pricePerMinute,
     };
 
     var method = "POST";
-    var url = "http://localhost:3021/api/facilities";
+    var url = `http://localhost:3021/api/facilities/${currentTenantId}`;
     if (edit) {
       method = "PUT";
-      url = "http://localhost:3021/api/facilities/" + id;
+      url = `http://localhost:3021/api/facilities/${currentTenantId}/${id}`;
     }
     //Upload facility to backend
     fetch(url, {
       method: method,
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${user.accessToken}`,
       },
       body: JSON.stringify(facility),
     })
