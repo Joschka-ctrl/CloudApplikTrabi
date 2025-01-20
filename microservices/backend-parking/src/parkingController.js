@@ -210,7 +210,7 @@ router.get('/parkingStats/usage/:tenantId/:facilityId', authenticateToken, async
 
 router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, async (req, res) => {
     const { tenantId, facilityId } = req.params;
-    const { startDate, endDate } = req.query;
+    // const { startDate, endDate } = req.query;
     console.log('Query Params:', { startDate, endDate });
 
     // Validierung der Query-Parameter
@@ -220,7 +220,7 @@ router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, asyn
 
     try {
         // Service-Aufruf zur Berechnung der Stockwerk-Statistiken
-        const floorStats = await parkingService.getFloorStats(tenantId, facilityId, startDate, endDate);
+        const floorStats = await parkingService.getFloorStats(tenantId, facilityId);
 
         res.json({ floorStats });
     } catch (error) {

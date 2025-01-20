@@ -60,10 +60,9 @@ const ParkingLots = () => {
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
 
-      const startDate = "2023-01-01"; // Beispiel: Startdatum
-      const endDate = "2023-12-31"; // Beispiel: Enddatum
+      
 
-      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`, {
+      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
