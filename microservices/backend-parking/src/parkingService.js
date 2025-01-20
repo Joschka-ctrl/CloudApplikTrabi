@@ -6,7 +6,8 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
 
-const db = admin.firestore("free");
+admin.firestore().settings({ databaseId: 'free' });
+const db = admin.firestore()
 
 // Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
