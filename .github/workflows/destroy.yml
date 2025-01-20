@@ -1,16 +1,18 @@
 name: destroy-Cluster
 on:
-  push:
-    tags:
-      - '5.*' 
+  workflow_dispatch:
+    inputs:
+      tenant_name:
+        description: "Tenant Name"
+        required: true
+        default: "default-cluster"   
+
+
 env:
     PROJECT_ID: trabantparking-stage
-    GKE_CLUSTER: metaa-8uurq
+    GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
     GKE_REGION: europe-west1-b
-    TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
-    # TF_PLAN_FILE: terraform.tfstate
     DNS_ZONE_NAME: trabant
-
 
 jobs:
   destroy:
