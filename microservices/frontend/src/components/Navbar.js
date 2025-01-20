@@ -22,13 +22,19 @@ const Navbar = () => {
               <Link to="/defects">Defects</Link>
             </li>
             
-            {shouldShowReports && (
+            {/* {shouldShowReports && (
               <>
               <div className="VerticalDivider" />
               <li className="NavbarItem r">
                 <Link to="/reports">Reports</Link>
               </li>
-              </>)}
+              </>)} */}
+              
+              <div className="VerticalDivider" />
+              <li className="NavbarItem r">
+                <Link to="/reports">Reports</Link>
+              </li>
+              
             <div className="VerticalDivider" />
             <li className="NavbarItem r">
               <Link to="/e-charging">E-Charging</Link>
