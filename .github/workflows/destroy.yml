@@ -68,9 +68,9 @@ jobs:
     - name: Import Storage Bucket to Terraform State
       run: |
         terraform import google_storage_bucket.default \
-          projects/${{ env.PROJECT_ID }}/buckets/${{ env.BUCKET_NAME }}
+          projects/${{ env.PROJECT_ID }}/buckets/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
-
+    
     # Importiere die Firestore-Datenbank
     - name: Import Firestore Database to Terraform State
       run: |
