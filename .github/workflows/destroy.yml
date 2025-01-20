@@ -67,8 +67,7 @@ jobs:
       # Importiere den Storage Bucket
     - name: Import Storage Bucket to Terraform State
       run: |
-        terraform import google_storage_bucket.default \
-          projects/${{ env.PROJECT_ID }}/buckets/${{ env.TF_PLAN_BUCKET }}
+        terraform import google_storage_bucket.default projects/trabantparking-stage/buckets/trabantparking-stage-terraform-plans
       working-directory: cloud/terraform
     
     # Importiere die Firestore-Datenbank
