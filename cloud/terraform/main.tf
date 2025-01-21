@@ -11,6 +11,28 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
 }
 
+resource "google_service_account" "cluster_service_account" {
+  account_id   = "cluster-service-account"
+  display_name = "Service Account for GKE Cluster"
+}
+
+resource "google_project_iam_binding" "firestore_access" {
+  role    = "roles/datastore.user" # Zugriff auf Firestore
+  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
+}
+
+resource "google_project_iam_binding" "token_creator" {
+  role    = "roles/iam.serviceAccountTokenCreator" # Erlaubt die Verwendung von Application Default Credentials
+  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
+}
+
+resource "google_project_iam_binding" "log_writer" {
+  role    = "roles/logging.logWriter" # Erlaubt das Schreiben von Logs
+  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
+}
+
+
+
 resource "google_container_cluster" "gke" {
   name     = var.cluster_name
   location = "europe-west1-b"
@@ -20,6 +42,7 @@ resource "google_container_cluster" "gke" {
   addons_config {
     http_load_balancing {
       disabled = false
+      service_account = google_service_account.cluster_service_account.email
     }
   }
 
