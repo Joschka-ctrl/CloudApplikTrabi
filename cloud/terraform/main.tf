@@ -35,8 +35,6 @@ resource "google_project_iam_binding" "log_writer" {
   members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
 }
 
-
-
 resource "google_container_cluster" "gke" {
   name     = var.cluster_name
   location = "europe-west1-b"
