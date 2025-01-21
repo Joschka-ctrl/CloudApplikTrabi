@@ -1,5 +1,5 @@
 name: shutdown-stage
-on:
+on: 
   workflow_dispatch:
     inputs:
       region:
