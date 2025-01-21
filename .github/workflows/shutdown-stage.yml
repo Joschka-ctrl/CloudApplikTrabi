@@ -1,0 +1,47 @@
+name: shutdown-stage
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: "Region"
+        required: false
+        default: "europe-west1" 
+      zone: 
+        description: "Zone"
+        required: false
+        default: "europe-west1-c" 
+
+
+jobs:
+  destroy-stage-free:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt install gh -y
+
+      - name: Trigger another pipeline
+        run: |
+          gh workflow run destroy.yml -f tenant_name=stage-free -f region=${{ github.event.inputs.region }} -f zone=${{ github.event.inputs.zone }}  -R Joschka-ctrl/CloudApplikTrabi -r stage
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN }}  
+
+  destroy-stage-pro:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt install gh -y
+
+      - name: Trigger another pipeline
+        run: |
+          gh workflow run destroy.yml -f tenant_name=stage-pro -f region=${{ github.event.inputs.region }}  -f zone=${{ github.event.inputs.zone }}  -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN }}
