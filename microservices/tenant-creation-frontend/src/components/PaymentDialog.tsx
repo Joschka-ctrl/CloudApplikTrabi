@@ -25,7 +25,7 @@ const getPlanPrice = (plan: string): number => {
   switch (plan.toLowerCase()) {
     case 'free':
       return 0;
-    case 'standard':
+    case 'pro':
       return 10;
     case 'enterprise':
       return 50;

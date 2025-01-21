@@ -17,6 +17,7 @@ import { CurrentPlan } from './components/CurrentPlan';
 import { UserManagement } from './components/UserManagement';
 import { AddUserDialog } from './components/AddUserDialog';
 import { PaymentDialog } from './components/PaymentDialog';
+import { TenantCustomization } from './components/TenantCustomization';
 import SuperAdmin from './pages/super-admin';
 import { auth } from './firebase';
 import { User } from './types/User';
@@ -58,7 +59,7 @@ function App() {
     switch (plan.toLowerCase()) {
       case 'free':
         return 0;
-      case 'standard':
+      case 'pro':
         return 10;
       case 'enterprise':
         return 50;
@@ -67,11 +68,11 @@ function App() {
     }
   };
 
-  const generateTenantUrl = (plan: string, tenantId: string|null): string => {
+  const generateTenantUrl = (plan: string, tenantId: string | null): string => {
     switch (plan.toLowerCase()) {
       case 'free':
         return 'http://free.trabantparking.ninja';
-      case 'standard':
+      case 'pro':
         return 'http://parking.trabantparking.ninja';
       case 'enterprise':
         return `http://${tenantId}.trabantparking.ninja`;
@@ -114,7 +115,7 @@ function App() {
       const response = await fetch(url, {
         method: 'HEAD'
       });
-      
+
       if (response.status === 500) {
         setDeploymentStatus('failed');
       } else if (response.ok) {
@@ -166,7 +167,7 @@ function App() {
   useEffect(() => {
     const fetchUsers = async () => {
       if (!auth.tenantId) return;
-      
+
       try {
         const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`,
           {
@@ -339,6 +340,7 @@ function App() {
         onAddUser={() => setShowAddUserModal(true)}
         onDeleteUser={handleDeleteUser}
       />
+      <TenantCustomization/>
     </Container>
   );
 
@@ -346,7 +348,7 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <BrowserRouter>
-          <Box sx={{ 
+          <Box sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -362,8 +364,8 @@ function App() {
               </Box>
             )}
             {showSignUp ? (
-              <AdminSignUp 
-                onSignUpSuccess={() => setShowSignUp(false)} 
+              <AdminSignUp
+                onSignUpSuccess={() => setShowSignUp(false)}
                 onSwitchToLogin={() => setShowSignUp(false)}
               />
             ) : (
@@ -381,9 +383,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
           minHeight: '100vh',
           width: '100vw',
           overflow: 'hidden',
