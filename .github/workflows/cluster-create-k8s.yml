@@ -52,7 +52,7 @@ jobs:
         echo "tenant_name: ${{ github.event.inputs.tenant_name }}"
         echo "region: ${{ github.event.inputs.region }}"
         echo "zone: ${{ github.event.inputs.zone }}"
-        
+
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -118,7 +118,8 @@ jobs:
     - name: Terraform Plan
       run: |
         terraform import google_service_account.default projects/trabantparking-stage/serviceAccounts/continuous-integrator@trabantparking-stage.iam.gserviceaccount.com
-        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
+        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -var="region=${{ github.event.inputs.region }}" -var="zone=${{ github.event.inputs.zone }}" -out=tfplan
+
         terraform show -json tfplan > plan.json
         gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
       working-directory: cloud/terraform
