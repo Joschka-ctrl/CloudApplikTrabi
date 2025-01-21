@@ -1,5 +1,8 @@
 name: shutdown-stage
-on:
+on: 
+  push:
+    tags:
+      - '8.*' 
   workflow_dispatch:
     inputs:
       region:
