@@ -2,8 +2,8 @@
 
 provider "google" {
   project = "trabantparking-stage" 
-  region  = "europe-west1"
-  zone    = "europe-west1-b"
+  region  = var.region
+  zone    = var.zone
 }
 
 provider "kubernetes" {
@@ -14,7 +14,7 @@ provider "kubernetes" {
 }
 
 resource "google_service_account" "default" {
-  account_id   = "continuous-integrator"  # Hier passt du den Account-ID an
+  account_id   = "continuous-integrator@trabantparking-stage.iam.gserviceaccount.com"  # Hier passt du den Account-ID an
   display_name = "continuous-integrator"
 }
 

@@ -18,7 +18,7 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-free -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-free -f region=europe-west1 -f zone=europe-west1-c -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}  
 
@@ -34,6 +34,7 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-parking -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-parking -f region=europe-west1 -f zone=europe-west1-c -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}

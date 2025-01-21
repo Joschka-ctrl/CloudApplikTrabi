@@ -6,12 +6,20 @@ on:
       tenant_name:
         description: "Tenant Name"
         required: true
-        default: "default-cluster"   
+        default: "default-cluster" 
+      region:
+        description: "Region"
+        required: false
+        default: "europe-west1" 
+      zone: 
+        description: "Zone"
+        required: false
+        default: "europe-west1-b" 
 
 env:
   PROJECT_ID: trabantparking-stage
   GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
-  GKE_REGION: europe-west1-b
+  GKE_ZONE: ${{ github.event.inputs.zone }}
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
@@ -51,7 +59,7 @@ jobs:
     - name: Check if Cluster Exists
       id: check_cluster
       run: |
-        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}; then
           echo "Cluster exists"
           echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
         else
@@ -63,7 +71,7 @@ jobs:
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         echo ${{ env.PROJECT_ID }}
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
 
     - name: Cluster Name
@@ -223,7 +231,7 @@ jobs:
 
     - name: Get GKE Credentials
       run: |
-        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}
 
     - name: Check if Firebase Credentials Secret Exists
       run: |
