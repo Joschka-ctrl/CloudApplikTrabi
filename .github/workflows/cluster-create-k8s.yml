@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -46,6 +47,12 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
+    - name: Print input values
+      run: |
+        echo "tenant_name: ${{ github.event.inputs.tenant_name }}"
+        echo "region: ${{ github.event.inputs.region }}"
+        echo "zone: ${{ github.event.inputs.zone }}"
+        
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
