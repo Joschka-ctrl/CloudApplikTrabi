@@ -598,6 +598,38 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
   }
 });
 
+async function triggerStopWorkflow() {
+  try {
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'shutdown-stage.yml',
+      ref: 'stage',
+      inputs: {
+        region: "europe-west1",
+        zone: "europe-west1-c",
+      },
+    });
+
+    console.log('Stop workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering stop workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// Stop tenant endpoint
+app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
+  try {
+    await triggerStopWorkflow();
+    res.json({ message: 'Tenant stop process initiated successfully' });
+  } catch (error) {
+    console.error('Error stopping tenant:', error);
+    res.status(500).json({ error: 'Failed to stop tenant' });
+  }
+});
+
 async function triggerDeleteWorkflow(tenantId) {
   try {
     console.log('Triggering delete workflow with the following details:');
