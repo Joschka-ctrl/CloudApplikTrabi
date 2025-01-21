@@ -11,7 +11,6 @@ on:
         required: false
         default: "europe-west1-c" 
 
-
 jobs:
   destroy-stage-free:
     runs-on: ubuntu-latest
@@ -41,7 +40,7 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run destroy.yml -f tenant_name=stage-pro -f region=${{ github.event.inputs.region }}  -f zone=${{ github.event.inputs.zone }}  -R Joschka-ctrl/CloudApplikTrabi -r stage-cluster
+          gh workflow run destroy.yml -f tenant_name=stage-pro -f region=${{ github.event.inputs.region }}  -f zone=${{ github.event.inputs.zone }}  -R Joschka-ctrl/CloudApplikTrabi -r stage
 
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
