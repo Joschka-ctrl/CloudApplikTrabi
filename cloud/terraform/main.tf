@@ -12,21 +12,25 @@ provider "kubernetes" {
 }
 
 resource "google_service_account" "cluster_service_account" {
+  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
   account_id   = "cluster-service-account"
   display_name = "Service Account for GKE Cluster"
 }
 
 resource "google_project_iam_binding" "firestore_access" {
+  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
   role    = "roles/datastore.user" # Zugriff auf Firestore
   members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
 }
 
 resource "google_project_iam_binding" "token_creator" {
+  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
   role    = "roles/iam.serviceAccountTokenCreator" # Erlaubt die Verwendung von Application Default Credentials
   members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
 }
 
 resource "google_project_iam_binding" "log_writer" {
+  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
   role    = "roles/logging.logWriter" # Erlaubt das Schreiben von Logs
   members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
 }
