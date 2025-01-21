@@ -10,6 +10,8 @@ const firebaseConfig = {
 
 const app: FirebaseApp = initializeApp(firebaseConfig);
 
+
+
 // Exportiere die Authentifizierungs-Instanz
 export const auth: Auth = getAuth(app);
 export default app;
