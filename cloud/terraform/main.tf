@@ -1,3 +1,5 @@
+
+
 provider "google" {
   project = "trabantparking-stage" 
   region  = "europe-west1"
@@ -11,29 +13,11 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
 }
 
-resource "google_service_account" "cluster_service_account" {
-  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
-  account_id   = "cluster-service-account"
-  display_name = "Service Account for GKE Cluster"
+resource "google_service_account" "default" {
+  account_id   = "continuous-integrator"  # Hier passt du den Account-ID an
+  display_name = "continuous-integrator"
 }
 
-resource "google_project_iam_binding" "firestore_access" {
-  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
-  role    = "roles/datastore.user" # Zugriff auf Firestore
-  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
-}
-
-resource "google_project_iam_binding" "token_creator" {
-  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
-  role    = "roles/iam.serviceAccountTokenCreator" # Erlaubt die Verwendung von Application Default Credentials
-  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
-}
-
-resource "google_project_iam_binding" "log_writer" {
-  project = var.project_id # Ersetze durch die tatsächliche Projekt-ID oder eine Variable
-  role    = "roles/logging.logWriter" # Erlaubt das Schreiben von Logs
-  members = ["serviceAccount:${google_service_account.cluster_service_account.email}"]
-}
 
 resource "google_container_cluster" "gke" {
   name     = var.cluster_name
@@ -55,7 +39,6 @@ resource "google_container_cluster" "gke" {
 
   initial_node_count = 1
 }
-
 
 resource "google_storage_bucket" "default" {
   name     = "trabantparking-stage-terraform-plans"

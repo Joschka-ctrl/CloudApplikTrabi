@@ -102,6 +102,7 @@ jobs:
 
     - name: Terraform Plan
       run: |
+        terraform import google_service_account.default projects/trabantparking-stage/serviceAccounts/continuous-integrator@trabantparking-stage.iam.gserviceaccount.com
         terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
         terraform show -json tfplan > plan.json
         gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
