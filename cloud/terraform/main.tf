@@ -28,7 +28,6 @@ resource "google_container_cluster" "gke" {
   addons_config {
     http_load_balancing {
       disabled = false
-      service_account = google_service_account.cluster_service_account.email
     }
   }
 
