@@ -68,6 +68,27 @@ jobs:
           CLUSTER_NAME=${{ env.GKE_CLUSTER }}
           TENANT_NAME=${{ env.GKE_CLUSTER }}
 
+    - name: Create or Update Cloud Scheduler Job
+      run: |
+        gcloud scheduler jobs create http async-repot-${{ env.GKE_CLUSTER }} \
+          --schedule="1 0 * * *" \
+          --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
+          --http-method=POST \
+          --time-zone="Europe/Berlin" \
+          --headers="Content-Type:application/json" \
+          --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+          --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
+
+
+          || gcloud scheduler jobs update http my-scheduler-job-${{ env.GKE_CLUSTER }} \
+          --schedule="1 0 * * *" \
+          --uri="https://europe-west1-trabantparking-stage..cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
+          --http-method=POST \
+          --time-zone="Europe/Berlin" \
+          --headers="Content-Type:application/json"
+          --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+          --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
+
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
