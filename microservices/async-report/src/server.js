@@ -6,6 +6,9 @@ const path = require('path');
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
+
+
+
 admin.firestore().settings({ databaseId: 'free' });
 const db = admin.firestore();
 
