@@ -215,6 +215,20 @@ jobs:
           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
       working-directory: microservices
 
+    # Backend Reporting
+    - name: Build and Push Backend Facility Management
+      run: |
+        docker build \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          --build-arg PROJECT_ID=trabantparking-stage \
+          -t backend-reporting-server:${{ env.LATEST_TAG }} \
+          -f backend-reporting/Dockerfile ./facility-management
+        docker tag facility-management-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
+
     # Backend Parking
     - name: Build and Push Backend Parking
       run: |
