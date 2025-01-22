@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-facility-management
+  labels:
+    app: backend-facility-management
+spec:
+  replicas: {{ .Values.backendFacilityManagement.replicaCount }}
+  selector:
+    matchLabels:
+      app: backend-facility-management
+  template:
+    metadata:
+      labels:
+        app: backend-facility-management
+    spec:
+      containers:
+      - name: backend-facility-management
+        image: "{{ .Values.backendFacilityManagement.image.repository }}:{{ .Values.global.tag }}"
+        imagePullPolicy: {{ .Values.backendFacilityManagement.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.backendFacilityManagement.containerPort }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.backendFacilityManagement.readinessProbe.path }}
+            port: {{ .Values.backendFacilityManagement.containerPort }}
+          initialDelaySeconds: {{ .Values.backendFacilityManagement.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.backendFacilityManagement.readinessProbe.periodSeconds }}

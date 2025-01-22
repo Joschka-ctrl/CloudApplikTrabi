@@ -39,6 +39,10 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Routes
+app.get("/api/facilities/health", (req, res) => {
+    res.status(200).send("Facility Management API is up and running");
+});
+
 app.post("/api/facilities/:tenantId", authenticateToken,async (req, res) => {
     const token = req.headers.authorization.split(' ')[1];
     console.log("POST /facility");
