@@ -30,7 +30,6 @@ interface Tenant {
   tenantId: string;
   displayName: string;
   plan: string;
-  status: string;
   createdAt: string;
   url?: string;
 }
@@ -42,7 +41,6 @@ export default function SuperAdmin() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
-  const [tenantToStop, setTenantToStop] = useState<Tenant | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -83,19 +81,6 @@ export default function SuperAdmin() {
     fetchTenants();
   }, [navigate]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'healthy':
-        return 'success';
-      case 'unhealthy':
-        return 'error';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
   const handleDeleteClick = (tenant: Tenant) => {
     setTenantToDelete(tenant);
     setDeleteDialogOpen(true);
@@ -135,14 +120,11 @@ export default function SuperAdmin() {
     setTenantToDelete(null);
   };
 
-  const handleStopClick = (tenant: Tenant) => {
-    setTenantToStop(tenant);
+  const handleStopClick = () => {
     setStopDialogOpen(true);
   };
 
   const handleStopConfirm = async () => {
-    if (!tenantToStop) return;
-
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -158,7 +140,6 @@ export default function SuperAdmin() {
       });
 
       setStopDialogOpen(false);
-      setTenantToStop(null);
     } catch (err: any) {
       console.error('Error stopping tenant:', err);
       setError(err.response?.data?.error || 'Failed to stop tenant');
@@ -170,7 +151,6 @@ export default function SuperAdmin() {
 
   const handleStopCancel = () => {
     setStopDialogOpen(false);
-    setTenantToStop(null);
   };
 
   if (loading) {
@@ -202,7 +182,6 @@ export default function SuperAdmin() {
                   <TableCell>Tenant ID</TableCell>
                   <TableCell>Company Name</TableCell>
                   <TableCell>Plan</TableCell>
-                  <TableCell>Status</TableCell>
                   <TableCell>Created At</TableCell>
                   <TableCell>URL</TableCell>
                   <TableCell>Actions</TableCell>
@@ -214,13 +193,12 @@ export default function SuperAdmin() {
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell></TableCell>
-                  <TableCell></TableCell>
                   <TableCell> <a href="http://stage-free.trabantparking.ninja" target="_blank" rel="noopener noreferrer">
                           http://stage-free.trabantparking.ninja
                         </a></TableCell>
                   <TableCell>
                     <IconButton
-                      onClick={() => handleStopClick({ tenantId: 'free', displayName: 'Free', plan: 'free', status: 'healthy', createdAt: '' })}
+                      onClick={() => handleStopClick()}
                       color="warning"
                       size="small"
                       aria-label="stop tenant"
@@ -238,13 +216,6 @@ export default function SuperAdmin() {
                         label={tenant.plan} 
                         size="small"
                         color={tenant.plan === 'enterprise' ? 'primary' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={tenant.status} 
-                        size="small"
-                        color={getStatusColor(tenant.status) as any}
                       />
                     </TableCell>
                     <TableCell>
@@ -296,11 +267,11 @@ export default function SuperAdmin() {
         >
           <DialogTitle>Stop Tenant</DialogTitle>
           <DialogContent>
-            Are you sure you want to stop tenant "{tenantToStop?.displayName}"? The tenant will be temporarily deactivated.
+            Are you sure you want to delete the clusters "stage-free and stage-pro"? The Clusters will be deleted.
           </DialogContent>
           <DialogActions>
             <Button onClick={handleStopCancel}>Cancel</Button>
-            <Button onClick={handleStopConfirm} color="warning">Stop</Button>
+            <Button onClick={handleStopConfirm} color="warning">Delete</Button>
           </DialogActions>
         </Dialog>
       </Paper>

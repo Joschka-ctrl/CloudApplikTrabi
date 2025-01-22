@@ -75,6 +75,54 @@ async function triggerWorkflow(tenantConfig) {
   }
 }
 
+async function triggerDeleteWorkflow(tenantId) {
+  try {
+    console.log('Triggering delete workflow with the following details:');
+    console.log('Owner:', process.env.GITHUB_OWNER);
+    console.log('Repo:', process.env.GITHUB_REPO);
+    console.log('Workflow ID:', 'destroy.yml');
+    console.log('Branch/Ref:', 'stage');
+    console.log('Inputs:', { tenant_name: tenantId });
+
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'destroy.yml',
+      ref: 'stage',
+      inputs: {
+        tenant_name: tenantId,
+      },
+    });
+
+    console.log('Delete workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering delete workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+async function triggerStopWorkflow() {
+  try {
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'shutdown-stage.yml',
+      ref: 'stage',
+      inputs: {
+        region: "europe-west1",
+        zone: "europe-west1-c",
+      },
+    });
+
+    console.log('Stop workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering stop workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 
 async function createTenantDocument(tenantConfig) {
   try {
@@ -100,7 +148,7 @@ async function createAdminUserAndTenant(adminData) {
         passwordRequired: false,
       },
     };
-    
+
     const tenant = await admin.auth().tenantManager().createTenant(tenantConfig);
 
     // Create admin user in Firebase Auth
@@ -130,6 +178,18 @@ async function createAdminUserAndTenant(adminData) {
     };
 
     await db.collection('tenants').doc(tenant.tenantId).set(tenantData);
+
+    // Save admin user information in Firestore
+    const adminUserData = {
+      id: adminUser.uid,
+      email: adminData.email,
+      displayName: adminData.fullName,
+      role: 'admin',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('tenants').doc(tenant.tenantId)
+      .collection('users').doc(adminUser.uid).set(adminUserData);
 
     return {
       tenantId: tenant.tenantId,
@@ -187,7 +247,7 @@ async function deleteTenantUser(tenantId, userId) {
   try {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     await tenantAuth.deleteUser(userId);
-    
+
     // Delete user document from Firestore
     await db.collection('tenants').doc(tenantId).collection('users').doc(userId).delete();
 
@@ -228,8 +288,8 @@ async function updateUserCustomClaims(uid, customization) {
 async function getTenantUsers(tenantId) {
   try {
     const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
-    
-    return usersSnapshot.docs.map(doc => doc.data().id);
+
+    return usersSnapshot.docs.map(doc => doc.data().email);
   } catch (error) {
     console.error(`Error getting users for tenant ${tenantId}:`, error);
     throw error;
@@ -378,34 +438,11 @@ app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
       } else {
         url = `http://parking.trabantparking.ninja`;
       }
-      if (url) {
-        try {
-
-          // Try to fetch the tenant's URL to check health
-          const response = await axios.get(url, {
-            timeout: 1500,
-            validateStatus: function (status) {
-              return status >= 200 && status < 500; // Accept any status code that's not a server error
-            }
-          });
-          
-          // Consider any successful response (including redirects) as healthy
-          status = response.status >= 200 && response.status < 500 ? 'healthy' : 'unhealthy';
-          console.log(`Health check for tenant ${doc.id} completed with status: ${status} (HTTP ${response.status})`);
-        } catch (error) {
-          console.error(`Health check failed for tenant ${doc.id}:`, error.message);
-          status = 'unhealthy';
-        }
-      } else {
-        status = 'pending'; // No URL means the tenant is still being set up
-        console.log(`No URL found for tenant ${doc.id}, status set to pending`);
-      }
 
       tenants.push({
         tenantId: doc.id,
         displayName: tenantData.displayName || doc.id,
         plan: tenantData.plan || 'free',
-        status: status,
         createdAt: tenantData.createdAt ? tenantData.createdAt.toDate().toISOString() : new Date().toISOString(),
         url: url || null
       });
@@ -424,9 +461,9 @@ app.get('/api/tenants/health', authenticateToken, async (req, res) => {
   const plan = req.query.plan;
   let status = 'pending';
   let url;
-  if(plan === 'free') {
+  if (plan === 'free') {
     url = `http://free.trabantparking.ninja`;
-  }  else if (plan === 'enterprise'){
+  } else if (plan === 'enterprise') {
     url = `http://${tenantId}.trabantparking.ninja`;
   } else {
     url = `http://parking.trabantparking.ninja`;
@@ -440,7 +477,7 @@ app.get('/api/tenants/health', authenticateToken, async (req, res) => {
         return status >= 200 && status < 500; // Accept any status code that's not a server error
       }
     });
-    
+
     // Consider any successful response (including redirects) as healthy
     status = response.status >= 200 && response.status < 500 ? 'healthy' : 'unhealthy';
     console.log(`Health check for tenant ${tenantId} completed with status: ${status} (HTTP ${response.status})`);
@@ -547,7 +584,7 @@ app.get('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
     }
 
     const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-    
+
     if (!tenantDoc.exists) {
       return res.status(404).json({ error: 'Tenant not found' });
     }
@@ -598,26 +635,6 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
   }
 });
 
-async function triggerStopWorkflow() {
-  try {
-    await octokit.actions.createWorkflowDispatch({
-      owner: process.env.GITHUB_OWNER,
-      repo: process.env.GITHUB_REPO,
-      workflow_id: 'shutdown-stage.yml',
-      ref: 'stage',
-      inputs: {
-        region: "europe-west1",
-        zone: "europe-west1-c",
-      },
-    });
-
-    console.log('Stop workflow triggered successfully.');
-    return true;
-  } catch (error) {
-    console.error('Error triggering stop workflow:', error.response?.data || error.message);
-    throw error;
-  }
-}
 
 // Stop tenant endpoint
 app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
@@ -630,32 +647,7 @@ app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
   }
 });
 
-async function triggerDeleteWorkflow(tenantId) {
-  try {
-    console.log('Triggering delete workflow with the following details:');
-    console.log('Owner:', process.env.GITHUB_OWNER);
-    console.log('Repo:', process.env.GITHUB_REPO);
-    console.log('Workflow ID:', 'destroy.yml');
-    console.log('Branch/Ref:', 'stage');
-    console.log('Inputs:', { tenant_name: tenantId });
 
-    await octokit.actions.createWorkflowDispatch({
-      owner: process.env.GITHUB_OWNER,
-      repo: process.env.GITHUB_REPO,
-      workflow_id: 'destroy.yml',
-      ref: 'stage',
-      inputs: {
-        tenant_name: tenantId,
-      },
-    });
-
-    console.log('Delete workflow triggered successfully.');
-    return true;
-  } catch (error) {
-    console.error('Error triggering delete workflow:', error.response?.data || error.message);
-    throw error;
-  }
-}
 
 async function deleteTenantDocument(tenantId) {
   try {
@@ -749,7 +741,6 @@ app.get('/api/tenants/:tenantId/customization', authenticateToken, async (req, r
 
     if (!doc.exists) {
       return res.json({
-        tenantId,
         primaryColor: '#1976d2',
         secondaryColor: '#dc004e',
         logoUrl: ''
@@ -781,7 +772,6 @@ app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, r
     }
 
     const customization = {
-      tenantId,
       primaryColor,
       secondaryColor,
       logoUrl,
@@ -792,25 +782,34 @@ app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, r
     await db.collection('tenantCustomization').doc(tenantId).set(customization);
 
     // Get all users for this tenant
-    const userIds = await getTenantUsers(tenantId);
-    console.log(`Updating custom claims for ${userIds.length} users of tenant ${tenantId}`);
+    const userEmails = await getTenantUsers(tenantId);
+    const users = await Promise.all((userEmails || []).map(async (userEmail) => 
+      admin.auth().tenantManager().authForTenant(tenantId).getUserByEmail(userEmail)
+    ));
 
-    // Update custom claims for all users
-    await Promise.all(userIds.map(uid => updateUserCustomClaims(uid, customization)));
-
-    // Force token refresh for all users
-    await Promise.all(userIds.map(async (uid) => {
-      try {
-        await admin.auth().revokeRefreshTokens(uid);
-        console.log(`Revoked refresh tokens for user ${uid}`);
-      } catch (error) {
-        console.error(`Error revoking refresh tokens for user ${uid}:`, error);
-      }
+    // Update claims for each user
+    await Promise.all(users.map(async (user) => {
+      const currentClaims = user.customClaims || {};
+      const newClaims = {
+        ...currentClaims,
+        primaryColor: customization.primaryColor,
+        secondaryColor: customization.secondaryColor,
+        logoUrl: customization.logoUrl
+      };
+      
+      await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(user.uid, newClaims);
     }));
 
-    res.json({ 
+    // Fetch first user again to verify updated claims
+    if (users.length > 0) {
+      const updatedUser = await admin.auth().tenantManager().authForTenant(tenantId).getUser(users[0].uid);
+      console.log(`Updated custom claims for ${users.length} users of tenant ${tenantId}`);
+      console.log('First user updated claims:', JSON.stringify(updatedUser.customClaims, null, 2));
+    }
+
+    res.json({
       message: 'Customization updated successfully',
-      updatedUsers: userIds.length
+      updatedUsers: users.length
     });
   } catch (error) {
     console.error('Error updating tenant customization:', error);
