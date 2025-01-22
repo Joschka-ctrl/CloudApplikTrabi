@@ -160,8 +160,7 @@ router.get('/floor-occupancy', authenticateToken, async (req, res) => {
 // Get parking metrics
 router.get('/metrics', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
 
     // Get all parking spots and current occupancy
     const [spotsData, occupancyData] = await Promise.all([
@@ -309,8 +308,7 @@ router.get('/echarging/card-provider-revenue', authenticateToken, async (req, re
 // Get parking duration statistics
 router.get('/parking-duration', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const durationStats = await parkingServiceRequest(
@@ -328,8 +326,7 @@ router.get('/parking-duration', authenticateToken, async (req, res) => {
 // Get revenue statistics
 router.get('/parking-revenue', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const revenueStats = await parkingServiceRequest(
@@ -347,8 +344,7 @@ router.get('/parking-revenue', authenticateToken, async (req, res) => {
 // Get floor statistics
 router.get('/floor-stats', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const floorStats = await parkingServiceRequest(
