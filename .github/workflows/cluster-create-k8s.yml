@@ -221,8 +221,8 @@ jobs:
         docker build \
           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
           --build-arg PROJECT_ID=trabantparking-stage \
-          -t backend-reporting-server:${{ env.LATEST_TAG }} \
-          -f backend-reporting/Dockerfile ./facility-management
+          -t facility-management-server:${{ env.LATEST_TAG }} \
+          -f facility-management/Dockerfile ./facility-management
         docker tag facility-management-server:${{ env.LATEST_TAG }} \
           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server:${{ env.LATEST_TAG }}
         docker push \
