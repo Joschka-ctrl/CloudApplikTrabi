@@ -18,12 +18,10 @@ const Navbar = () => {
   });
 
   const currentHost = window.location.hostname;
-  // Überprüfen, ob der Pfad mit "/free" beginnt
-  const shouldShowReports = !currentHost.startsWith('free');
-  console.log(shouldShowReports);
-
+  
   // Check if this is a free or pro tenant
   const isBasicTenant = currentHost.startsWith('free') || currentHost.startsWith('pro');
+  const shouldShowReports = !isBasicTenant;
 
   useEffect(() => {
     const getCustomClaims = async () => {
