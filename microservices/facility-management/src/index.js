@@ -13,7 +13,6 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     projectId: 'trabantparking-stage'
 });
-console.log(process.env.CLUSTER_NAME );
 admin.firestore().settings({
     databaseId: process.env.CLUSTER_NAME || "develop",
 });
