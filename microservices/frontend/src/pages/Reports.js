@@ -13,6 +13,7 @@ import ParkingDurationChart from '../features/reports/components/ParkingDuration
 import DailyRevenueChart from '../features/reports/components/DailyRevenueChart';
 import FloorUsagePatternChart from '../features/reports/components/FloorUsagePatternChart';
 import ExportPDFButton from '../features/reports/components/ExportPDFButton';
+import ParkingDurationDistributionChart from '../features/reports/components/ParkingDurationDistributionChart';
 import { Button } from 'bootstrap';
 
 function TabPanel(props) {
@@ -50,22 +51,18 @@ const Reports = () => {
   const [floorStats, setFloorStats] = useState(null);
   const [tabValue, setTabValue] = useState(0);
   const [dailyReports, setDailyReports] = useState([]);
+  const [durationDistribution, setDurationDistribution] = useState(null);
   const { user } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reports';
 
-  const fetchWithAuth = async (url, options = {}) => {
-    if (user) {
-      const token = user.accessToken;
-      const headers = {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      };
-      return fetch(url, { ...options, headers });
-    } else {
-      throw new Error("User is not authenticated");
-    }
-  };
+  // Initialize dates with today's date
+  useEffect(() => {
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    setStartDate(formattedDate);
+    setEndDate(formattedDate);
+  }, []);
 
   // Fetch parking places on component mount
   useEffect(() => {
@@ -73,10 +70,17 @@ const Reports = () => {
     fetchReports();
   }, []);
 
+  // Set first parking place as default when parkingPlaces are loaded
+  useEffect(() => {
+    if (parkingPlaces.length > 0 && !selectedParkingPlace) {
+      setSelectedParkingPlace(parkingPlaces[0].facilityId);
+    }
+  }, [parkingPlaces]);
+
   // Fetch data when filters change
   useEffect(() => {
     const fetchData = async () => {
-      if (!selectedParkingPlace) return;
+      if (!selectedParkingPlace || parkingPlaces.length === 0) return;
       
       // Validate date range
       if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
@@ -97,24 +101,37 @@ const Reports = () => {
           fetchMetrics(),
           fetchDurationStats(),
           fetchRevenueStats(),
-          fetchFloorStats()
+          fetchFloorStats(),
+          fetchDurationDistribution()
         ]);
       } catch (error) {
-        console.error('Error fetching report data:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
     fetchData();
   }, [selectedParkingPlace, startDate, endDate, minUsage, maxUsage]);
 
-  
+  const fetchWithAuth = async (url, options = {}) => {
+    if (user) {
+      const token = user.accessToken;
+      const headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      };
+      return fetch(url, { ...options, headers });
+    } else {
+      throw new Error("User is not authenticated");
+    }
+  };
+
   const fetchParkingPlaces = async () => {
     try {
       const response = await fetchWithAuth(`${HOST_URL}/facilities?tenantId=${encodeURIComponent(user.tenantId)}`);
       const data = await response.json();
       setParkingPlaces(data);
       if (data.length > 0) {
-        setSelectedParkingPlace(data[0].id);
+        setSelectedParkingPlace(data[0].facilityId);
       }
     } catch (error) {
       console.error('Error fetching parking places:', error);
@@ -278,6 +295,21 @@ const Reports = () => {
     }
   };
 
+  const fetchDurationDistribution = async () => {
+    try {
+      const response = await fetchWithAuth(
+        `${HOST_URL}/parkingStats/duration/${encodeURIComponent(user.tenantId)}/${encodeURIComponent(selectedParkingPlace)}?startDate=${startDate}&endDate=${endDate}`
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch duration distribution');
+      }
+      const data = await response.json();
+      setDurationDistribution(data);
+    } catch (error) {
+      console.error('Error fetching duration distribution:', error);
+    }
+  };
+
   const handleReportDownload = async (reportId) => {
     try {
       const response = await fetchWithAuth(`${HOST_URL}/api/reporting/download/${reportId}`);
@@ -310,31 +342,31 @@ const Reports = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-<Box sx={{ mb: 2 }}>
-  <Typography variant="h6" gutterBottom>
-    Daily Reports
-  </Typography>
-  <Grid container spacing={2}>
-    {dailyReports && dailyReports.length > 0 ? (
-      dailyReports.map((report, index) => (
-        <Grid item key={report.id || index}>
-          <Button
-            variant="outlined"
-            onClick={() => handleReportDownload(report.id)}
-          >
-            {`${report.date || 'Unknown Date'} - ${report.facilityName || 'Unknown Facility'}`}
-          </Button>
-        </Grid>
-      ))
-    ) : (
-      <Grid item>
-        <Typography variant="body2" color="text.secondary">
-          No daily reports available
-        </Typography>
-      </Grid>
-    )}
-  </Grid>
-</Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Daily Reports
+          </Typography>
+          <Grid container spacing={2}>
+            {dailyReports && dailyReports.length > 0 ? (
+              dailyReports.map((report, index) => (
+                <Grid item key={report.id || index}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleReportDownload(report.id)}
+                  >
+                    {`${report.date || 'Unknown Date'} - ${report.facilityName || 'Unknown Facility'}`}
+                  </Button>
+                </Grid>
+              ))
+            ) : (
+              <Grid item>
+                <Typography variant="body2" color="text.secondary">
+                  No daily reports available
+                </Typography>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <FilterPanel 
@@ -362,7 +394,7 @@ const Reports = () => {
         </Box>
 
         <div className="grid-container">
-          <MetricsPanel metrics={metrics} revenueStats={revenueStats} />
+            <MetricsPanel metrics={metrics} revenueStats={revenueStats} />
           
           <DailyUsageChart 
             data={dailyUsageData}
@@ -397,6 +429,13 @@ const Reports = () => {
           
           <FloorUsagePatternChart 
             floorStats={floorStats}
+            selectedParkingPlace={selectedParkingPlace}
+            startDate={startDate}
+            endDate={endDate}
+          />
+          
+          <ParkingDurationDistributionChart 
+            durationStats={durationStats}
             selectedParkingPlace={selectedParkingPlace}
             startDate={startDate}
             endDate={endDate}
