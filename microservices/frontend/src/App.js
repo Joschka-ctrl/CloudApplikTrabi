@@ -25,8 +25,16 @@ const App = () => {
             <Navbar />
             <Routes>
               <Route path="/" element={<ContactSection />} />
-              <Route
+              {/* <Route
                 path="/defects"
+                element={
+                  <ProtectedRoute>
+                    <Defects />
+                  </ProtectedRoute>
+                }
+              /> */}
+              <Route
+                path="/defects/:facilityID"
                 element={
                   <ProtectedRoute>
                     <Defects />
@@ -43,6 +51,14 @@ const App = () => {
               />
                 <Route
                 path="/parkingSpaces"
+                element={
+                  <ProtectedRoute>
+                    <ParkingLots/>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/parkingSpaces/:id"
                 element={
                   <ProtectedRoute>
                     <ParkingLots/>

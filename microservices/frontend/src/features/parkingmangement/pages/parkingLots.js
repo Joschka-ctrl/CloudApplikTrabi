@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useAuth } from '../../../components/AuthProvider';
+import { useParams } from 'react-router-dom';
 
 const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
@@ -27,6 +28,14 @@ const ParkingLots = () => {
   const [selectedSpotId, setSelectedSpotId] = useState(null);
   const [floorStats, setFloorStats] = useState([]);
 
+  const { id } = useParams();
+
+
+  useEffect(() => {
+    if(id){
+      setSelectedFacilityId(id);
+    }
+  });
 
   useEffect(() => {
     // tenantId = tenantId || '15';
@@ -182,27 +191,28 @@ const ParkingLots = () => {
       <Typography variant="h4" component="h1" align="center" gutterBottom>
         Parking Management
       </Typography>
-      <FormControl fullWidth margin="normal">
-        <Select
-          labelId="facility-id-label"
-          value={selectedFacilityId}
-          onChange={handleFacilityChange}
-          displayEmpty
-        >
-          <MenuItem value="" disabled>
-            Select a Facility ID
-          </MenuItem>
-          {facilities.length > 0 ? (
-            facilities.map(facility => (
-              <MenuItem key={facility.facilityId} value={facility.facilityId}>
-                {facility.facilityId}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem disabled>No facilities available</MenuItem>
-          )}
-        </Select>
-      </FormControl>
+      {!id && (
+        <FormControl fullWidth margin="normal">
+          <Select
+            labelId="facility-id-label"
+            value={selectedFacilityId}
+            onChange={handleFacilityChange}
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select a Facility ID
+            </MenuItem>
+            {facilities.length > 0 ? (
+              facilities.map(facility => (
+                <MenuItem key={facility.facilityId} value={facility.facilityId}>
+                  {facility.facilityId}
+                </MenuItem>
+              ))
+            ) : (<></>
+            )}
+          </Select>
+        </FormControl>
+      )}
 
       {/* /* Stats Section */}
       {floorStats.length > 0 && (
