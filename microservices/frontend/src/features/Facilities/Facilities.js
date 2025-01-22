@@ -19,6 +19,8 @@ export default function Facilities() {
       ? "http://localhost:3021"
       : process.env.REACT_APP_API_URL;
 
+  const PARKING_API_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';   
+
   const [facilities, setFacilities] = React.useState([]);
 
   React.useEffect(() => {
@@ -34,6 +36,34 @@ export default function Facilities() {
       .then((data) => setFacilities(data))
       .catch((error) => console.error("Error fetching facilities:", error));
   }, []);
+
+  React.useEffect(() => {
+    const fetchOccupancyLevels = async () => {
+      const updatedFacilities = await Promise.all(
+        facilities.map(async (facility) => {
+          const response = await fetch(`${PARKING_API_URL}/currentOccupancy/${currentTenantId}/${facility.facilityId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${user.accessToken}`,
+            },
+          });
+          const data = await response.json();
+          const occupancyLevel = (data.occupancy.currentOccupancy / data.occupancy.maxCapacity)*100;
+          return { ...facility, occupancyLevel: occupancyLevel };
+        })
+      );
+      setFacilities(updatedFacilities);
+    };
+
+    if (facilities.length > 0) {
+      fetchOccupancyLevels();
+    }
+  });
+
+  const getFacilityOccupancyLevel = (facility) => {
+    return 47;
+  };
 
   const navigate = useNavigate();
 
@@ -87,7 +117,7 @@ export default function Facilities() {
                 <Typography variant="body2" color="textSecondary">
                   Occupancy Level:
                 </Typography>
-                <LinearProgress variant="determinate" value={47} />
+                <LinearProgress variant="determinate" value={facility.occupancyLevel} />
               </CardContent>
             </Card>
           </Grid>
