@@ -15,7 +15,7 @@ admin.initializeApp({
 });
 console.log(process.env.CLUSTER_NAME );
 admin.firestore().settings({
-    databaseId: process.env.CLUSTER_NAME,
+    databaseId: process.env.CLUSTER_NAME || "develop",
 });
 const db = admin.firestore();
 
