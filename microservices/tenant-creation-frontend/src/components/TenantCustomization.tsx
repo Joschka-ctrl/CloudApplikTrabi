@@ -19,43 +19,66 @@ interface TenantCustomization {
 const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
 
 export const TenantCustomization = () => {
-  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEnterprise, setIsEnterprise] = useState(false);
   const [customization, setCustomization] = useState<TenantCustomization>({
     primaryColor: '#1976d2',
     secondaryColor: '#dc004e',
     logoUrl: '',
   });
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    const fetchCustomization = async () => {
-      if (!auth.currentUser) return;
+    const checkTenantPlan = async () => {
+      if (!auth.currentUser || initialized) return;
       
       try {
-        const response = await fetch(`${HOST}/${auth.tenantId}/customization`, {
+        setLoading(true);
+        // First check if this tenant is enterprise
+        const response = await fetch(`${HOST}/${auth.tenantId}`, {
           headers: {
             'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
           }
         });
         
         if (!response.ok) {
-          throw new Error('Failed to fetch customization');
+          throw new Error('Failed to fetch tenant information');
         }
         
-        const data = await response.json();
-        setCustomization(data);
+        const tenantData = await response.json();
+        const isEnterprisePlan = tenantData.plan === 'enterprise';
+        setIsEnterprise(isEnterprisePlan);
+
+        // Only fetch customization if enterprise
+        if (isEnterprisePlan) {
+          const customizationResponse = await fetch(`${HOST}/${auth.tenantId}/customization`, {
+            headers: {
+              'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
+            }
+          });
+          
+          if (!customizationResponse.ok) {
+            throw new Error('Failed to fetch customization');
+          }
+          
+          const customizationData = await customizationResponse.json();
+          setCustomization(customizationData);
+        }
+        setInitialized(true);
       } catch (error) {
-        console.error('Error fetching customization:', error);
-        setError('Failed to load customization settings');
+        console.error('Error:', error);
+        setError(error instanceof Error ? error.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCustomization();
-  }, [auth.currentUser]);
+    if (auth.currentUser && !initialized) {
+      checkTenantPlan();
+    }
+  }, [auth.currentUser, initialized]);
 
   const handleChange = (field: keyof TenantCustomization) => (
     event: ChangeEvent<HTMLInputElement>
@@ -68,7 +91,7 @@ export const TenantCustomization = () => {
   };
 
   const handleSave = async () => {
-    if (!auth.tenantId) return;
+    if (!auth.tenantId || !isEnterprise) return;
     
     setSaving(true);
     setError(null);
@@ -91,13 +114,26 @@ export const TenantCustomization = () => {
       console.error('Error saving customization:', error);
       setError(error instanceof Error ? error.message : 'Failed to save customization');
     } finally {
-      console.log(auth.currentUser?.getIdToken());
       setSaving(false);
     }
   };
 
   if (loading) {
     return <CircularProgress />;
+  }
+
+  if (!isEnterprise) {
+    return (
+      <Paper elevation={3} sx={{ p: 3, mt: 6 }}>
+        <Typography variant="h5" gutterBottom color="error">
+          Customization Not Available
+        </Typography>
+        <Typography>
+          Tenant customization is only available for Enterprise plan customers. 
+          Please upgrade your plan to access these features.
+        </Typography>
+      </Paper>
+    );
   }
 
   return (
