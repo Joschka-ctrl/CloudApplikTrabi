@@ -2,8 +2,8 @@ name: Production Cluster Creation
 
 on:
   push:
-    tags:
-      - '1.*' 
+    branches:
+      - master
 
 jobs:
   create-free:
