@@ -69,6 +69,7 @@ jobs:
           TENANT_NAME=${{ env.GKE_CLUSTER }}
 
     - name: Create or Update Cloud Scheduler Job
+      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'pro' }}
       run: |
         # Abrufen aller Jobs im Cloud Scheduler
         scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
