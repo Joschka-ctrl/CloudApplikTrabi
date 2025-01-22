@@ -7,7 +7,7 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
 
-admin.firestore().settings({ databaseId: 'free' });
+admin.firestore().settings({ databaseId: process.env.CLUSTER_NAME });
 const db = admin.firestore();
 
 
@@ -69,7 +69,7 @@ app.get('/daily-report', async (req, res) => {  // Hier wird der Pfad '/daily-re
             }
 
             // Check tenant ID for specific reporting
-            if (data.tenantId === 'wegmachen-ij57r') {
+            if (data.tenantId === process.env.TENANT_NAME ) {
                 let fileContent = {};
 
                 if (averageParkingDuration === '00:00:00') {
@@ -124,4 +124,4 @@ function convertMsToTime(milliseconds) {
 }
 
 // This is the correct function to make it work for Google Cloud Functions
-functions.http('dailyReport', app);
+functions.http(`dailyReport${process.env.TENANT_NAME}`, app);
