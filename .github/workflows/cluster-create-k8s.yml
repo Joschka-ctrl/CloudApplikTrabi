@@ -61,10 +61,10 @@ jobs:
           --trigger-http \
           --allow-unauthenticated \
           --region ${{ github.event.inputs.region }} \
-          --source ../../microservices/cloud-function/cloudRunFunction.js \
-          --entry-point dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }} \
+          --source microservices/cloud-function \
+          --entry-point dailyReport \
           --set-env-vars CLUSTER_NAME=${{ env.GKE_CLUSTER }},TENANT_NAME=${{ env.GKE_CLUSTER }}
-
+          
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
