@@ -2,9 +2,9 @@ name: Production Cluster Creation
 
 on:
   push:
-    tags:
-      - '0.*' 
-
+     branches:
+      - stage
+      
 jobs:
   create-stage-free:
     runs-on: ubuntu-latest
