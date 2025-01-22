@@ -181,6 +181,7 @@ jobs:
       run: |
         docker build \
           --build-arg BUCKET_ENV=_stage \
+          --build-arg CLUSTER_NAME=${{ env.GKE_CLUSTER }} \
           -t backend-server:latest \
           -f backend/Dockerfile ./backend
         docker tag backend-server:latest \
@@ -195,6 +196,7 @@ jobs:
         docker build \
           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
           --build-arg PROJECT_ID=trabantparking-stage \
+          --build-arg CLUSTER_NAME=${{ env.GKE_CLUSTER }} \
           -t backend-echarging-server:${{ env.LATEST_TAG }} \
           -f backend-echarging/Dockerfile ./backend-echarging
         docker tag backend-echarging-server:${{ env.LATEST_TAG }} \
@@ -209,6 +211,7 @@ jobs:
         docker build \
           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
           --build-arg PROJECT_ID=trabantparking-stage \
+          --build-arg CLUSTER_NAME=${{ env.GKE_CLUSTER }} \
           -t backend-reporting-server:${{ env.LATEST_TAG }} \
           -f backend-reporting/Dockerfile ./backend-reporting
         docker tag backend-reporting-server:${{ env.LATEST_TAG }} \
@@ -217,12 +220,13 @@ jobs:
           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
       working-directory: microservices
 
-    # Backend Reporting
+    # Backend Facility Management
     - name: Build and Push Backend Facility Management
       run: |
         docker build \
           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
           --build-arg PROJECT_ID=trabantparking-stage \
+          --build-arg CLUSTER_NAME=${{ env.GKE_CLUSTER }} \
           -t facility-management-server:${{ env.LATEST_TAG }} \
           -f facility-management/Dockerfile ./facility-management
         docker tag facility-management-server:${{ env.LATEST_TAG }} \
@@ -237,6 +241,7 @@ jobs:
         docker build \
           --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
           --build-arg PROJECT_ID=trabantparking-stage \
+          --build-arg CLUSTER_NAME=${{ env.GKE_CLUSTER }} \
           -t backend-parking-server:${{ env.LATEST_TAG }} \
           -f backend-parking/Dockerfile ./backend-parking
         docker tag backend-parking-server:${{ env.LATEST_TAG }} \

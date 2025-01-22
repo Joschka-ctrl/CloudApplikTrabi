@@ -9,6 +9,10 @@ admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
 
+admin.firestore().settings({
+  databaseId: process.env.CLUSTER_NAME || 'develop',
+});
+
 const db = admin.firestore();
 const app = express();
 const router = express.Router();
@@ -117,40 +121,36 @@ router.get('/daily-usage', authenticateToken, async (req, res) => {
 // Get floor occupancy data
 router.get('/floor-occupancy', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { facilityId, tenantId } = req.query;
 
-    // Get all parking spots
-    const spotsData = await parkingServiceRequest(
-      `/parkingSpots/${tenantId}/${facilityId}`,
+    if (!facilityId || !tenantId) {
+      return res.status(400).json({ error: 'facilityId and tenantId are required' });
+    }
+
+    // Get floor stats from parking service
+    const response = await parkingServiceRequest(
+      `/parkingStats/floors/${tenantId}/${facilityId}`,
       req.headers.authorization.split(' ')[1]
     );
 
-    // Group spots by floor and calculate occupancy
-    const floorOccupancy = spotsData.reduce((acc, spot) => {
-      const floor = spot.floor || '1';
-      if (!acc[floor]) {
-        acc[floor] = { total: 0, occupied: 0 };
-      }
-      acc[floor].total++;
-      if (spot.occupied) {
-        acc[floor].occupied++;
-      }
-      return acc;
-    }, {});
+    // Ensure we have the expected data structure
+    if (!response.floorStats || !Array.isArray(response.floorStats)) {
+      throw new Error('Invalid data structure received from parking service');
+    }
 
-    // Format data for frontend
-    const occupancyData = {
-      labels: [],
-      data: []
+    // Transform the data to match frontend expectations
+    const transformedData = {
+      floorStats: response.floorStats.map(floor => ({
+        floor: floor.floor,
+        totalSpots: floor.totalSpots,
+        occupiedSpots: floor.occupiedSpots,
+        availableSpots: floor.availibleSpots, // Fix typo in original data
+        closedSpots: floor.closedSpots,
+        occupancyPercentage: floor.occupancyPercentage
+      }))
     };
 
-    Object.entries(floorOccupancy).forEach(([floor, data]) => {
-      occupancyData.labels.push(`Floor ${floor}`);
-      occupancyData.data.push((data.occupied / data.total) * 100);
-    });
-
-    res.json(occupancyData);
+    res.json(transformedData);
   } catch (error) {
     console.error('Error fetching floor occupancy:', error);
     res.status(500).json({ error: 'Failed to fetch floor occupancy data' });
@@ -383,6 +383,27 @@ router.get('/echarging/garages', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching facilities:', error);
     res.status(500).json({ error: 'Failed to fetch facilities' });
+  }
+});
+
+
+// Get daily reports
+router.get('api/reports/daily', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant ID is required' });
+    }
+
+    const reports = await db.collection('daily-report').where('tenantId', '==', tenantId).get();
+
+    console.log('Fetched reports:', reports);
+    res.json(reports);
+  } catch (error) {
+    console.error('Error fetching reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
   }
 });
 

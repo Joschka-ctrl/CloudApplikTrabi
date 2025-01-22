@@ -106,7 +106,7 @@ const ChargingStationForm = ({ open, onClose, onSave, station, garages }) => {
                 required
               >
                 {garages.map((garage) => (
-                  <MenuItem key={garage.id} value={garage.id}>
+                  <MenuItem key={garage.facilityId} value={garage.facilityId}>
                     {garage.name}
                   </MenuItem>
                 ))}

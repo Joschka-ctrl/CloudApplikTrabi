@@ -46,7 +46,7 @@ const ReportFilters = ({
                 <em>All Garages</em>
               </MenuItem>
               {garages.map((garage) => (
-                <MenuItem key={garage.id} value={garage.id}>
+                <MenuItem key={garage.facilityId} value={garage.facilityId}>
                   {garage.name}
                 </MenuItem>
               ))}

@@ -24,7 +24,7 @@ const FilterPanel = ({
         >
           <option value="">Select Parking Place</option>
           {parkingPlaces.map((place) => (
-            <option key={place.id} value={place.id}>
+            <option key={place.facilityId} value={place.facilityId}>
               {place.name}
             </option>
           ))}
