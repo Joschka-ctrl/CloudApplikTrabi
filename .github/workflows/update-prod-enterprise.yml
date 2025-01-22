@@ -9,6 +9,11 @@ jobs:
   update-Enterprise-tenants:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2 
+
       - name: Set up Google Cloud SDK
         uses: google-github-actions/auth@v2
         with:
@@ -17,7 +22,7 @@ jobs:
   
       - name: Install Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-  
+
       - name: Get list of clusters
         run: |
           clusters=$(gcloud container clusters list --format="value(name)")
@@ -30,18 +35,6 @@ jobs:
           echo "Clusters found: $clusters"
           echo "$clusters" > clusters.txt
 
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
-
-      - name: Get latest tag
-        id: get_latest_tag
-        run: |
-          git fetch --tags
-          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
-          echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
-          
       - name: Trigger workflow for each cluster
         run: |
           while read -r cluster_name; do
