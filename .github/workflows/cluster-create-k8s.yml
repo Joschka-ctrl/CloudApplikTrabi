@@ -53,53 +53,6 @@ jobs:
         echo "region: ${{ github.event.inputs.region }}"
         echo "zone: ${{ github.event.inputs.zone }}"
 
- 
-    - name: Deploy Cloud Function
-      id: deploy_cloud_function
-      uses: google-github-actions/deploy-cloud-functions@v3
-      timeout-minutes: 10
-      with:
-        name: asyncreport${{ env.GKE_CLUSTER }}
-        source_dir: microservices/cloud-function
-        runtime: nodejs20
-        entry_point: dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }}
-        region: ${{ github.event.inputs.region }}
-        environment_variables: |-
-          CLUSTER_NAME=${{ env.GKE_CLUSTER }}
-          TENANT_NAME=${{ env.GKE_CLUSTER }}
-
-    - name: Create or Update Cloud Scheduler Job
-      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'pro' }}
-      run: |
-        # Abrufen aller Jobs im Cloud Scheduler
-        scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
-        echo "Cloud Scheduler jobs: $scheduler_output"
-        
-        # Überprüfen, ob ein Job mit dem Namen des cluster existiert
-        if echo "$scheduler_output" | grep -q "async-repot-${{env.GKE_CLUSTER}}"; then
-          echo "Job 'async-repot-${{env.GKE_CLUSTER}}' exists. updating..."
-
-           gcloud scheduler jobs update http async-repot-${{ env.GKE_CLUSTER }} \
-            --schedule="1 0 * * *" \
-            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
-            --http-method=GET \
-            --location="europe-west1" \
-            --time-zone="Europe/Berlin" \
-            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
-            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
-        else
-          echo "Job 'stage' does not exist.create new one."
-          gcloud scheduler jobs create http async-repot-${{ env.GKE_CLUSTER }} \
-            --schedule="1 0 * * *" \
-            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
-            --http-method=GET \
-            --location="europe-west1" \
-            --time-zone="Europe/Berlin" \
-            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
-            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
-
-        fi
-        
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -369,7 +322,52 @@ jobs:
         else
           echo "DNS record already exists for ${SUBDOMAIN}, skipping creation."
         fi
+        
+    - name: Deploy Cloud Function
+      id: deploy_cloud_function
+      uses: google-github-actions/deploy-cloud-functions@v3
+      timeout-minutes: 10
+      with:
+        name: asyncreport${{ env.GKE_CLUSTER }}
+        source_dir: microservices/cloud-function
+        runtime: nodejs20
+        entry_point: dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }}
+        region: ${{ github.event.inputs.region }}
+        environment_variables: |-
+          CLUSTER_NAME=${{ env.GKE_CLUSTER }}
+          TENANT_NAME=${{ env.GKE_CLUSTER }}
+  
+    - name: Create or Update Cloud Scheduler Job
+      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'pro' }}
+      run: |
+        # Abrufen aller Jobs im Cloud Scheduler
+        scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
+        echo "Cloud Scheduler jobs: $scheduler_output"
+        
+        # Überprüfen, ob ein Job mit dem Namen des cluster existiert
+        if echo "$scheduler_output" | grep -q "async-repot-${{env.GKE_CLUSTER}}"; then
+          echo "Job 'async-repot-${{env.GKE_CLUSTER}}' exists. updating..."
 
+            gcloud scheduler jobs update http async-repot-${{ env.GKE_CLUSTER }} \
+            --schedule="1 0 * * *" \
+            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
+            --http-method=GET \
+            --location="europe-west1" \
+            --time-zone="Europe/Berlin" \
+            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
+        else
+          echo "Job 'stage' does not exist.create new one."
+          gcloud scheduler jobs create http async-repot-${{ env.GKE_CLUSTER }} \
+            --schedule="1 0 * * *" \
+            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
+            --http-method=GET \
+            --location="europe-west1" \
+            --time-zone="Europe/Berlin" \
+            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
+
+        fi
     # - name: migrate data from plan to plan
     #   if: ${{ env.CLUSTER_EXISTS == 'true' && env.SECRET_EXISTS == 'true' }}
     #   run: |
