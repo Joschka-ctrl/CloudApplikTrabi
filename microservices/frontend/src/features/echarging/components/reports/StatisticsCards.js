@@ -23,7 +23,7 @@ const StatisticsCards = ({ stats, loading }) => {
               Total Sessions
             </Typography>
             <Typography variant="h5">
-              {stats.totalSessions}
+              {stats.totalSessions || 0}
             </Typography>
           </CardContent>
         </Card>
@@ -35,7 +35,7 @@ const StatisticsCards = ({ stats, loading }) => {
               Total Energy (kWh)
             </Typography>
             <Typography variant="h5">
-              {stats.totalEnergy.toFixed(2)}
+              {(stats.totalEnergy || 0).toFixed(2)}
             </Typography>
           </CardContent>
         </Card>
@@ -47,7 +47,7 @@ const StatisticsCards = ({ stats, loading }) => {
               Avg. Session Duration (h)
             </Typography>
             <Typography variant="h5">
-              {stats.averageSessionDuration.toFixed(2)}
+              {(stats.averageSessionDuration || 0).toFixed(2)}
             </Typography>
           </CardContent>
         </Card>
@@ -59,7 +59,7 @@ const StatisticsCards = ({ stats, loading }) => {
               Avg. Energy per Session (kWh)
             </Typography>
             <Typography variant="h5">
-              {stats.averageEnergyPerSession.toFixed(2)}
+              {(stats.averageEnergyPerSession || 0).toFixed(2)}
             </Typography>
           </CardContent>
         </Card>

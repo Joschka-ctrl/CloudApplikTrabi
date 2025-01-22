@@ -389,13 +389,17 @@ router.get("/charging-stats", authenticateToken, async (req, res) => {
       return res.status(400).json({ error: "Invalid tenant ID" });
     }
     
+    // Start with base query filtering by tenantId
     let query = db.collection("charging-sessions")
-      .where("tenantId", "==", tenantId);
+      .where("tenantId", "==", tenantId)
+      .where("status", "==", "completed"); // Only include completed sessions
     
-    if (garage) {
+    // Add garage filter if specified
+    if (garage && garage !== '') {
       query = query.where("garage", "==", garage);
     }
     
+    // Add date filters if specified
     if (startDate) {
       query = query.where("startTime", ">=", new Date(startDate));
     }
@@ -415,9 +419,12 @@ router.get("/charging-stats", authenticateToken, async (req, res) => {
     
     snapshot.forEach(doc => {
       const session = doc.data();
-      stats.totalSessions++;
-      stats.totalDuration += (session.endTime - session.startTime) / (1000 * 60 * 60); // Convert to hours
-      stats.totalEnergy += session.energyConsumed || 0;
+      if (session.startTime && session.endTime && session.energyConsumed) {
+        stats.totalSessions++;
+        const duration = (session.endTime.toDate() - session.startTime.toDate()) / (1000 * 60 * 60); // Convert to hours
+        stats.totalDuration += duration;
+        stats.totalEnergy += session.energyConsumed;
+      }
     });
     
     if (stats.totalSessions > 0) {

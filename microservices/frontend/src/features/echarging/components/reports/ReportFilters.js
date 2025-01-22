@@ -1,7 +1,7 @@
 import React from 'react';
-import { Grid, Paper, TextField } from '@mui/material';
+import { Grid, Paper, TextField, MenuItem } from '@mui/material';
 
-const ReportFilters = ({ startDate, endDate, selectedGarage, onStartDateChange, onEndDateChange, onGarageChange }) => {
+const ReportFilters = ({ startDate, endDate, selectedGarage, onStartDateChange, onEndDateChange, onGarageChange, allGarages }) => {
   return (
     <Paper sx={{ p: 2, mb: 4 }}>
       <Grid container spacing={3}>
@@ -31,7 +31,18 @@ const ReportFilters = ({ startDate, endDate, selectedGarage, onStartDateChange, 
             label="Garage"
             value={selectedGarage}
             onChange={(e) => onGarageChange(e.target.value)}
-          />
+            select
+            InputLabelProps={{ shrink: true }}
+          >
+            <MenuItem value="">
+              <em>All Garages</em>
+            </MenuItem>
+            {allGarages.map((garage) => (
+              <MenuItem key={garage._id} value={garage._id}>
+                {garage.name}
+              </MenuItem>
+            ))}
+          </TextField>
         </Grid>
       </Grid>
     </Paper>

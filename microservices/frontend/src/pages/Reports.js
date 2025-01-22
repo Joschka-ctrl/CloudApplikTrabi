@@ -122,6 +122,7 @@ const Reports = () => {
     try {
       const params = new URLSearchParams();
       params.append('parkingId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       if (minUsage) params.append('minUsage', minUsage);

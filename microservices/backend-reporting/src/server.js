@@ -16,6 +16,7 @@ const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://loc
 
 const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://backend-echarging';
 
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021/api/facilities' : 'api/facilities';
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -67,6 +68,18 @@ const eChargingServiceRequest = async (endpoint, token) => {
   }
 };
 
+const facilityServiceRequest = async (endpoint, token) => {
+  try {
+    const response = await axios.get(`${FACILITY_SERVICE_URL}${endpoint}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error calling facility service: ${error.message}` + `at endpoint: ${FACILITY_SERVICE_URL}${endpoint}`);
+    throw error;
+  }
+};
+
 // Health check endpoint
 app.get("/api/reporting/health", (req, res) => {
   res.status(200).json({ status: 'healthy' });
@@ -80,7 +93,7 @@ app.use('/', router);
 router.get('/daily-usage', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
     let startDate = req.query.startDate;
     let endDate = req.query.endDate;
 
@@ -105,7 +118,7 @@ router.get('/daily-usage', authenticateToken, async (req, res) => {
 router.get('/floor-occupancy', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
 
     // Get all parking spots
     const spotsData = await parkingServiceRequest(
@@ -148,7 +161,7 @@ router.get('/floor-occupancy', authenticateToken, async (req, res) => {
 router.get('/metrics', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
 
     // Get all parking spots and current occupancy
     const [spotsData, occupancyData] = await Promise.all([
@@ -207,8 +220,8 @@ router.get('/metrics', authenticateToken, async (req, res) => {
 router.get('/facilities', authenticateToken, async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
-    const facilities = await parkingServiceRequest(
-      `/facilities/${tenantId}`,
+    const facilities = await facilityServiceRequest(
+      `/${tenantId}`,
       req.headers.authorization.split(' ')[1]
     );
     res.json(facilities);
@@ -221,7 +234,7 @@ router.get('/facilities', authenticateToken, async (req, res) => {
 // Get e-charging statistics
 router.get('/echarging/stats', authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, garage } = req.query;
+    const { startDate, endDate, garage, tenantId } = req.query;
     const token = req.headers.authorization.split(' ')[1];
 
     // Build query parameters
@@ -229,6 +242,7 @@ router.get('/echarging/stats', authenticateToken, async (req, res) => {
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
     if (garage) queryParams.append('garage', garage);
+    if (tenantId) queryParams.append('tenantId', tenantId);
 
     const stats = await eChargingServiceRequest(
       `/charging-stats?${queryParams.toString()}`,

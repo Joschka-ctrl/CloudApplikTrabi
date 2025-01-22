@@ -9,10 +9,14 @@ import ProviderRevenueCards from '../components/reports/ProviderRevenueCards';
 import RevenueCharts from '../components/reports/RevenueCharts';
 import ExportPDFButton from '../components/reports/ExportPDFButton';
 
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
+
 const ChargingReports = () => {
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedGarage, setSelectedGarage] = useState('');
+  const [allGarages, setAllGarages] = useState([]);
   const [chargingStats, setChargingStats] = useState(null);
   const [utilizationData, setUtilizationData] = useState(null);
   const [providerRevenue, setProviderRevenue] = useState(null);
@@ -21,9 +25,6 @@ const ChargingReports = () => {
     utilization: false,
     revenue: false
   });
-  const { user } = useAuth();
-
-  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
@@ -37,14 +38,25 @@ const ChargingReports = () => {
       throw new Error("User is not authenticated");
     }
   };
+  
+  const fetchGarages = async () => {
+    try {
+      const response = await fetchWithAuth(`${HOST_URL}/facilities`);
+      const data = await response.json();
+      setAllGarages(data);
+    } catch (error) {
+      console.error('Error fetching garages:', error);
+    }
+  };
 
   const fetchChargingStats = async () => {
     try {
       setLoading(prev => ({ ...prev, stats: true }));
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
+        ...(selectedGarage && { garage: selectedGarage })
       });
 
       const response = await fetchWithAuth(
@@ -63,13 +75,14 @@ const ChargingReports = () => {
     try {
       setLoading(prev => ({ ...prev, utilization: true }));
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
+        ...(selectedGarage && { garage: selectedGarage })
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/echarging/utilization?${params}`
+        `${HOST_URL}/echarging/station-utilization?${params}`
       );
       const data = await response.json();
       setUtilizationData(data);
@@ -85,9 +98,10 @@ const ChargingReports = () => {
     try {
       setLoading(prev => ({ ...prev, revenue: true }));
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
-        ...(selectedGarage ? { garage: selectedGarage } : { garage: 'All' })
+        ...(selectedGarage && { garage: selectedGarage })
       });
 
       const response = await fetchWithAuth(
@@ -104,10 +118,13 @@ const ChargingReports = () => {
   };
 
   useEffect(() => {
-    fetchChargingStats();
-    fetchUtilizationData();
-    fetchProviderRevenue();
-  }, [startDate, endDate, selectedGarage]);
+    if (user) {
+      fetchChargingStats();
+      fetchUtilizationData();
+      fetchProviderRevenue();
+      fetchGarages();
+    }
+  }, [startDate, endDate, selectedGarage, user]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -131,6 +148,7 @@ const ChargingReports = () => {
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onGarageChange={setSelectedGarage}
+        allGarages={allGarages}
       />
 
       <Grid container spacing={3}>
