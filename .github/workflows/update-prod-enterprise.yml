@@ -39,7 +39,7 @@ jobs:
         run: |
           while read -r cluster_name; do
             echo "Triggering workflow for cluster: $cluster_name on location $location"
-          gh workflow run cluster-create-k8s.yml -f tenant_name=${cluster_name} f region=europe-west1  -f zone=${location} -R Joschka-ctrl/CloudApplikTrabi -r master
+          gh workflow run cluster-create-k8s.yml -f tenant_name=${cluster_name} -f region=europe-west1  -f zone=${location} -R Joschka-ctrl/CloudApplikTrabi -r master
           done < clusters.txt
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
