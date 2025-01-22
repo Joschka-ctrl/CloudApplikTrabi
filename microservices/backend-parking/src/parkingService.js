@@ -6,7 +6,7 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
 
-admin.firestore().settings({ databaseId: 'free' });
+admin.firestore().settings({ databaseId: 'stage-pro' });
 const db = admin.firestore()
 
 // Parkhaus
