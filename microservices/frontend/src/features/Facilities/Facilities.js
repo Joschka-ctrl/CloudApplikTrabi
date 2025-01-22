@@ -17,7 +17,7 @@ export default function Facilities() {
   const FACILITY_API_URL =
     process.env.NODE_ENV === "development"
       ? "http://localhost:3021"
-      : process.env.REACT_APP_API_URL;
+      : "";
 
   const PARKING_API_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';   
 
