@@ -131,7 +131,9 @@ const ChargingSessions = () => {
           >
             <MenuItem value="">All Garages</MenuItem>
             {garages.map((garage) => (
-              <MenuItem key={garage} value={garage}>{garage}</MenuItem>
+              <MenuItem key={garage.id} value={garage.id}>
+                {garage.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -150,33 +152,36 @@ const ChargingSessions = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sessions.map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell>{session.stationId}</TableCell>
-                  <TableCell>{session.garage}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={session.status}
-                      color={session.status === 'active' ? 'success' : 'default'}
-                    />
-                  </TableCell>
-                  <TableCell>{formatDateTime(session.startTime)}</TableCell>
-                  <TableCell>{formatDateTime(session.endTime)}</TableCell>
-                  <TableCell>{session.energyConsumed || '-'}</TableCell>
-                  <TableCell>
-                    {session.status === 'active' && (
-                      <Button
-                        variant="contained"
-                        color="error"
-                        startIcon={<StopIcon />}
-                        onClick={() => handleEndSession(session.id)}
-                      >
-                        End Session
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {sessions.map((session) => {
+                const garage = garages.find(g => g.id === session.garage) || { name: session.garage };
+                return (
+                  <TableRow key={session.id}>
+                    <TableCell>{session.stationId}</TableCell>
+                    <TableCell>{garage.name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={session.status}
+                        color={session.status === 'completed' ? 'success' : 'warning'}
+                      />
+                    </TableCell>
+                    <TableCell>{formatDateTime(session.startTime)}</TableCell>
+                    <TableCell>{formatDateTime(session.endTime)}</TableCell>
+                    <TableCell>{session.energyConsumed ? `${session.energyConsumed.toFixed(2)} kWh` : '-'}</TableCell>
+                    <TableCell>
+                      {session.status === 'active' && (
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<StopIcon />}
+                          onClick={() => handleEndSession(session.id)}
+                        >
+                          End Session
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </TableContainer>

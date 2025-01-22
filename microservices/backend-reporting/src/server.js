@@ -259,7 +259,7 @@ router.get('/echarging/stats', authenticateToken, async (req, res) => {
 // Get station utilization data
 router.get('/echarging/utilization', authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, garage } = req.query;
+    const { startDate, endDate, garage, tenantId } = req.query;
     const token = req.headers.authorization.split(' ')[1];
 
     // Build query parameters
@@ -267,6 +267,7 @@ router.get('/echarging/utilization', authenticateToken, async (req, res) => {
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
     if (garage) queryParams.append('garage', garage);
+    if (tenantId) queryParams.append('tenantId', tenantId);
 
     const utilizationData = await eChargingServiceRequest(
       `/station-utilization?${queryParams.toString()}`,
@@ -283,7 +284,7 @@ router.get('/echarging/utilization', authenticateToken, async (req, res) => {
 // Get card provider revenue data
 router.get('/echarging/card-provider-revenue', authenticateToken, async (req, res) => {
   try {
-    const { startDate, endDate, garage } = req.query;
+    const { startDate, endDate, garage, tenantId } = req.query;
     const token = req.headers.authorization.split(' ')[1];
 
     // Build query parameters
@@ -291,6 +292,7 @@ router.get('/echarging/card-provider-revenue', authenticateToken, async (req, re
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
     if (garage) queryParams.append('garage', garage);
+    if (tenantId) queryParams.append('tenantId', tenantId);
 
     const providerStats = await eChargingServiceRequest(
       `/card-provider-revenue?${queryParams.toString()}`,
@@ -308,7 +310,7 @@ router.get('/echarging/card-provider-revenue', authenticateToken, async (req, re
 router.get('/parking-duration', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
     const { startDate, endDate } = req.query;
 
     const durationStats = await parkingServiceRequest(
@@ -327,7 +329,7 @@ router.get('/parking-duration', authenticateToken, async (req, res) => {
 router.get('/parking-revenue', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
     const { startDate, endDate } = req.query;
 
     const revenueStats = await parkingServiceRequest(
@@ -346,7 +348,7 @@ router.get('/parking-revenue', authenticateToken, async (req, res) => {
 router.get('/floor-stats', authenticateToken, async (req, res) => {
   try {
     const { parkingId: facilityId } = req.query;
-    const tenantId = req.user.tenant_id || '1';
+    const tenantId = req.query.tenantId;
     const { startDate, endDate } = req.query;
 
     const floorStats = await parkingServiceRequest(
@@ -358,6 +360,29 @@ router.get('/floor-stats', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error fetching floor stats:', error);
     res.status(500).json({ error: 'Failed to fetch floor statistics' });
+  }
+});
+
+// Get facilities/garages
+router.get('/echarging/garages', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+
+    if (!tenantId) {
+      return res.status(400).json({ error: 'Tenant ID is required' });
+    }
+
+    const facilities = await facilityServiceRequest(
+      `/${tenantId}`,
+      token
+    );
+
+    console.log('Fetched facilities:', facilities);
+    res.json(facilities);
+  } catch (error) {
+    console.error('Error fetching facilities:', error);
+    res.status(500).json({ error: 'Failed to fetch facilities' });
   }
 });
 

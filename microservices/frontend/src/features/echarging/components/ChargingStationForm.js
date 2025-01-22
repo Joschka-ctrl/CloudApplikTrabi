@@ -97,18 +97,17 @@ const ChargingStationForm = ({ open, onClose, onSave, station, garages }) => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                fullWidth
                 select
-                label="Garage"
+                fullWidth
                 name="garage"
+                label="Garage"
                 value={formData.garage}
                 onChange={handleChange}
                 required
-                helperText="Select the garage where this station is located"
               >
                 {garages.map((garage) => (
-                  <MenuItem key={garage} value={garage}>
-                    {garage}
+                  <MenuItem key={garage.id} value={garage.id}>
+                    {garage.name}
                   </MenuItem>
                 ))}
               </TextField>

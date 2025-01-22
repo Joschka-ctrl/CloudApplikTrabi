@@ -130,7 +130,9 @@ const ChargingStations = () => {
           >
             <MenuItem value="">All</MenuItem>
             {garages.map(garage => (
-              <MenuItem key={garage} value={garage}>{garage}</MenuItem>
+              <MenuItem key={garage.id} value={garage.id}>
+                {garage.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>

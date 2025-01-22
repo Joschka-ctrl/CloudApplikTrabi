@@ -41,11 +41,29 @@ const ChargingReports = () => {
   
   const fetchGarages = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/facilities`);
+      const params = new URLSearchParams({
+        tenantId: user.tenantId
+      });
+      console.log('Fetching garages with params:', params.toString());
+      const response = await fetchWithAuth(`${HOST_URL}/echarging/garages?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch garages: ${response.statusText}`);
+      }
+      
       const data = await response.json();
+      console.log('Fetched garages:', data);
+      
+      if (!Array.isArray(data)) {
+        console.error('Received invalid garages data:', data);
+        setAllGarages([]);
+        return;
+      }
+      
       setAllGarages(data);
     } catch (error) {
       console.error('Error fetching garages:', error);
+      setAllGarages([]);
     }
   };
 
@@ -148,7 +166,7 @@ const ChargingReports = () => {
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onGarageChange={setSelectedGarage}
-        allGarages={allGarages}
+        garages={allGarages || []}
       />
 
       <Grid container spacing={3}>
