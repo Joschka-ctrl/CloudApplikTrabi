@@ -995,19 +995,21 @@ const getParkingDurationStats = async (tenantId, facilityId, startDate, endDate)
     console.log('Get Parking Duration Stats');
     try {
         const facility = await getFacilityData(facilityId, tenantId);
-        const averageDuration = calculateAverageParkingDuration(facility.carsInParkingFacility, startDate, endDate);
+        const histoyDoc = await getParkingHistoryDoc(facilityId, tenantId);
+        history = histoyDoc.data();
+        const averageDuration = calculateAverageParkingDuration(history.History, startDate, endDate);
         console.log(averageDuration);
         // Dauerunterteilungen
         const durationBreakdown = {
-            shortTerm: facility.carsInParkingFacility.filter(car => {
+            shortTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration < 2 * 60;
             }).length,
-            mediumTerm: facility.carsInParkingFacility.filter(car => {
+            mediumTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration >= 2 * 60 && parkingDuration <= 6 * 60;
             }).length,
-            longTerm: facility.carsInParkingFacility.filter(car => {
+            longTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration > 6 * 60;
             }).length
