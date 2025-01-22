@@ -124,4 +124,4 @@ function convertMsToTime(milliseconds) {
 }
 
 // This is the correct function to make it work for Google Cloud Functions
-functions.http(`dailyReport${process.env.TENANT_NAME}`, app);
+functions.http(`dailyReport${process.env.CLUSTER_NAME}${process.env.TENANT_NAME}`, app);
