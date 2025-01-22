@@ -61,7 +61,7 @@ jobs:
       run: |
         gcloud functions deploy asyncreport${{ env.GKE_CLUSTER }} \
           --runtime nodejs20 \
-          --trigger-https \
+          --trigger-http \
           --allow-unauthenticated \
           --region ${{ github.event.inputs.region }} \
           --source ../../microservices/cloud-function \
