@@ -55,15 +55,19 @@ jobs:
 
  
     - name: Deploy Cloud Function
-      run: |
-        gcloud functions deploy asyncreport${{ env.GKE_CLUSTER }} \
-          --runtime nodejs20 \
-          --trigger-http \
-          --allow-unauthenticated \
-          --region ${{ github.event.inputs.region }} \
-          --source microservices/cloud-function \
-          --entry-point dailyReport \
-          --secrets CLUSTER_NAME=${{ env.GKE_CLUSTER }},TENANT_NAME=${{ env.GKE_CLUSTER }}
+      id: deploy_cloud_function
+      uses: google-github-actions/deploy-cloud-functions@v3
+      timeout-minutes: 10
+      with:
+        name: asyncreport${{ env.GKE_CLUSTER }}
+        source_dir: microservices/cloud-function
+        runtime: nodejs20
+        entry_point: dailyReport
+        region: ${{ github.event.inputs.region }}
+        environment_variables: |-
+          CLUSTER_NAME=${{ env.GKE_CLUSTER }}
+          TENANT_NAME=${{ env.GKE_CLUSTER }}
+
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
