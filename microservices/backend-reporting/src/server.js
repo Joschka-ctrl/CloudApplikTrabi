@@ -9,6 +9,10 @@ admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
 
+admin.firestore().settings({
+  databaseId: process.env.CLUSTER_NAME || 'develop',
+});
+
 const db = admin.firestore();
 const app = express();
 const router = express.Router();

@@ -10,6 +10,9 @@ ENV NODE_ENV=production
 ARG BUCKET_ENV
 ENV BUCKET_ENV=${BUCKET_ENV}
 
+ARG CLUSTER_NAME
+ENV CLUSTER_NAME=${CLUSTER_NAME}
+
 WORKDIR /usr/src/app
 
 # Create app directory and ensure correct permissions
