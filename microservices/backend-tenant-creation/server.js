@@ -173,7 +173,7 @@ async function createAdminUserAndTenant(adminData) {
       companyName: adminData.companyName,
       adminEmail: adminData.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      plan: adminData.plan || 'pro',
+      plan: adminData.plan || 'free',
       status: 'active'
     };
 
