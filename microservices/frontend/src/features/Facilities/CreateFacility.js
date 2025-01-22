@@ -12,6 +12,11 @@ import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../components/AuthProvider";
 
+const FACILITY_API_URL =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3021"
+      : ""; 
+
 export default function CreateFacility({ edit }) {
   const { user, currentTenantId } = useAuth();
 
@@ -30,7 +35,7 @@ export default function CreateFacility({ edit }) {
   useEffect(() => {
     if (edit) {
       // Fetch facility data from backend
-      fetch(`http://localhost:3021/api/facilities/${currentTenantId}/${id}`, {
+      fetch(`${FACILITY_API_URL}/api/facilities/${currentTenantId}/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -97,10 +102,10 @@ export default function CreateFacility({ edit }) {
     };
 
     var method = "POST";
-    var url = `http://localhost:3021/api/facilities/${currentTenantId}`;
+    var url = `${FACILITY_API_URL}/api/facilities/${currentTenantId}`;
     if (edit) {
       method = "PUT";
-      url = `http://localhost:3021/api/facilities/${currentTenantId}/${id}`;
+      url = `${FACILITY_API_URL}/api/facilities/${currentTenantId}/${id}`;
     }
     //Upload facility to backend
     fetch(url, {
