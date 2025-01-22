@@ -125,7 +125,7 @@ async function createAdminUserAndTenant(adminData) {
       companyName: adminData.companyName,
       adminEmail: adminData.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      plan: adminData.plan || 'standard',
+      plan: adminData.plan || 'pro',
       status: 'active'
     };
 
@@ -198,6 +198,44 @@ async function deleteTenantUser(tenantId, userId) {
   }
 }
 
+// Helper function to update custom claims for a user
+async function updateUserCustomClaims(uid, customization) {
+  try {
+    // Get current custom claims
+    const user = await admin.auth().getUser(uid);
+    const currentClaims = user.customClaims || {};
+
+    // Merge new customization with existing claims
+    const newClaims = {
+      ...currentClaims,
+      customization: {
+        primaryColor: customization.primaryColor,
+        secondaryColor: customization.secondaryColor,
+        logoUrl: customization.logoUrl
+      }
+    };
+
+    // Set the new custom claims
+    await admin.auth().setCustomUserClaims(uid, newClaims);
+    console.log(`Updated custom claims for user ${uid}`);
+  } catch (error) {
+    console.error(`Error updating custom claims for user ${uid}:`, error);
+    throw error;
+  }
+}
+
+// Helper function to get all users for a tenant
+async function getTenantUsers(tenantId) {
+  try {
+    const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
+    
+    return usersSnapshot.docs.map(doc => doc.data().id);
+  } catch (error) {
+    console.error(`Error getting users for tenant ${tenantId}:`, error);
+    throw error;
+  }
+}
+
 // Admin sign-in and tenant creation endpoint
 app.post('/api/admin/signup', async (req, res) => {
   try {
@@ -265,11 +303,11 @@ async function handleFreePlan(tenantConfig) {
   }
 }
 
-async function handleStandardPlan(tenantConfig) {
+async function handleproPlan(tenantConfig) {
   try {
-    return "standard.trabantparking.ninja";
+    return "pro.trabantparking.ninja";
   } catch (error) {
-    console.error('Error creating Standard Plan Tenant:', error);
+    console.error('Error creating pro Plan Tenant:', error);
     throw error;
   }
 }
@@ -291,10 +329,10 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
         // Trigger the workflow for free plan
         await handleFreePlan({ tenantId, tenantName: tenantId });
         break;
-      case 'standard':
-        console.log("standard");
-        await handleStandardPlan({ tenantId, tenantName: tenantId });
-        // Create a document for standard plan
+      case 'pro':
+        console.log("pro");
+        await handleproPlan({ tenantId, tenantName: tenantId });
+        // Create a document for pro plan
         // await createTenantDocument({ tenantId, plan });
         break;
       case 'enterprise':
@@ -540,9 +578,9 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       case 'free':
         console.log("free");
         return await handleFreePlan({ tenantName: tenantId });
-      case 'standard':
-        console.log("standard");
-        return await handleStandardPlan({ tenantName: tenantId });
+      case 'pro':
+        console.log("pro");
+        return await handleproPlan({ tenantName: tenantId });
       case 'enterprise':
         console.log("enterprise");
         await triggerWorkflow({ tenantName: tenantId });
@@ -557,6 +595,38 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
   } catch (error) {
     console.error('Error changing plan:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+async function triggerStopWorkflow() {
+  try {
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'shutdown-stage.yml',
+      ref: 'stage',
+      inputs: {
+        region: "europe-west1",
+        zone: "europe-west1-c",
+      },
+    });
+
+    console.log('Stop workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering stop workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+// Stop tenant endpoint
+app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
+  try {
+    await triggerStopWorkflow();
+    res.json({ message: 'Tenant stop process initiated successfully' });
+  } catch (error) {
+    console.error('Error stopping tenant:', error);
+    res.status(500).json({ error: 'Failed to stop tenant' });
   }
 });
 
@@ -666,6 +736,85 @@ app.delete('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting tenant:', error);
     res.status(500).json({ error: 'Failed to delete tenant' });
+  }
+});
+
+// Get tenant customization endpoint
+app.get('/api/tenants/:tenantId/customization', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+
+    const docRef = db.collection('tenantCustomization').doc(tenantId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.json({
+        tenantId,
+        primaryColor: '#1976d2',
+        secondaryColor: '#dc004e',
+        logoUrl: ''
+      });
+    }
+
+    res.json(doc.data());
+  } catch (error) {
+    console.error('Error getting tenant customization:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update tenant customization endpoint
+app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { primaryColor, secondaryColor, logoUrl } = req.body;
+
+    // Validate the colors (basic hex color validation)
+    const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    if (!colorRegex.test(primaryColor) || !colorRegex.test(secondaryColor)) {
+      return res.status(400).json({ error: 'Invalid color format' });
+    }
+
+    // Validate logo URL (basic URL validation)
+    if (logoUrl && !logoUrl.match(/^https?:\/\/.+/)) {
+      return res.status(400).json({ error: 'Invalid logo URL' });
+    }
+
+    const customization = {
+      tenantId,
+      primaryColor,
+      secondaryColor,
+      logoUrl,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Save customization to Firestore
+    await db.collection('tenantCustomization').doc(tenantId).set(customization);
+
+    // Get all users for this tenant
+    const userIds = await getTenantUsers(tenantId);
+    console.log(`Updating custom claims for ${userIds.length} users of tenant ${tenantId}`);
+
+    // Update custom claims for all users
+    await Promise.all(userIds.map(uid => updateUserCustomClaims(uid, customization)));
+
+    // Force token refresh for all users
+    await Promise.all(userIds.map(async (uid) => {
+      try {
+        await admin.auth().revokeRefreshTokens(uid);
+        console.log(`Revoked refresh tokens for user ${uid}`);
+      } catch (error) {
+        console.error(`Error revoking refresh tokens for user ${uid}:`, error);
+      }
+    }));
+
+    res.json({ 
+      message: 'Customization updated successfully',
+      updatedUsers: userIds.length
+    });
+  } catch (error) {
+    console.error('Error updating tenant customization:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

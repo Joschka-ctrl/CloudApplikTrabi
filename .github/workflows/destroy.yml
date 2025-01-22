@@ -5,13 +5,22 @@ on:
       tenant_name:
         description: "Tenant Name"
         required: true
-        default: "default-cluster"   
+        default: "default-cluster"
+      region:
+        description: "Region"
+        required: false
+        default: "europe-west1" 
+      zone: 
+        description: "Zone"
+        required: false
+        default: "europe-west1-b"   
 
 
 env:
     PROJECT_ID: trabantparking-stage
     GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
-    GKE_REGION: europe-west1-b
+    GKE_ZONE: ${{ github.event.inputs.zone }}
+    GKE_REGION: ${{ github.event.inputs.region }}
     DNS_ZONE_NAME: trabant
 
 jobs:
@@ -44,7 +53,7 @@ jobs:
     - name: Check if Cluster Exists
       id: check_cluster
       run: |
-        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}; then
             echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
         else
             echo "CLUSTER_EXISTS=false" >> $GITHUB_ENV
@@ -53,7 +62,7 @@ jobs:
     - name: Delete GKE Cluster (Fallback)
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
-        gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }} --quiet
+        gcloud container clusters delete ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }} --quiet
 
     - name: Delete DNS Record
       if: ${{ env.CLUSTER_EXISTS == 'true' }}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../firebase';
-import { onAuthStateChanged } from '@firebase/auth';
+import { getAuth, onAuthStateChanged } from '@firebase/auth';
 
 interface AuthState {
   isAuthenticated: boolean;

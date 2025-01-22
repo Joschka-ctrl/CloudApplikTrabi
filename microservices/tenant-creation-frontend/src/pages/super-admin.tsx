@@ -21,6 +21,7 @@ import {
   Button,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import StopIcon from '@mui/icons-material/Stop';
 import axios from 'axios';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
@@ -39,7 +40,9 @@ export default function SuperAdmin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [stopDialogOpen, setStopDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [tenantToStop, setTenantToStop] = useState<Tenant | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -132,6 +135,44 @@ export default function SuperAdmin() {
     setTenantToDelete(null);
   };
 
+  const handleStopClick = (tenant: Tenant) => {
+    setTenantToStop(tenant);
+    setStopDialogOpen(true);
+  };
+
+  const handleStopConfirm = async () => {
+    if (!tenantToStop) return;
+
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError('You must be logged in to stop a tenant');
+        return;
+      }
+
+      const idToken = await currentUser.getIdToken();
+      await axios.post(`http://localhost:3023/api/tenants/stop`, {}, {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      setStopDialogOpen(false);
+      setTenantToStop(null);
+    } catch (err: any) {
+      console.error('Error stopping tenant:', err);
+      setError(err.response?.data?.error || 'Failed to stop tenant');
+      if (err.response?.status === 401) {
+        navigate('/');
+      }
+    }
+  };
+
+  const handleStopCancel = () => {
+    setStopDialogOpen(false);
+    setTenantToStop(null);
+  };
+
   if (loading) {
     return (
       <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -168,6 +209,26 @@ export default function SuperAdmin() {
                 </TableRow>
               </TableHead>
               <TableBody>
+                <TableRow>
+                  <TableCell>stage free + stage pro</TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell></TableCell>
+                  <TableCell> <a href="http://stage-free.trabantparking.ninja" target="_blank" rel="noopener noreferrer">
+                          http://stage-free.trabantparking.ninja
+                        </a></TableCell>
+                  <TableCell>
+                    <IconButton
+                      onClick={() => handleStopClick({ tenantId: 'free', displayName: 'Free', plan: 'free', status: 'healthy', createdAt: '' })}
+                      color="warning"
+                      size="small"
+                      aria-label="stop tenant"
+                    >
+                      <StopIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
                 {tenants.map((tenant) => (
                   <TableRow key={tenant.tenantId}>
                     <TableCell>{tenant.tenantId}</TableCell>
@@ -226,6 +287,20 @@ export default function SuperAdmin() {
           <DialogActions>
             <Button onClick={handleDeleteCancel}>Cancel</Button>
             <Button onClick={handleDeleteConfirm} color="error">Delete</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={stopDialogOpen}
+          onClose={handleStopCancel}
+        >
+          <DialogTitle>Stop Tenant</DialogTitle>
+          <DialogContent>
+            Are you sure you want to stop tenant "{tenantToStop?.displayName}"? The tenant will be temporarily deactivated.
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleStopCancel}>Cancel</Button>
+            <Button onClick={handleStopConfirm} color="warning">Stop</Button>
           </DialogActions>
         </Dialog>
       </Paper>

@@ -40,7 +40,8 @@ const authenticateToken = async (req, res, next) => {
     console.log('Unauthorized access attempt detected');
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
+  console.log(db.databaseId);
+  console.log(db);
   const token = req.headers.authorization.split(' ')[1];
 
   try {
