@@ -61,7 +61,7 @@ jobs:
           --trigger-http \
           --allow-unauthenticated \
           --region ${{ github.event.inputs.region }} \
-          --source ../../microservices/cloud-function \
+          --source ../../microservices/cloud-function/cloudRunFunction.js \
           --entry-point dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }} \
           --set-env-vars CLUSTER_NAME=${{ env.GKE_CLUSTER }},TENANT_NAME=${{ env.GKE_CLUSTER }}
 
