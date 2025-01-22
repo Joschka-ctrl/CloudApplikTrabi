@@ -189,10 +189,9 @@ router.get('/facilities/:tenantId', authenticateToken, async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Abrufen der Einrichtungen.' });
     }
-
 });
 
-router.get('/parkingStats/usage/:tenantId/:facilityId', authenticateToken, async (req, res) => {
+router.get('/parkingStats/usage/:tenantId/:facilityId', async (req, res) => {
     try {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
@@ -208,7 +207,7 @@ router.get('/parkingStats/usage/:tenantId/:facilityId', authenticateToken, async
     }
 });
 
-router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, async (req, res) => {
+router.get('/parkingStats/floors/:tenantId/:facilityId', async (req, res) => {
     const { tenantId, facilityId } = req.params;
 
     try {
@@ -223,7 +222,7 @@ router.get('/parkingStats/floors/:tenantId/:facilityId', authenticateToken, asyn
 });
 
 
-router.get('/parkingStats/duration/:tenantId/:facilityId', authenticateToken, async (req, res) => {
+router.get('/parkingStats/duration/:tenantId/:facilityId', async (req, res) => {
     const { tenantId, facilityId } = req.params;
     const { startDate, endDate } = req.query;
 

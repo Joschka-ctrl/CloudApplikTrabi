@@ -121,6 +121,24 @@ const getDoc = async (facilityID, tenantID) => {
     }
 }
 
+const getParkingHistoryDoc = async (facilityID, tenantID) => {
+    try {
+        const snapshot = await db.collection("parking-history")
+            .where("facilityId", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            console.error(`No History found for ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        const doc = snapshot.docs[0];
+        return doc;
+    } catch (error) {
+        console.error('Error fetching facility data:', error);
+    }
+}
+
 const getAllParkingSpotsOfFacility = async (facilityID, tenantID) => {
     try {
         // Query the Firestore collection "parking-facility" for documents where tenantId matches
@@ -367,7 +385,7 @@ const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
         const facilityData = await getFacilityData(facilityID, tenantID);
         const { currentOccupancy, maxCapacity } = facilityData;
-        return {"currentOccupancy": currentOccupancy, "maxCapacity": maxCapacity};
+        return { "currentOccupancy": currentOccupancy, "maxCapacity": maxCapacity };
     }
     catch (error) {
         console.error('Error fetching current occupancy:', error);
@@ -855,8 +873,8 @@ const getFacilitiesOfTenant = async (tenantID) => {
 const getParkingStats = async (tenantId, facilityId, startDate, endDate) => {
     try {
 
-        const facility = await getFacilityData(facilityId, tenantId);
-
+        const facilityDoc = await getParkingHistoryDoc(facilityId, tenantId);
+        const facility = facilityDoc.data();
         // Berechnung der Statistiken
         const stats = calculateParkingStats(facility, startDate, endDate);
         return ({ dailyUsage: stats });
@@ -874,7 +892,7 @@ const calculateParkingStats = (facility, startDate, endDate) => {
     // Initiale Statistiken
     const dailyStats = {};
 
-    facility.carsInParkingFacility.forEach(car => {
+    facility.History.forEach(car => {
         const parkingDate = new Date(car.parkingStartedAt.seconds * 1000);
         if (parkingDate >= start && parkingDate <= end) {
             const dateKey = parkingDate.toISOString().split('T')[0];
