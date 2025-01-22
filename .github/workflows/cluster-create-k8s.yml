@@ -75,7 +75,7 @@ jobs:
           --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
           --http-method=POST \
           --time-zone="Europe/Berlin" \
-          --headers="Content-Type:application/json" \
+          --headers="Content-Type=application/json" \
           --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
           --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
 
@@ -85,7 +85,7 @@ jobs:
           --uri="https://europe-west1-trabantparking-stage..cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}" \
           --http-method=POST \
           --time-zone="Europe/Berlin" \
-          --headers="Content-Type:application/json"
+          --headers="Content-Type=application/json"
           --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
           --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
 
