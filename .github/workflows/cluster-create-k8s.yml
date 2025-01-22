@@ -62,7 +62,7 @@ jobs:
         name: asyncreport${{ env.GKE_CLUSTER }}
         source_dir: microservices/cloud-function
         runtime: nodejs20
-        entry_point: dailyReport
+        entry_point: dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }}
         region: ${{ github.event.inputs.region }}
         environment_variables: |-
           CLUSTER_NAME=${{ env.GKE_CLUSTER }}
