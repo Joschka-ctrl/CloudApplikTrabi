@@ -6,7 +6,7 @@ const admin = require('firebase-admin');
 const app = express();
 const router = express.Router();
 const port = 3015;
-const db = require("./firestore.js"); // Firestore-Datenbank
+const db = require("./firestore.js"); // Firestore-Datenbank 
 
 
 // Configure Multer middleware

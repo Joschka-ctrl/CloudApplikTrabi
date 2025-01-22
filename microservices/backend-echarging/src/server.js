@@ -12,6 +12,10 @@ admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
 
+admin.firestore().settings({
+  databaseId: process.env.CLUSTER_NAME || "develop",
+});
+
 const db = admin.firestore();
 
 app.use(cors());

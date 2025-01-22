@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const admin = require("firebase-admin");
 const cors = require("cors");
@@ -11,8 +13,9 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     projectId: 'trabantparking-stage'
 });
+console.log(process.env.CLUSTER_NAME );
 admin.firestore().settings({
-    databaseId: "facilities",
+    databaseId: process.env.CLUSTER_NAME,
 });
 const db = admin.firestore();
 
