@@ -11,7 +11,7 @@ const Billing = () => {
   const [billingSummary, setBillingSummary] = useState({});
   const [newRate, setNewRate] = useState({ provider: '', ratePerKw: '' });
   const [totalStats, setTotalStats] = useState({ energy: 0, revenue: 0, sessions: 0 });
-  const { user, tenantId } = useAuth();
+  const { user } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
@@ -30,7 +30,7 @@ const Billing = () => {
 
   const fetchProviderRates = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/provider-rates?tenantId=${encodeURIComponent(tenantId)}`);
+      const response = await fetchWithAuth(`${HOST_URL}/provider-rates?tenantId=${encodeURIComponent(user.tenantId)}`);
       const data = await response.json();
       setProviderRates(data);
     } catch (error) {
@@ -40,7 +40,7 @@ const Billing = () => {
 
   const fetchBillingSummary = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/billing-summary?tenantId=${encodeURIComponent(tenantId)}`);
+      const response = await fetchWithAuth(`${HOST_URL}/billing-summary?tenantId=${encodeURIComponent(user.tenantId)}`);
       const data = await response.json();
       setBillingSummary(data);
       
@@ -65,7 +65,7 @@ const Billing = () => {
   const handleSubmitRate = async (e) => {
     e.preventDefault();
     try {
-      await fetchWithAuth(`${HOST_URL}/provider-rates?tenantId=${encodeURIComponent(tenantId)}`, {
+      await fetchWithAuth(`${HOST_URL}/provider-rates?tenantId=${encodeURIComponent(user.tenantId)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

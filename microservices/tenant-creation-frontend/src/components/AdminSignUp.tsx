@@ -11,7 +11,7 @@ import {
   Link,
 } from '@mui/material';
 import { auth } from '../firebase.ts';
-import { createUserWithEmailAndPassword } from '@firebase/auth';
+import { signInWithEmailAndPassword } from '@firebase/auth';
 
 interface AdminSignUpProps {
   onSignUpSuccess: () => void;
@@ -71,14 +71,10 @@ export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpPro
 
       auth.tenantId = data.tenantId;
       localStorage.setItem('tenantId', data.tenantId);
-      // Now sign in the user with Firebase
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
+     
+      // login the admin user that was already created in the backend
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
 
-      // Set the tenant ID in the user's custom claims
       const idToken = await userCredential.user.getIdToken(true);
       
       // Call backend to verify the signup was successful

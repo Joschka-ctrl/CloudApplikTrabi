@@ -6,7 +6,8 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
 
-const db = admin.firestore();
+admin.firestore().settings({ databaseId: 'stage-pro' });
+const db = admin.firestore()
 
 // Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
@@ -114,6 +115,24 @@ const getDoc = async (facilityID, tenantID) => {
 
         const doc = snapshot.docs[0];
         console.log(doc.id);
+        return doc;
+    } catch (error) {
+        console.error('Error fetching facility data:', error);
+    }
+}
+
+const getParkingHistoryDoc = async (facilityID, tenantID) => {
+    try {
+        const snapshot = await db.collection("parking-history")
+            .where("facilityId", "==", facilityID)
+            .where("tenantId", "==", tenantID)
+            .get();
+
+        if (snapshot.empty) {
+            console.error(`No History found for ID: ${facilityID} and tenantId: ${tenantID}`);
+        }
+
+        const doc = snapshot.docs[0];
         return doc;
     } catch (error) {
         console.error('Error fetching facility data:', error);
@@ -365,8 +384,8 @@ const getTicketNumber = async (tenantID, facilityID) => {
 const getCurrentOccupancy = async (tenantID, facilityID) => {
     try {
         const facilityData = await getFacilityData(facilityID, tenantID);
-        const { currentOccupancy } = facilityData;
-        return currentOccupancy;
+        const { currentOccupancy, maxCapacity } = facilityData;
+        return { "currentOccupancy": currentOccupancy, "maxCapacity": maxCapacity };
     }
     catch (error) {
         console.error('Error fetching current occupancy:', error);
@@ -854,8 +873,8 @@ const getFacilitiesOfTenant = async (tenantID) => {
 const getParkingStats = async (tenantId, facilityId, startDate, endDate) => {
     try {
 
-        const facility = await getFacilityData(facilityId, tenantId);
-
+        const facilityDoc = await getParkingHistoryDoc(facilityId, tenantId);
+        const facility = facilityDoc.data();
         // Berechnung der Statistiken
         const stats = calculateParkingStats(facility, startDate, endDate);
         return ({ dailyUsage: stats });
@@ -873,7 +892,7 @@ const calculateParkingStats = (facility, startDate, endDate) => {
     // Initiale Statistiken
     const dailyStats = {};
 
-    facility.carsInParkingFacility.forEach(car => {
+    facility.History.forEach(car => {
         const parkingDate = new Date(car.parkingStartedAt.seconds * 1000);
         if (parkingDate >= start && parkingDate <= end) {
             const dateKey = parkingDate.toISOString().split('T')[0];
@@ -907,30 +926,24 @@ const calculateParkingStats = (facility, startDate, endDate) => {
     return Object.values(dailyStats);
 };
 
-const getFloorStats = async (tenantId, facilityId, startDate, endDate) => {
+const getFloorStats = async (tenantId, facilityId) => {
     try {
         // Facility-Daten abrufen
         const facility = await getFacilityData(facilityId, tenantId);
 
         // Initialisierung der Ergebnisse
         const floorStats = facility.parkingSpacesOnFloor.map((floor, index) => {
-            const totalSpots = floor.spots.length;
+            const totalSpots = floor.spots.length - floor.spots.filter(spot => spot.isClosed).length;
             const occupiedSpots = floor.spots.filter(spot => spot.occupied).length;
-            const occupancyPercentage = (occupiedSpots / totalSpots) * 100;
-
-            // Durchschnittliche Belegungszeit berechnen
-            const averageOccupancyTime = calculateAverageParkingDuration(
-                facility.carsInParkingFacility,
-                startDate,
-                endDate
-            );
-
+            const occupancyPercentage = Math.ceil((occupiedSpots / totalSpots) * 100);
+            const closedSpots = floor.spots.filter(spot => spot.isClosed).length;
             return {
-                floor: index + 1,
+                floor: index,
                 totalSpots,
                 occupiedSpots,
+                closedSpots: closedSpots,
+                availibleSpots: totalSpots - occupiedSpots - closedSpots,
                 occupancyPercentage,
-                averageOccupancyTime,
             };
         });
         return floorStats;
@@ -982,19 +995,21 @@ const getParkingDurationStats = async (tenantId, facilityId, startDate, endDate)
     console.log('Get Parking Duration Stats');
     try {
         const facility = await getFacilityData(facilityId, tenantId);
-        const averageDuration = calculateAverageParkingDuration(facility.carsInParkingFacility, startDate, endDate);
+        const histoyDoc = await getParkingHistoryDoc(facilityId, tenantId);
+        history = histoyDoc.data();
+        const averageDuration = calculateAverageParkingDuration(history.History, startDate, endDate);
         console.log(averageDuration);
         // Dauerunterteilungen
         const durationBreakdown = {
-            shortTerm: facility.carsInParkingFacility.filter(car => {
+            shortTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration < 2 * 60;
             }).length,
-            mediumTerm: facility.carsInParkingFacility.filter(car => {
+            mediumTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration >= 2 * 60 && parkingDuration <= 6 * 60;
             }).length,
-            longTerm: facility.carsInParkingFacility.filter(car => {
+            longTerm: history.History.filter(car => {
                 const parkingDuration = calculateAverageParkingDuration([car], startDate, endDate);
                 return parkingDuration > 6 * 60;
             }).length

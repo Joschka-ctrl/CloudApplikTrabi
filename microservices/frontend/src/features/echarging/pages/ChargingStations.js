@@ -20,16 +20,32 @@ const ChargingStations = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [selectedGarage, setSelectedGarage] = useState('');
   const [garages, setGarages] = useState([]);
-  const { user, tenantId } = useAuth();
+  const { user, currentTenantId } = useAuth();
 
   const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
+  const fetchGarages = async () => {
+    try {
+      const response = await fetch(`${HOST_URL}/garages?tenantId=${encodeURIComponent(currentTenantId)}`, {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      const data = await response.json();
+      console.log(data);
+      setGarages(data);
+    } catch (error) {
+      console.error('Error fetching garages:', error);
+    }
+  };
+
   const fetchStations = async () => {
     try {
-      const token = await user.getIdToken();
+      console.log(user);
+      const token = await user.accessToken;
       const url = selectedGarage 
-        ? `${HOST_URL}/charging-stations?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(tenantId)}`
-        : `${HOST_URL}/charging-stations?tenantId=${encodeURIComponent(tenantId)}`;
+        ? `${HOST_URL}/charging-stations?garage=${encodeURIComponent(selectedGarage)}&tenantId=${encodeURIComponent(currentTenantId)}`
+        : `${HOST_URL}/charging-stations?tenantId=${encodeURIComponent(currentTenantId)}`;
       
       const response = await fetch(url, {
         headers: {
@@ -38,10 +54,6 @@ const ChargingStations = () => {
       });
       const data = await response.json();
       setStations(data);
-      
-      // Extract unique garages
-      const uniqueGarages = [...new Set(data.map(station => station.garage))].filter(Boolean);
-      setGarages(uniqueGarages);
     } catch (error) {
       console.error('Error fetching charging stations:', error);
     }
@@ -50,6 +62,10 @@ const ChargingStations = () => {
   useEffect(() => {
     fetchStations();
   }, [selectedGarage]);
+
+  useEffect(() => {
+    fetchGarages();
+  }, []);
 
   const handleGarageChange = (event) => {
     setSelectedGarage(event.target.value);
@@ -114,7 +130,9 @@ const ChargingStations = () => {
           >
             <MenuItem value="">All</MenuItem>
             {garages.map(garage => (
-              <MenuItem key={garage} value={garage}>{garage}</MenuItem>
+              <MenuItem key={garage.id} value={garage.id}>
+                {garage.name}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -140,6 +158,7 @@ const ChargingStations = () => {
           onClose={handleCloseForm}
           onSave={handleSave}
           station={selectedStation}
+          garages={garages}
         />
       </Box>
     </Container>

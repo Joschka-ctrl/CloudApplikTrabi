@@ -6,15 +6,21 @@ import {
   Button,
   TextField,
   Box,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 interface AddUserDialogProps {
   open: boolean;
   email: string;
   name: string;
+  role: string;
   onClose: () => void;
   onEmailChange: (email: string) => void;
   onNameChange: (name: string) => void;
+  onRoleChange: (role: string) => void;
   onSubmit: () => void;
 }
 
@@ -22,9 +28,11 @@ export const AddUserDialog = ({
   open,
   email,
   name,
+  role,
   onClose,
   onEmailChange,
   onNameChange,
+  onRoleChange,
   onSubmit,
 }: AddUserDialogProps) => {
   return (
@@ -51,6 +59,19 @@ export const AddUserDialog = ({
             variant="outlined"
             placeholder="Enter user's email"
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="role-select-label">Role</InputLabel>
+            <Select
+              labelId="role-select-label"
+              value={role}
+              label="Role"
+              onChange={(e) => onRoleChange(e.target.value)}
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="facility-manager">Facility-Manager</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
       </DialogContent>
       <DialogActions>

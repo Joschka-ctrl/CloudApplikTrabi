@@ -6,12 +6,20 @@ on:
       tenant_name:
         description: "Tenant Name"
         required: true
-        default: "default-cluster"   
+        default: "default-cluster" 
+      region:
+        description: "Region"
+        required: false
+        default: "europe-west1" 
+      zone: 
+        description: "Zone"
+        required: false
+        default: "europe-west1-b" 
 
 env:
   PROJECT_ID: trabantparking-stage
   GKE_CLUSTER: ${{ github.event.inputs.tenant_name }}
-  GKE_REGION: europe-west1
+  GKE_ZONE: ${{ github.event.inputs.zone }}
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
@@ -22,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -38,6 +47,12 @@ jobs:
       run: |
         gcloud auth configure-docker europe-west1-docker.pkg.dev
 
+    - name: Print input values
+      run: |
+        echo "tenant_name: ${{ github.event.inputs.tenant_name }}"
+        echo "region: ${{ github.event.inputs.region }}"
+        echo "zone: ${{ github.event.inputs.zone }}"
+
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
       with:
@@ -51,7 +66,7 @@ jobs:
     - name: Check if Cluster Exists
       id: check_cluster
       run: |
-        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}; then
+        if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}; then
           echo "Cluster exists"
           echo "CLUSTER_EXISTS=true" >> $GITHUB_ENV
         else
@@ -60,24 +75,51 @@ jobs:
         fi
 
     - name: Import Existing Cluster
-      if: env.CLUSTER_EXISTS == 'true'
+      if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         echo ${{ env.PROJECT_ID }}
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_REGION }}/clusters/${{ env.GKE_CLUSTER }}
+        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
 
     - name: Cluster Name
       run: |
         echo ${{ env.GKE_CLUSTER }}
 
+    - name: Check if bucket exists
+      run: |
+        BUCKET_NAME="trabantparking-stage-terraform-plans"
+        if gcloud storage buckets describe gs://$BUCKET_NAME --project=trabantparking-stage >/dev/null 2>&1; then
+          echo "BUCKET_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "BUCKET_EXISTS=false" >> $GITHUB_ENV
+        fi
+
     - name: Import Bucket
+      if: ${{ env.BUCKET_EXISTS == 'true' }}
       run: |
         terraform import google_storage_bucket.default trabantparking-stage-terraform-plans
       working-directory: cloud/terraform  
 
+    - name: Check if Firestore Database exists
+      run: |
+        if [ -n "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "${{ env.GKE_CLUSTER }}"; then
+          echo "FIRESTORE_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "FIRESTORE_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+   
+    - name: Import Firestore Database
+      if: ${{ env.FIRESTORE_EXISTS == 'true' }}
+      run: |
+        terraform import google_firestore_database.firestore projects/${{ env.PROJECT_ID }}/databases/${{ env.GKE_CLUSTER }}
+      working-directory: cloud/terraform
+
     - name: Terraform Plan
       run: |
-        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -out=tfplan
+        terraform import google_service_account.default projects/trabantparking-stage/serviceAccounts/continuous-integrator@trabantparking-stage.iam.gserviceaccount.com
+        terraform plan -var="cluster_name=${{ env.GKE_CLUSTER }}" -var="region=${{ github.event.inputs.region }}" -var="zone=${{ github.event.inputs.zone }}" -out=tfplan
+
         terraform show -json tfplan > plan.json
         gcloud storage cp tfplan gs://${{ env.TF_PLAN_BUCKET }}/${{ env.GKE_CLUSTER }}.tfstate
       working-directory: cloud/terraform
@@ -102,7 +144,7 @@ jobs:
       with:
         fetch-depth: 2
 
-    - name: Get the latest tag
+    - name: Get latest tag
       id: get_latest_tag
       run: |
         git fetch --tags
@@ -173,6 +215,20 @@ jobs:
           europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server:${{ env.LATEST_TAG }}
       working-directory: microservices
 
+    # Backend Reporting
+    - name: Build and Push Backend Facility Management
+      run: |
+        docker build \
+          --build-arg AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
+          --build-arg PROJECT_ID=trabantparking-stage \
+          -t facility-management-server:${{ env.LATEST_TAG }} \
+          -f facility-management/Dockerfile ./facility-management
+        docker tag facility-management-server:${{ env.LATEST_TAG }} \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server:${{ env.LATEST_TAG }}
+        docker push \
+          europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server:${{ env.LATEST_TAG }}
+      working-directory: microservices
+
     # Backend Parking
     - name: Build and Push Backend Parking
       run: |
@@ -197,8 +253,8 @@ jobs:
 
     - name: Get GKE Credentials
       run: |
-        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_REGION }}
-
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}
+        
     - name: Check if Firebase Credentials Secret Exists
       run: |
         if kubectl get secret firebase-credentials -n default; then
@@ -265,15 +321,80 @@ jobs:
     - name: Create DNS Subdomain Record for Tenant
       run: |
         echo "Creating DNS record for tenant ${TENANT_NAME}..."
-        SUBDOMAIN="${TENANT_NAME}.trabantparking.ninja"
-        gcloud dns record-sets transaction start --zone=default
-        gcloud dns record-sets transaction add ${INGRESS_IP} \
-          --name=${SUBDOMAIN} --ttl=5 --type=A --zone=default
-        gcloud dns record-sets transaction execute --zone=default
-      env:
-        TENANT_NAME: ${{ secrets.TENANT_NAME }}
+        SUBDOMAIN="${{ env.GKE_CLUSTER }}.trabantparking.ninja"
 
-      
+        # Überprüfen, ob der DNS-Record bereits existiert
+        existing_record=$(gcloud dns record-sets list --zone=trabant --name=${SUBDOMAIN} --type=A --format="value(name)")
+
+        if [ -z "$existing_record" ]; then
+          echo "DNS record does not exist, creating a new one..."
+          
+          # Start DNS transaction
+          gcloud dns record-sets transaction start --zone=trabant
+          gcloud dns record-sets transaction add ${INGRESS_IP} --name=${SUBDOMAIN} --ttl=5 --type=A --zone=trabant
+          gcloud dns record-sets transaction execute --zone=trabant
+        else
+          echo "DNS record already exists for ${SUBDOMAIN}, skipping creation."
+        fi
+        
+    - name: Deploy Cloud Function
+      id: deploy_cloud_function
+      uses: google-github-actions/deploy-cloud-functions@v3
+      timeout-minutes: 10
+      with:
+        name: asyncreport${{ env.GKE_CLUSTER }}
+        source_dir: microservices/cloud-function
+        runtime: nodejs20
+        entry_point: dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }}
+        region: ${{ github.event.inputs.region }}
+        environment_variables: |-
+          CLUSTER_NAME=${{ env.GKE_CLUSTER }}
+          TENANT_NAME=${{ env.GKE_CLUSTER }}
+  
+    - name: Create or Update Cloud Scheduler Job
+      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'pro' }}
+      run: |
+        # Abrufen aller Jobs im Cloud Scheduler
+        scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
+        echo "Cloud Scheduler jobs: $scheduler_output"
+        
+        # Überprüfen, ob ein Job mit dem Namen des cluster existiert
+        if echo "$scheduler_output" | grep -q "async-repot-${{env.GKE_CLUSTER}}"; then
+          echo "Job 'async-repot-${{env.GKE_CLUSTER}}' exists. updating..."
+
+            gcloud scheduler jobs update http async-repot-${{ env.GKE_CLUSTER }} \
+            --schedule="1 0 * * *" \
+            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
+            --http-method=GET \
+            --location="europe-west1" \
+            --time-zone="Europe/Berlin" \
+            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
+        else
+          echo "Job 'stage' does not exist.create new one."
+          gcloud scheduler jobs create http async-repot-${{ env.GKE_CLUSTER }} \
+            --schedule="1 0 * * *" \
+            --uri="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}/daily-report" \
+            --http-method=GET \
+            --location="europe-west1" \
+            --time-zone="Europe/Berlin" \
+            --oidc-service-account-email="cloud-scheduler@trabantparking-stage.iam.gserviceaccount.com" \
+            --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
+
+        fi
+    # - name: migrate data from plan to plan
+    #   if: ${{ env.CLUSTER_EXISTS == 'true' && env.SECRET_EXISTS == 'true' }}
+    #   run: |
+    #     if firebase database:get /${{env.GKE_CLUSTER}} --project=trabantparking-stage > ${{env.GKE_CLUSTER}}-data.json; then
+    #       echo "Database '${{env.GKE_CLUSTER}}' exists. Exporting data..."
+    #       # Import data into 'free'
+    #       firebase database:set /migrate ${{env.GKE_CLUSTER}}-data.json --project=trabantparking-stage
+    #       echo "Data migrated to 'migrate'."
+    #     else
+    #       echo "Database '${{env.GKE_CLUSTER}}' does not exist."
+    #     fi
+
+
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app

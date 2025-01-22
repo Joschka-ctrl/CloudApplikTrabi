@@ -86,7 +86,7 @@ export function AdminLogin({ onLoginSuccess, onSwitchToSignUp }: AdminLoginProps
       setLoading(true);
       
       // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(
+      await signInWithEmailAndPassword(
         auth,
         formData.email,
         formData.password

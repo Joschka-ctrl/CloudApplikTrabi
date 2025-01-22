@@ -11,6 +11,9 @@ import AuthProvider from "./components/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Reports from "./pages/Reports";
 import ParkingLots from "./features/parkingmangement/pages/parkingLots";
+import CreateFacility from "./features/Facilities/CreateFacility";
+import Facilities from "./features/Facilities/Facilities";
+import FacilityDetail from "./features/Facilities/Facility";
 
 
 const App = () => {
@@ -22,8 +25,16 @@ const App = () => {
             <Navbar />
             <Routes>
               <Route path="/" element={<ContactSection />} />
-              <Route
+              {/* <Route
                 path="/defects"
+                element={
+                  <ProtectedRoute>
+                    <Defects />
+                  </ProtectedRoute>
+                }
+              /> */}
+              <Route
+                path="/defects/:facilityID"
                 element={
                   <ProtectedRoute>
                     <Defects />
@@ -46,6 +57,18 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/parkingSpaces/:id"
+                element={
+                  <ProtectedRoute>
+                    <ParkingLots/>
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/facilities" element={<ProtectedRoute><Facilities/></ProtectedRoute>} />
+              <Route path="/facilities/new" element={<ProtectedRoute><CreateFacility/></ProtectedRoute>} />
+              <Route path="/facilities/:id" element={<ProtectedRoute><FacilityDetail /></ProtectedRoute>} />
+              <Route path="/facilities/:id/edit" element={<ProtectedRoute><CreateFacility edit /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route

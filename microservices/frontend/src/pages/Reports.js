@@ -4,7 +4,7 @@ import 'chart.js/auto';
 import './Reports.css';
 import { useAuth } from '../components/AuthProvider';
 import ChargingReports from '../features/echarging/pages/ChargingReports';
-import { Tabs, Tab, Box } from '@mui/material';
+import { Tabs, Tab, Box, Typography, Grid } from '@mui/material';
 import FilterPanel from '../features/reports/components/FilterPanel';
 import MetricsPanel from '../features/reports/components/MetricsPanel';
 import DailyUsageChart from '../features/reports/components/DailyUsageChart';
@@ -13,6 +13,7 @@ import ParkingDurationChart from '../features/reports/components/ParkingDuration
 import DailyRevenueChart from '../features/reports/components/DailyRevenueChart';
 import FloorUsagePatternChart from '../features/reports/components/FloorUsagePatternChart';
 import ExportPDFButton from '../features/reports/components/ExportPDFButton';
+import { Button } from 'bootstrap';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -48,13 +49,14 @@ const Reports = () => {
   const [revenueStats, setRevenueStats] = useState(null);
   const [floorStats, setFloorStats] = useState(null);
   const [tabValue, setTabValue] = useState(0);
+  const [dailyReports, setDailyReports] = useState([]);
   const { user } = useAuth();
 
-  const HOST_URL = 'http://localhost:3004';
+  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reports';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
-      const token = await user.getIdToken(); // Fetch the token from the user object
+      const token = user.accessToken;
       const headers = {
         ...options.headers,
         Authorization: `Bearer ${token}`,
@@ -68,6 +70,7 @@ const Reports = () => {
   // Fetch parking places on component mount
   useEffect(() => {
     fetchParkingPlaces();
+    fetchReports();
   }, []);
 
   // Fetch data when filters change
@@ -104,9 +107,10 @@ const Reports = () => {
     fetchData();
   }, [selectedParkingPlace, startDate, endDate, minUsage, maxUsage]);
 
+  
   const fetchParkingPlaces = async () => {
     try {
-      const response = await fetchWithAuth(`${HOST_URL}/parking-places`);
+      const response = await fetchWithAuth(`${HOST_URL}/facilities?tenantId=${encodeURIComponent(user.tenantId)}`);
       const data = await response.json();
       setParkingPlaces(data);
       if (data.length > 0) {
@@ -117,16 +121,27 @@ const Reports = () => {
     }
   };
 
+  const fetchReports = async () => {
+    try {
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/daily?tenantId=${encodeURIComponent(user.tenantId)}`);
+      const data = await response.json();
+      setDailyReports(data);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    }
+  };
+
   const fetchDailyUsage = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       if (minUsage) params.append('minUsage', minUsage);
       if (maxUsage) params.append('maxUsage', maxUsage);
 
-      const response = await fetchWithAuth(`${HOST_URL}/daily-usage?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/daily-usage?${params}`);
       if (!response.ok) throw new Error('Failed to fetch daily usage data');
       
       const data = await response.json();
@@ -152,15 +167,19 @@ const Reports = () => {
   const fetchFloorOccupancy = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-stats?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/floor-occupancy?${params}`);
       if (!response.ok) throw new Error('Failed to fetch floor occupancy data');
       
+
       const data = await response.json();
       setFloorStats(data);
+
+      console.log(data);
       
       // Transform floor stats into pie chart data
       const floorData = data.floorStats || [];
@@ -169,10 +188,7 @@ const Reports = () => {
           `Floor ${floor.floor} (${floor.occupancyPercentage}% Occupied, ${floor.occupiedSpots}/${floor.totalSpots} spots)`
         ),
         datasets: [{
-          data: floorData.map(floor => [
-            floor.occupancyPercentage,
-            100 - floor.occupancyPercentage
-          ]).flat(),
+          data: floorData.map(floor => floor.occupancyPercentage),
           backgroundColor: floorData.map(() => ['#FF6384', '#e9ecef']).flat(),
           borderColor: floorData.map(() => ['#FF6384', '#e9ecef']).flat(),
           borderWidth: 1
@@ -190,11 +206,12 @@ const Reports = () => {
   const fetchMetrics = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/metrics?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/metrics?${params}`);
       if (!response.ok) throw new Error('Failed to fetch metrics data');
       
       const data = await response.json();
@@ -207,11 +224,12 @@ const Reports = () => {
   const fetchDurationStats = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-duration?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/parking-duration?${params}`);
       if (!response.ok) throw new Error('Failed to fetch duration stats');
       
       const data = await response.json();
@@ -225,11 +243,12 @@ const Reports = () => {
   const fetchRevenueStats = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/parking-revenue?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/parking-revenue?${params}`);
       if (!response.ok) throw new Error('Failed to fetch revenue stats');
       
       const data = await response.json();
@@ -243,11 +262,12 @@ const Reports = () => {
   const fetchFloorStats = async () => {
     try {
       const params = new URLSearchParams();
-      params.append('parkingId', selectedParkingPlace);
+      params.append('facilityId', selectedParkingPlace);
+      params.append('tenantId', user.tenantId);
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
 
-      const response = await fetchWithAuth(`${HOST_URL}/api/reports/floor-stats?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/floor-stats?${params}`);
       if (!response.ok) throw new Error('Failed to fetch floor stats');
       
       const data = await response.json();
@@ -255,6 +275,19 @@ const Reports = () => {
     } catch (error) {
       console.error('Error fetching floor stats:', error);
       setFloorStats(null);
+    }
+  };
+
+  const handleReportDownload = async (reportId) => {
+    try {
+      const response = await fetchWithAuth(`${HOST_URL}/api/reporting/download/${reportId}`);
+      const link = document.createElement('a');
+      link.download = 'report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading report:', error);
     }
   };
 
@@ -277,6 +310,32 @@ const Reports = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
+<Box sx={{ mb: 2 }}>
+  <Typography variant="h6" gutterBottom>
+    Daily Reports
+  </Typography>
+  <Grid container spacing={2}>
+    {dailyReports && dailyReports.length > 0 ? (
+      dailyReports.map((report, index) => (
+        <Grid item key={report.id || index}>
+          <Button
+            variant="outlined"
+            onClick={() => handleReportDownload(report.id)}
+          >
+            {`${report.date || 'Unknown Date'} - ${report.facilityName || 'Unknown Facility'}`}
+          </Button>
+        </Grid>
+      ))
+    ) : (
+      <Grid item>
+        <Typography variant="body2" color="text.secondary">
+          No daily reports available
+        </Typography>
+      </Grid>
+    )}
+  </Grid>
+</Box>
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <FilterPanel 
             parkingPlaces={parkingPlaces}

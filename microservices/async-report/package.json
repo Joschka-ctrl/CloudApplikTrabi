@@ -1,0 +1,19 @@
+{
+  "name": "async-report",
+  "version": "1.0.0",
+  "description": "async Report",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "@google-cloud/firestore": "^7.10.0",
+    "firebase-admin": "^12.6.0",
+    "google-auth-library": "^9.14.2"
+  }
+}

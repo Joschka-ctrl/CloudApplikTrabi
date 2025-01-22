@@ -9,10 +9,14 @@ import ProviderRevenueCards from '../components/reports/ProviderRevenueCards';
 import RevenueCharts from '../components/reports/RevenueCharts';
 import ExportPDFButton from '../components/reports/ExportPDFButton';
 
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
+
 const ChargingReports = () => {
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedGarage, setSelectedGarage] = useState('');
+  const [allGarages, setAllGarages] = useState([]);
   const [chargingStats, setChargingStats] = useState(null);
   const [utilizationData, setUtilizationData] = useState(null);
   const [providerRevenue, setProviderRevenue] = useState(null);
@@ -21,9 +25,6 @@ const ChargingReports = () => {
     utilization: false,
     revenue: false
   });
-  const { user } = useAuth();
-
-  const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
 
   const fetchWithAuth = async (url, options = {}) => {
     if (user) {
@@ -37,14 +38,40 @@ const ChargingReports = () => {
       throw new Error("User is not authenticated");
     }
   };
+  
+  const fetchGarages = async () => {
+    try {
+      const params = new URLSearchParams({
+        tenantId: user.tenantId
+      });
+      console.log('Fetching garages with params:', params.toString());
+      const response = await fetchWithAuth(`${HOST_URL}/echarging/garages?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch garages: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Fetched garages:', data);
+      
+      if (!Array.isArray(data)) {
+        console.error('Received invalid garages data:', data);
+        setAllGarages([]);
+        return;
+      }
+      
+      setAllGarages(data);
+    } catch (error) {
+      console.error('Error fetching garages:', error);
+      setAllGarages([]);
+    }
+  };
 
   const fetchChargingStats = async () => {
     try {
       setLoading(prev => ({ ...prev, stats: true }));
-      if (selectedGarage == ''){
-        selectedGarage = 'All'
-      }
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
         ...(selectedGarage && { garage: selectedGarage })
@@ -66,18 +93,20 @@ const ChargingReports = () => {
     try {
       setLoading(prev => ({ ...prev, utilization: true }));
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
         ...(selectedGarage && { garage: selectedGarage })
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/echarging/utilization?${params}`
+        `${HOST_URL}/echarging/station-utilization?${params}`
       );
       const data = await response.json();
       setUtilizationData(data);
     } catch (error) {
       console.error('Error fetching utilization data:', error);
+      setUtilizationData(null);  // Set to null on error to prevent UI crashes
     } finally {
       setLoading(prev => ({ ...prev, utilization: false }));
     }
@@ -87,6 +116,7 @@ const ChargingReports = () => {
     try {
       setLoading(prev => ({ ...prev, revenue: true }));
       const params = new URLSearchParams({
+        tenantId: user.tenantId,
         ...(startDate && { startDate }),
         ...(endDate && { endDate }),
         ...(selectedGarage && { garage: selectedGarage })
@@ -99,16 +129,20 @@ const ChargingReports = () => {
       setProviderRevenue(data);
     } catch (error) {
       console.error('Error fetching provider revenue:', error);
+      setProviderRevenue(null);  // Set to null on error to prevent UI crashes
     } finally {
       setLoading(prev => ({ ...prev, revenue: false }));
     }
   };
 
   useEffect(() => {
-    fetchChargingStats();
-    fetchUtilizationData();
-    fetchProviderRevenue();
-  }, [startDate, endDate, selectedGarage]);
+    if (user) {
+      fetchChargingStats();
+      fetchUtilizationData();
+      fetchProviderRevenue();
+      fetchGarages();
+    }
+  }, [startDate, endDate, selectedGarage, user]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -132,6 +166,7 @@ const ChargingReports = () => {
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
         onGarageChange={setSelectedGarage}
+        garages={allGarages || []}
       />
 
       <Grid container spacing={3}>

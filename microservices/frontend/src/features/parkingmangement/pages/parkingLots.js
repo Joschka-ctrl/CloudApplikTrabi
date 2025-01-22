@@ -8,38 +8,86 @@ import {
   Modal,
   Box,
   Button,
-  Typography
+  Typography,
+  Grid,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import { useAuth } from '../../../components/AuthProvider';
+import { useParams } from 'react-router-dom';
 
 const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';
 
-const ParkingLots = ({ tenantId }) => {
+const ParkingLots = () => {
+  const { user, currentTenantId } = useAuth();
+  const tenantId = currentTenantId;
+  const token = user.accessToken;
   const [facilities, setFacilities] = useState([]);
   const [selectedFacilityId, setSelectedFacilityId] = useState('');
   const [parkingSpots, setParkingSpots] = useState([]);
   const [openPopup, setOpenPopup] = useState(false);
   const [selectedSpotId, setSelectedSpotId] = useState(null);
+  const [floorStats, setFloorStats] = useState([]);
+
+  const { id } = useParams();
+
 
   useEffect(() => {
-    tenantId = tenantId || '15';
-    fetch(`${HOST_URL}/facilities/${tenantId}`)
+    if(id){
+      setSelectedFacilityId(id);
+    }
+  });
+
+  useEffect(() => {
+    // tenantId = tenantId || '15';
+
+    fetch(`${HOST_URL}/facilities/${tenantId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch facilities: ${response.status}`))
       .then(data => setFacilities(data))
       .catch(error => console.error(error));
   }, [tenantId]);
 
   useEffect(() => {
-    tenantId = tenantId || '15';
+    // tenantId = tenantId || '15';
     if (selectedFacilityId) {
-      fetch(`${HOST_URL}/parkingSpots/${tenantId}/${selectedFacilityId}`)
+      fetch(`${HOST_URL}/parkingSpots/${tenantId}/${selectedFacilityId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
         .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch parking spots: ${response.status}`))
         .then(data => setParkingSpots(data))
         .catch(error => console.error(error));
+
     } else {
       setParkingSpots([]);
+
     }
   }, [selectedFacilityId, tenantId]);
+
+  useEffect(() => {
+    if (selectedFacilityId) {
+      fetch(`${HOST_URL}/parkingStats/floors/${tenantId}/${selectedFacilityId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(response => response.ok ? response.json() : Promise.reject(`Failed to fetch floor stats: ${response.status}`))
+        .then(data => setFloorStats(data.floorStats || []))
+        .catch(error => console.error(error));
+    } else {
+      setFloorStats([]);
+    }
+  }, [selectedFacilityId, tenantId, parkingSpots]);
 
   const handleFacilityChange = (event) => {
     setSelectedFacilityId(event.target.value);
@@ -56,10 +104,12 @@ const ParkingLots = ({ tenantId }) => {
   };
 
   const handleChangeSpotAvailabilityStatus = (newStatus) => {
-    tenantId = tenantId || '15';
     return fetch(`${HOST_URL}/handleSpotAvalibilityStatus`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         id: selectedSpotId,
         tenantID: tenantId,
@@ -75,9 +125,9 @@ const ParkingLots = ({ tenantId }) => {
         const updatedSpots = parkingSpots.map((spot) =>
           spot.id === selectedSpotId
             ? {
-                ...spot,
-                avalibilityStatus: newStatus, // Set the status
-              }
+              ...spot,
+              avalibilityStatus: newStatus, // Set the status
+            }
             : spot
         );
         setParkingSpots(updatedSpots);
@@ -85,7 +135,7 @@ const ParkingLots = ({ tenantId }) => {
       })
       .catch((error) => console.error(error));
   };
-  
+
 
 
   const columns = [
@@ -111,7 +161,7 @@ const ParkingLots = ({ tenantId }) => {
             statusColor = '#9E9E9E'; // Gray for unknown
             break;
         }
-  
+
         return (
           <Button
             variant="contained"
@@ -134,34 +184,122 @@ const ParkingLots = ({ tenantId }) => {
       },
     },
   ];
-  
+
 
   return (
-    <Container style={{ marginTop: '50px' }}>
-      <FormControl fullWidth margin="normal">
-        <Select
-          labelId="facility-id-label"
-          value={selectedFacilityId}
-          onChange={handleFacilityChange}
-          displayEmpty
+    <Container style={{ marginTop: '60px' }}>
+      <Typography variant="h4" component="h1" align="center" gutterBottom>
+        Parking Management
+      </Typography>
+      {!id && (
+        <FormControl fullWidth margin="normal">
+          <Select
+            labelId="facility-id-label"
+            value={selectedFacilityId}
+            onChange={handleFacilityChange}
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select a Facility ID
+            </MenuItem>
+            {facilities.length > 0 ? (
+              facilities.map(facility => (
+                <MenuItem key={facility.facilityId} value={facility.facilityId}>
+                  {facility.facilityId}
+                </MenuItem>
+              ))
+            ) : (<></>
+            )}
+          </Select>
+        </FormControl>
+      )}
+
+      {/* /* Stats Section */}
+      {floorStats.length > 0 && (
+        <Paper
+          sx={{
+            padding: '10px',
+            marginBottom: '20px',
+            backgroundColor: '#f7f9fc',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            height: 'auto', // Flexible height
+            width: '100%',
+            overflow: 'hidden', // Verhindert das Überlaufen des Inhalts
+          }}
         >
-          <MenuItem value="" disabled>
-            Select a Facility ID
-          </MenuItem>
-          {facilities.length > 0 ? (
-            facilities.map(facility => (
-              <MenuItem key={facility.facilityId} value={facility.facilityId}>
-                {facility.facilityId}
-              </MenuItem>
-            ))
-          ) : (
-            <MenuItem disabled>No facilities available</MenuItem>
-          )}
-        </Select>
-      </FormControl>
+          <Typography
+            variant="h6"
+            component="h2"
+            gutterBottom
+            sx={{
+              fontWeight: 'bold',
+              color: '#2c3e50',
+              textAlign: 'center',
+              marginBottom: '10px', // Kleinere Margen
+              fontSize: '18px', // Kleinere Schriftgröße
+            }}
+          >
+            Floor Statistics
+          </Typography>
+          <Grid container spacing={1}>
+            {floorStats.map((floor) => (
+              <Grid item xs={12} sm={6} md={4} key={floor.floor}>
+                <Paper
+                  sx={{
+                    padding: '10px',
+                    textAlign: 'center',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    backgroundColor: '#ffffff',
+                    height: '100%', // Volle Höhe innerhalb des Grid
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between', // Verteilt den Inhalt innerhalb der Kachel
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    component="h3"
+                    sx={{ fontWeight: 'bold', color: '#34495e', fontSize: '16px' }} // Kleinere Schriftgröße
+                  >
+                    Floor {floor.floor}
+                  </Typography>
+                  <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+                    Total Spots: <strong>{floor.totalSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#F44336', fontSize: '14px' }}>
+                    Closed Spots: <strong>{floor.closedSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#FFCC00', fontSize: '14px' }}>
+                    Occupied Spots: <strong>{floor.occupiedSpots}</strong>
+                  </Typography>
+                  <Typography sx={{ color: '#4CAF50', fontSize: '14px' }}>
+                    Available Spots: <strong>{floor.availibleSpots}</strong>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: floor.occupancyPercentage > 75 ? '#e74c3c' : '#2ecc71',
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                    }}
+                  >
+                    Occupancy: {floor.occupancyPercentage}%
+                  </Typography>
+                  {/* Optional: Durchschnittliche Belegungszeit */}
+                  {/* <Typography sx={{ color: '#7f8c8d', fontSize: '14px' }}>
+              Avg. Occupancy Time: <strong>{Math.round(floor.averageOccupancyTime)} sec</strong>
+            </Typography> */}
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
+      )}
+
 
       {parkingSpots.length > 0 && (
-        <Paper sx={{ height: 400, width: '100%' }}>
+        <Paper sx={{ height: 800, width: '100%' }}>
           <DataGrid
             rows={parkingSpots}
             columns={columns}
@@ -180,7 +318,7 @@ const ParkingLots = ({ tenantId }) => {
         aria-labelledby="change-status-modal"
         aria-describedby="change-spot-status"
       >
-        <Box sx={{ ...style, width: 300 }}>
+        <Box sx={{ ...style, width: 300, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Typography variant="h6" component="h2" align="center">
             Change Parking Spot Status
           </Typography>
@@ -189,28 +327,26 @@ const ParkingLots = ({ tenantId }) => {
           </Typography>
           <Button
             variant="contained"
-            color="primary"
             onClick={() => handleChangeSpotAvailabilityStatus("occupied")}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, backgroundColor: '#FFCC00', color: 'white' }}
           >
             Mark as Occupied
           </Button>
           <Button
             variant="contained"
-            color="secondary"
+            sx={{ mt: 2, backgroundColor: '#4CAF50', color: 'white' }}
             onClick={() => handleChangeSpotAvailabilityStatus("free")}
-            sx={{ mt: 2 }}
           >
             Release Spot
           </Button>
           <Button
             variant="contained"
-            color="error"
             onClick={() => handleChangeSpotAvailabilityStatus("closed")}
-            sx={{ mt: 2 }}
+            sx={{ mt: 2, backgroundColor: '#F44336', color: 'white' }}
           >
             Close Spot
           </Button>
+
           <Button
             variant="outlined"
             color="secondary"

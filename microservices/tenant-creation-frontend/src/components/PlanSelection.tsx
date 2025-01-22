@@ -21,7 +21,7 @@ export const PlanSelection = ({
       description: 'Basic features for personal use.',
     },
     {
-      name: 'Standard',
+      name: 'pro',
       price: 10,
       description: 'Advanced features for small teams.',
     },
@@ -93,6 +93,7 @@ export const PlanSelection = ({
                     variant="contained"
                     fullWidth
                     onClick={() => onSelectPlan(planId)}
+                    disabled={isCurrentPlan}
                     {...(isCurrentPlan && {
                       startIcon: <CheckIcon />,
                       children: 'Current Plan',

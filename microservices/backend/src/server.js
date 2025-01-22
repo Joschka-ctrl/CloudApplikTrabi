@@ -40,7 +40,8 @@ const authenticateToken = async (req, res, next) => {
     console.log('Unauthorized access attempt detected');
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
+  //console.log(db.databaseId);
+  //console.log(db);
   const token = req.headers.authorization.split(' ')[1];
 
   try {
@@ -60,11 +61,11 @@ router.get("/health", (req, res) => {
 });
 
 // **1. Defect erstellen (geschützte Route)**
-router.post("/defects", authenticateToken, async (req, res) => {
+router.post("/defects/:tenantID", authenticateToken, async (req, res) => {
   try {
-    const { object, location, shortDescription, detailDescription, reportingDate, status } = req.body;
+    const { object, location, shortDescription, detailDescription, reportingDate, status, facilityID} = req.body;
 
-    if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status) {
+    if (!object || !location || !shortDescription || !detailDescription || !reportingDate || !status || !facilityID) {
       return res.status(400).json({ error: "Alle Felder sind erforderlich." });
     }
     if (shortDescription.length > 80) {
@@ -83,6 +84,8 @@ router.post("/defects", authenticateToken, async (req, res) => {
       reportingDate,
       status,
       updatedAt,
+      facilityID,
+      tenantID: req.params.tenantID,
     });
     const newDefectId = docRef.id;
 
@@ -95,14 +98,21 @@ router.post("/defects", authenticateToken, async (req, res) => {
 });
 
 // **2. Alle Defects abrufen**
-router.get("/defects", authenticateToken, async (req, res) => {
+router.get("/defects/:tenantId/:facilityId", authenticateToken, async (req, res) => {
+  console.log("Getting all defects for tenant " + req.params.tenantId + " and facility " + req.params.facilityId);
   try {
     const { filterType, filterText } = req.query;
     const allowedFilterFields = ["object", "location", "shortDescription", "detailDescription", "reportingDate", "status"];
-    let query = db.collection("defects");
+    let query = db.collection("defects").where("tenantID", "==", req.params.tenantId).where("facilityID", "==", req.params.facilityId);
 
     if (filterType && filterText && allowedFilterFields.includes(filterType)) {
-      query = query.where(filterType, ">=", filterText).where(filterType, "<=", filterText + "\uf8ff");
+      const snapshot = await query.get();
+      const filteredDocs = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data[filterType] && data[filterType].toLowerCase().includes(filterText.toLowerCase());
+      })
+      const defects = filteredDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json(defects);
     } else if (filterType && !allowedFilterFields.includes(filterType)) {
       return res.status(400).json({ error: "Invalid filter field." });
     }
@@ -186,7 +196,7 @@ router.delete("/defects/:id", authenticateToken, async (req, res) => {
 });
 
 // **6. Bild hochladen**
-router.post("/defects/:id/uploadPicture", authenticateToken, upload.single("picture"), async (req, res) => {
+router.post("/defects/:tenantId/:facilityId/:id/uploadPicture", authenticateToken, upload.single("picture"), async (req, res) => {
   try {
     const id = req.params.id;
     const docRef = db.collection("defects").doc(id);

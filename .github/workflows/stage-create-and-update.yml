@@ -1,38 +1,40 @@
-name: Stage Cluster Creation
+name: Production Cluster Creation
 
 on:
   push:
-    tags:
-      - '0.*'
-
+     branches:
+      - stage
+      
 jobs:
-  build-and-deploy:
-    name: Deploy to GCP
+  create-stage-free:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Trigger Full Cluster Creation
-        uses: actions/github-script@v6
-        with:
-          script: |
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-            const octokit = github.getOctokit(process.env.TENANT_CREATION_CLOUD_TOKEN);  // Verwende dein benutzerdefiniertes Token aus den GitHub Secrets
+      - name: Install GitHub CLI
+        run: |
+          sudo apt install gh -y
 
-            try {
-                // Trigger des Workflows
-                const response = await octokit.actions.createWorkflowDispatch({
-                    owner: context.repo.owner,  // Dynamisch den Repository Besitzer ermitteln
-                    repo: context.repo.repo,
-                    workflow_id: 'cluster-create-k8s.yml',  // Die zu startende Workflow-Datei
-                    ref: 'refs/heads/main',  // Branch, von dem der Workflow ausgelöst wird
-                    inputs: {
-                        tenant_name: 'stage'  // Eingabewert für den ausgelösten Workflow
-                    }
-                });
+      - name: Trigger another pipeline
+        run: |
+          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-free -f region=europe-west1 -f zone=europe-west1-c -R Joschka-ctrl/CloudApplikTrabi -r stage
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN }}  
 
-                console.log('Workflow erfolgreich ausgelöst:', response);
-                return true;
-            } catch (error) {
-                console.error('Fehler beim Auslösen des Workflows:', error);
-                throw error;
-            }
+  create-stage-standard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt install gh -y
+
+      - name: Trigger another pipeline
+        run: |
+          gh workflow run cluster-create-k8s.yml -f tenant_name=stage-pro -f region=europe-west1 -f zone=europe-west1-c -R Joschka-ctrl/CloudApplikTrabi -r stage
+
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN }}

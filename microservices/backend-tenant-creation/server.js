@@ -3,6 +3,7 @@ const { Octokit } = require('@octokit/rest');
 const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
+const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3023;
@@ -74,6 +75,54 @@ async function triggerWorkflow(tenantConfig) {
   }
 }
 
+async function triggerDeleteWorkflow(tenantId) {
+  try {
+    console.log('Triggering delete workflow with the following details:');
+    console.log('Owner:', process.env.GITHUB_OWNER);
+    console.log('Repo:', process.env.GITHUB_REPO);
+    console.log('Workflow ID:', 'destroy.yml');
+    console.log('Branch/Ref:', 'stage');
+    console.log('Inputs:', { tenant_name: tenantId });
+
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'destroy.yml',
+      ref: 'stage',
+      inputs: {
+        tenant_name: tenantId,
+      },
+    });
+
+    console.log('Delete workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering delete workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+async function triggerStopWorkflow() {
+  try {
+    await octokit.actions.createWorkflowDispatch({
+      owner: process.env.GITHUB_OWNER,
+      repo: process.env.GITHUB_REPO,
+      workflow_id: 'shutdown-stage.yml',
+      ref: 'stage',
+      inputs: {
+        region: "europe-west1",
+        zone: "europe-west1-c",
+      },
+    });
+
+    console.log('Stop workflow triggered successfully.');
+    return true;
+  } catch (error) {
+    console.error('Error triggering stop workflow:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 
 async function createTenantDocument(tenantConfig) {
   try {
@@ -99,8 +148,24 @@ async function createAdminUserAndTenant(adminData) {
         passwordRequired: false,
       },
     };
-    
+
     const tenant = await admin.auth().tenantManager().createTenant(tenantConfig);
+
+    // Create admin user in Firebase Auth
+    const adminAuth = admin.auth().tenantManager().authForTenant(tenant.tenantId);
+    const adminUser = await adminAuth.createUser({
+      email: adminData.email,
+      password: adminData.password,
+      emailVerified: false,
+      disabled: false,
+      displayName: adminData.fullName,
+    });
+
+    // Set custom claims for admin user
+    await adminAuth.setCustomUserClaims(adminUser.uid, {
+      tenantId: tenant.tenantId,
+      role: 'admin'
+    });
 
     // Create tenant document in Firestore
     const tenantData = {
@@ -108,11 +173,23 @@ async function createAdminUserAndTenant(adminData) {
       companyName: adminData.companyName,
       adminEmail: adminData.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      plan: adminData.plan || 'standard',
+      plan: adminData.plan || 'free',
       status: 'active'
     };
 
     await db.collection('tenants').doc(tenant.tenantId).set(tenantData);
+
+    // Save admin user information in Firestore
+    const adminUserData = {
+      id: adminUser.uid,
+      email: adminData.email,
+      displayName: adminData.fullName,
+      role: 'admin',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('tenants').doc(tenant.tenantId)
+      .collection('users').doc(adminUser.uid).set(adminUserData);
 
     return {
       tenantId: tenant.tenantId,
@@ -125,7 +202,7 @@ async function createAdminUserAndTenant(adminData) {
 }
 
 // Helper function to create a user in Firebase Auth
-async function createTenantUser(tenantId, email, name) {
+async function createTenantUser(tenantId, email, name, role = 'user') {
   try {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     const userRecord = await tenantAuth.createUser({
@@ -139,7 +216,7 @@ async function createTenantUser(tenantId, email, name) {
     // Set custom claims for user
     await tenantAuth.setCustomUserClaims(userRecord.uid, {
       tenantId: tenantId,
-      role: 'user'
+      role: role
     });
 
     // Create a user document in Firestore
@@ -150,7 +227,7 @@ async function createTenantUser(tenantId, email, name) {
       tenantId: tenantId,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       status: 'active',
-      role: 'user',
+      role: role,
     };
 
     await db.collection('tenants').doc(tenantId).collection('users').doc(userRecord.uid).set(userData);
@@ -170,7 +247,7 @@ async function deleteTenantUser(tenantId, userId) {
   try {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     await tenantAuth.deleteUser(userId);
-    
+
     // Delete user document from Firestore
     await db.collection('tenants').doc(tenantId).collection('users').doc(userId).delete();
 
@@ -181,12 +258,52 @@ async function deleteTenantUser(tenantId, userId) {
   }
 }
 
+// Helper function to update custom claims for a user
+async function updateUserCustomClaims(uid, customization) {
+  try {
+    // Get current custom claims
+    const user = await admin.auth().getUser(uid);
+    const currentClaims = user.customClaims || {};
+
+    // Merge new customization with existing claims
+    const newClaims = {
+      ...currentClaims,
+      customization: {
+        primaryColor: customization.primaryColor,
+        secondaryColor: customization.secondaryColor,
+        logoUrl: customization.logoUrl
+      }
+    };
+
+    // Set the new custom claims
+    await admin.auth().setCustomUserClaims(uid, newClaims);
+    console.log(`Updated custom claims for user ${uid}`);
+  } catch (error) {
+    console.error(`Error updating custom claims for user ${uid}:`, error);
+    throw error;
+  }
+}
+
+// Helper function to get all users for a tenant
+async function getTenantUsers(tenantId) {
+  try {
+    const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
+
+    return usersSnapshot.docs.map(doc => doc.data().email);
+  } catch (error) {
+    console.error(`Error getting users for tenant ${tenantId}:`, error);
+    throw error;
+  }
+}
+
 // Admin sign-in and tenant creation endpoint
 app.post('/api/admin/signup', async (req, res) => {
   try {
     const { email, password, fullName, companyName } = req.body;
 
-    if (!email || !password || !fullName || !companyName) {
+    companyNameEdit = companyName.toLowerCase().replace(/\s+/g, '-');
+
+    if (!email || !password || !fullName || !companyNameEdit) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -194,7 +311,7 @@ app.post('/api/admin/signup', async (req, res) => {
       email,
       password,
       fullName,
-      companyName
+      companyName: companyNameEdit
     });
 
     res.status(200).json(result);
@@ -219,7 +336,8 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
     // Set custom claims for admin
     await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(uid, {
       tenantId: tenantId,
-      admin: true
+      admin: true,
+      role: 'admin'
     });
 
     // Update tenant document with admin UID
@@ -234,74 +352,6 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
   }
 });
 
-
-
-async function loadKubernetesClient() {
-  const { KubeConfig, CoreV1Api } = await import('@kubernetes/client-node');
-  const kc = new KubeConfig();
-  kc.loadFromDefault();  // Lädt die Standard-Konfiguration aus dem .kube/config
-  const k8sApi = kc.makeApiClient(CoreV1Api);
-  return k8sApi;
-}
-
-async function getIngressControllerUrl(namespace = 'default', serviceName = 'istio-ingressgateway') {
-  try {
-    const k8sApi = await loadKubernetesClient();
-    console.log('Kubernetes client loaded successfully');
-    
-    // Hole den Service für den Ingress Controller
-    const res = await k8sApi.readNamespacedService({name: serviceName, namespace: namespace});
-    console.log('Service fetched successfully:', res.body);
-
-    // Extrahiere die externe IP aus der Antwort
-    const externalIp = res.body.status.loadBalancer.ingress[0].ip;
-
-    if (externalIp) {
-      console.log('Ingress Controller URL:', externalIp);
-      return externalIp;
-    } else {
-      throw new Error('No external IP found for Ingress Controller');
-    }
-  } catch (err) {
-    console.error('Error fetching Ingress URL:', err);
-    throw new Error('Unable to fetch Ingress URL');
-  }
-}
-
-
-
-
-const { ClusterManagerClient } = require('@google-cloud/container');
-
-const getClusterUrl = async (clusterName) => {
-  try {
-    const region = 'europe-west1';
-    const projectId = 'trabantparking-stage';
-    console.log('projectId:', projectId);
-    console.log('region:', region);
-    console.log('clusterName:', clusterName);
-
-    const clusterPath = `projects/${projectId}/locations/${region}/clusters/${clusterName}`;
-    
-
-
-    const client = new ClusterManagerClient();
-    const [response] = await client.getCluster({
-      // projectId: projectId,
-      // zone: region,
-      // clusterId: clusterName,
-      name: clusterPath,  // Hier den vollständigen Cluster-Pfad verwenden
-    });
-
-    // Rückgabe der Endpunkt-URL des Clusters
-    return `http://${response.endpoint}`;
-  } catch (error) {
-    console.error(`Error fetching cluster URL for ${clusterName}:`, error);
-    throw new Error('Unable to fetch cluster URL');
-  }
-};
-
-
 // Free Plan Tenant erstellen
 async function handleFreePlan(tenantConfig) {
   try {
@@ -313,11 +363,11 @@ async function handleFreePlan(tenantConfig) {
   }
 }
 
-async function handleStandardPlan(tenantConfig) {
+async function handleproPlan(tenantConfig) {
   try {
-    return "standard.trabantparking.ninja";
+    return "pro.trabantparking.ninja";
   } catch (error) {
-    console.error('Error creating Standard Plan Tenant:', error);
+    console.error('Error creating pro Plan Tenant:', error);
     throw error;
   }
 }
@@ -325,7 +375,7 @@ async function handleStandardPlan(tenantConfig) {
 // Create new tenant endpoint
 app.post('/api/tenants', authenticateToken, async (req, res) => {
   try {
-    const { plan, tenantId, emails } = req.body;
+    const { plan, tenantId } = req.body;
 
     if (!tenantId) {
       return res.status(400).json({
@@ -339,10 +389,10 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
         // Trigger the workflow for free plan
         await handleFreePlan({ tenantId, tenantName: tenantId });
         break;
-      case 'standard':
-        console.log("standard");
-        await handleStandardPlan({ tenantId, tenantName: tenantId });
-        // Create a document for standard plan
+      case 'pro':
+        console.log("pro");
+        await handleproPlan({ tenantId, tenantName: tenantId });
+        // Create a document for pro plan
         // await createTenantDocument({ tenantId, plan });
         break;
       case 'enterprise':
@@ -371,12 +421,84 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
   }
 });
 
+// Get all tenants with health status
+app.get('/api/tenants/allInfo', authenticateToken, async (req, res) => {
+  try {
+    const tenantsSnapshot = await db.collection('tenants').get();
+    const tenants = [];
+
+    for (const doc of tenantsSnapshot.docs) {
+      const tenantData = doc.data();
+      let status = 'pending';
+      let url;
+      if (doc.data().plan === 'free') {
+        url = `http://free.trabantparking.ninja`;
+      } else if (doc.data().plan === 'enterprise') {
+        url = `http://${doc.id}.trabantparking.ninja`;
+      } else {
+        url = `http://parking.trabantparking.ninja`;
+      }
+
+      tenants.push({
+        tenantId: doc.id,
+        displayName: tenantData.displayName || doc.id,
+        plan: tenantData.plan || 'free',
+        createdAt: tenantData.createdAt ? tenantData.createdAt.toDate().toISOString() : new Date().toISOString(),
+        url: url || null
+      });
+    }
+
+    res.json(tenants);
+  } catch (error) {
+    console.error('Error fetching tenants:', error);
+    res.status(500).json({ error: 'Failed to fetch tenants' });
+  }
+});
+
+// get health status of a tenant
+app.get('/api/tenants/health', authenticateToken, async (req, res) => {
+  const tenantId = req.query.tenantId;
+  const plan = req.query.plan;
+  let status = 'pending';
+  let url;
+  if (plan === 'free') {
+    url = `http://free.trabantparking.ninja`;
+  } else if (plan === 'enterprise') {
+    url = `http://${tenantId}.trabantparking.ninja`;
+  } else {
+    url = `http://parking.trabantparking.ninja`;
+  }
+
+  // ping the site and set status
+  try {
+    const response = await axios.get(url, {
+      timeout: 3000,
+      validateStatus: function (status) {
+        return status >= 200 && status < 500; // Accept any status code that's not a server error
+      }
+    });
+
+    // Consider any successful response (including redirects) as healthy
+    status = response.status >= 200 && response.status < 500 ? 'healthy' : 'unhealthy';
+    console.log(`Health check for tenant ${tenantId} completed with status: ${status} (HTTP ${response.status})`);
+  } catch (error) {
+    console.error(`Health check failed for tenant ${tenantId}:`, error.message);
+    status = 'unhealthy';
+  }
+
+  // return the status
+  res.json({ status: status, url: url });
+
+
+}
+);
+
 // Get all tenants endpoint
 app.get('/api/tenants', async (req, res) => {
   try {
     const tenantsSnapshot = await db.collection('tenants').get();
     const tenants = [];
-    
+
     tenantsSnapshot.forEach(doc => {
       tenants.push({
         id: doc.id,
@@ -390,7 +512,6 @@ app.get('/api/tenants', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch tenants' });
   }
 });
-
 // Get all users for a tenant
 app.get('/api/tenants/users', authenticateToken, async (req, res) => {
   try {
@@ -421,13 +542,13 @@ app.get('/api/tenants/users', authenticateToken, async (req, res) => {
 // Add a new user to a tenant
 app.post('/api/tenants/users', authenticateToken, async (req, res) => {
   try {
-    const { tenantId, email, name } = req.body;
+    const { tenantId, email, name, role = 'user' } = req.body;
 
     if (!tenantId || !email) {
       return res.status(400).json({ error: 'tenantId and email are required' });
     }
 
-    const newUser = await createTenantUser(tenantId, email, name);
+    const newUser = await createTenantUser(tenantId, email, name, role);
     res.status(201).json(newUser);
   } catch (error) {
     console.error('Error creating user:', error);
@@ -463,7 +584,7 @@ app.get('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
     }
 
     const tenantDoc = await db.collection('tenants').doc(tenantId).get();
-    
+
     if (!tenantDoc.exists) {
       return res.status(404).json({ error: 'Tenant not found' });
     }
@@ -494,9 +615,9 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       case 'free':
         console.log("free");
         return await handleFreePlan({ tenantName: tenantId });
-      case 'standard':
-        console.log("standard");
-        return await handleStandardPlan({ tenantName: tenantId });
+      case 'pro':
+        console.log("pro");
+        return await handleproPlan({ tenantName: tenantId });
       case 'enterprise':
         console.log("enterprise");
         await triggerWorkflow({ tenantName: tenantId });
@@ -511,6 +632,188 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
   } catch (error) {
     console.error('Error changing plan:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Stop tenant endpoint
+app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
+  try {
+    await triggerStopWorkflow();
+    res.json({ message: 'Tenant stop process initiated successfully' });
+  } catch (error) {
+    console.error('Error stopping tenant:', error);
+    res.status(500).json({ error: 'Failed to stop tenant' });
+  }
+});
+
+
+
+async function deleteTenantDocument(tenantId) {
+  try {
+    await db.collection('tenants').doc(tenantId).delete();
+    return true;
+  } catch (error) {
+    console.error('Error deleting tenant document:', error);
+    throw error;
+  }
+}
+
+async function deleteTenantFromIdentityPlatform(tenantId) {
+  try {
+    // Delete tenant from Identity Platform
+    await admin.auth().tenantManager().deleteTenant(tenantId);
+    console.log(`Successfully deleted tenant ${tenantId} from Identity Platform`);
+    return true;
+  } catch (error) {
+    console.error('Error deleting tenant from Identity Platform:', error);
+    throw error;
+  }
+}
+
+// Delete tenant endpoint
+app.delete('/api/tenants/:tenantId', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+
+    // Check if user is a super admin
+    // if (!req.user.admin) {
+    //   return res.status(403).json({ error: 'Only super admins can delete tenants' });
+    // }
+
+    // Get tenant information
+    const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+    if (!tenantDoc.exists) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+
+    const tenantData = tenantDoc.data();
+
+    // If it's an enterprise tenant, trigger the delete workflow
+    if (tenantData.plan === 'enterprise') {
+      try {
+        await triggerDeleteWorkflow(tenantId);
+      } catch (error) {
+        console.error('Error triggering delete workflow:', error);
+        return res.status(500).json({ error: 'Failed to trigger delete workflow' });
+      }
+    }
+
+    // Delete tenant users
+    const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
+    const deleteUserPromises = usersSnapshot.docs.map(async (doc) => {
+      const userData = doc.data();
+      try {
+        await deleteTenantUser(tenantId, userData.id);
+        await doc.ref.delete();
+      } catch (error) {
+        console.error(`Error deleting user ${userData.email}:`, error);
+      }
+    });
+
+    await Promise.all(deleteUserPromises);
+
+    // Delete tenant from Identity Platform
+    try {
+      await deleteTenantFromIdentityPlatform(tenantId);
+    } catch (error) {
+      console.error('Error deleting tenant from Identity Platform:', error);
+      return res.status(500).json({ error: 'Failed to delete tenant from Identity Platform' });
+    }
+
+    // Delete tenant document from Firestore
+    await deleteTenantDocument(tenantId);
+
+    res.status(200).json({ message: 'Tenant deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting tenant:', error);
+    res.status(500).json({ error: 'Failed to delete tenant' });
+  }
+});
+
+// Get tenant customization endpoint
+app.get('/api/tenants/:tenantId/customization', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+
+    const docRef = db.collection('tenantCustomization').doc(tenantId);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.json({
+        primaryColor: '#1976d2',
+        secondaryColor: '#dc004e',
+        logoUrl: ''
+      });
+    }
+
+    res.json(doc.data());
+  } catch (error) {
+    console.error('Error getting tenant customization:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Update tenant customization endpoint
+app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { primaryColor, secondaryColor, logoUrl } = req.body;
+
+    // Validate the colors (basic hex color validation)
+    const colorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    if (!colorRegex.test(primaryColor) || !colorRegex.test(secondaryColor)) {
+      return res.status(400).json({ error: 'Invalid color format' });
+    }
+
+    // Validate logo URL (basic URL validation)
+    if (logoUrl && !logoUrl.match(/^https?:\/\/.+/)) {
+      return res.status(400).json({ error: 'Invalid logo URL' });
+    }
+
+    const customization = {
+      primaryColor,
+      secondaryColor,
+      logoUrl,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Save customization to Firestore
+    await db.collection('tenantCustomization').doc(tenantId).set(customization);
+
+    // Get all users for this tenant
+    const userEmails = await getTenantUsers(tenantId);
+    const users = await Promise.all((userEmails || []).map(async (userEmail) => 
+      admin.auth().tenantManager().authForTenant(tenantId).getUserByEmail(userEmail)
+    ));
+
+    // Update claims for each user
+    await Promise.all(users.map(async (user) => {
+      const currentClaims = user.customClaims || {};
+      const newClaims = {
+        ...currentClaims,
+        primaryColor: customization.primaryColor,
+        secondaryColor: customization.secondaryColor,
+        logoUrl: customization.logoUrl
+      };
+      
+      await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(user.uid, newClaims);
+    }));
+
+    // Fetch first user again to verify updated claims
+    if (users.length > 0) {
+      const updatedUser = await admin.auth().tenantManager().authForTenant(tenantId).getUser(users[0].uid);
+      console.log(`Updated custom claims for ${users.length} users of tenant ${tenantId}`);
+      console.log('First user updated claims:', JSON.stringify(updatedUser.customClaims, null, 2));
+    }
+
+    res.json({
+      message: 'Customization updated successfully',
+      updatedUsers: users.length
+    });
+  } catch (error) {
+    console.error('Error updating tenant customization:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
