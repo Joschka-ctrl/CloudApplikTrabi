@@ -11,7 +11,9 @@ import {
   Alert,
   Button,
   Stack,
+  Icon,
 } from "@mui/material";
+import { ArrowForward, ArrowBack } from '@mui/icons-material';
 import { useAuth } from "../../components/AuthProvider";
 
 export default function FacilityDetail() {
@@ -147,6 +149,24 @@ export default function FacilityDetail() {
           </Grid>
         </Grid>
       </Paper>
+      <Grid container spacing={2} style={{ marginTop: "2rem" }}>
+        <Grid item xs={12} sm={6}>
+          <Paper elevation={3} style={{ padding: "1rem", cursor: "pointer" }} onClick={() => navigate(`/parkingspaces/${id}`)} >
+            <Stack direction="row" spacing={2} alignItems={"center"}>
+            <ArrowBack color="primary"></ArrowBack>
+            <Typography variant="h6">Facility Parking Status</Typography>
+            </Stack>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Paper elevation={3} style={{ padding: "1rem", cursor: "pointer" }} onClick={() => navigate(`/defects/${id}`)}>
+            <Stack direction="row-reverse" spacing={2} alignItems={"center"}>
+            <ArrowForward color="primary"></ArrowForward>
+            <Typography variant="h6">Facility Defect Status</Typography>
+            </Stack>
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
