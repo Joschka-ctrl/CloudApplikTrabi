@@ -51,6 +51,7 @@ const AuthProvider = ({ children }) => {
       await signOut(auth);
       localStorage.removeItem('currentTenantId');
       setCurrentTenantId(null);
+      window.location.reload();
     } catch (error) {
       console.error("Fehler beim Abmelden:", error);
       throw error;
