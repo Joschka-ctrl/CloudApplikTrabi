@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install-all": "npm run install-backend && npm run install-backend-echarging && npm run install-backend-parking && npm run install-backend-reporting && npm run install-backend-tenant-creation && npm run install-facility-management && npm run install-tenant-creation-frontend && npm run install-frontend",
+    "install-all": "npm run install-backend && npm run install-backend-echarging && npm run install-backend-parking && npm run install-backend-reporting && npm run install-backend-tenant-creation && npm run install-facility-management && npm run install-tenant-creation-frontend && npm run install-async-report && npm run install-frontend",
     "install-backend": "cd microservices/backend && npm install",
     "install-backend-echarging": "cd microservices/backend-echarging && npm install",
     "install-backend-parking": "cd microservices/backend-parking && npm install",
@@ -13,6 +13,7 @@
     "install-backend-tenant-creation": "cd microservices/backend-tenant-creation && npm install",
     "install-facility-management": "cd microservices/facility-management && npm install",
     "install-tenant-creation-frontend": "cd microservices/tenant-creation-frontend && npm install",
+    "install-async-report": "cd microservices/async-report && npm install",
     "install-frontend": "cd microservices/frontend && npm install",
     "start:dev": "run-p -n -l start:dev:*",
     "start:dev:backend": "cd microservices/backend && npm start",
@@ -21,8 +22,10 @@
     "start:dev:backend-reporting": "cd microservices/backend-reporting && npm start",
     "start:dev:backend-tenant-creation": "cd microservices/backend-tenant-creation && npm start",
     "start:dev:facility-management": "cd microservices/facility-management && npm start",
+    "start:dev:async-report": "cd microservices/async-report && npm start",
     "start:dev:tenant-creation-frontend": "cd microservices/tenant-creation-frontend && npm run dev",
     "start:dev:frontend": "cd microservices/frontend && npm start"
+    
   },
   "author": "",
   "license": "ISC",

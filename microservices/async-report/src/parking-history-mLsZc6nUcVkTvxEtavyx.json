@@ -1,0 +1,13 @@
+{
+  "date": "2025-01-21",
+  "tenantId": "wegmachen-ij57r",
+  "facilityId": "Parkhaus1234",
+  "totalCarsInFacility": 1,
+  "averageParkingDuration": "00:01:41",
+  "History": [
+    {
+      "parkingStartedAt": "2025-01-21T09:08:02.453Z",
+      "parkingEndedAt": "2025-01-21T09:09:44.048Z"
+    }
+  ]
+}
