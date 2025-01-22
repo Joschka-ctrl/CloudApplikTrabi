@@ -75,9 +75,9 @@ jobs:
         scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
         echo "Cloud Scheduler jobs: $scheduler_output"
         
-        # Überprüfen, ob ein Job mit dem Namen "stage" existiert
+        # Überprüfen, ob ein Job mit dem Namen des cluster existiert
         if echo "$scheduler_output" | grep -q "async-repot-${{env.GKE_CLUSTER}}"; then
-          echo "Job 'stage' exists. Setting variable to false."
+          echo "Job 'async-repot-${{env.GKE_CLUSTER}}' exists. updating..."
 
            gcloud scheduler jobs update http async-repot-${{ env.GKE_CLUSTER }} \
             --schedule="1 0 * * *" \
