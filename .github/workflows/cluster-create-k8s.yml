@@ -77,7 +77,7 @@ jobs:
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
         echo ${{ env.PROJECT_ID }}
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
+        terraform import google_container_cluster.primary projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
 
     - name: Cluster Name
