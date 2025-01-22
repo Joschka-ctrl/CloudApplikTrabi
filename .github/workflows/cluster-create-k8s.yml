@@ -53,18 +53,7 @@ jobs:
         echo "region: ${{ github.event.inputs.region }}"
         echo "zone: ${{ github.event.inputs.zone }}"
 
-    - name: Install GKE Auth Plugin
-      run: |
-        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
-  
-   
-  
-    - name: Checkout code
-      uses: actions/checkout@v3
-
+ 
     - name: Deploy Cloud Function
       run: |
         gcloud functions deploy asyncreport${{ env.GKE_CLUSTER }} \
@@ -75,8 +64,6 @@ jobs:
           --source ../../microservices/cloud-function \
           --entry-point dailyReport${{ env.GKE_CLUSTER }}${{ env.GKE_CLUSTER }} \
           --set-env-vars CLUSTER_NAME=${{ env.GKE_CLUSTER }},TENANT_NAME=${{ env.GKE_CLUSTER }}
-      
-    
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v2
@@ -255,6 +242,13 @@ jobs:
       working-directory: microservices
 
 # APPLY HELM
+    - name: Install GKE Auth Plugin
+      run: |
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
     - name: Get GKE Credentials
       run: |
         gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --region ${{ env.GKE_ZONE }}
