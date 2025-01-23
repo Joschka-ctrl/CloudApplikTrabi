@@ -162,7 +162,7 @@ jobs:
       run: |
         git fetch --tags
         LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))   
-        echo "LATEST_TAG=${LATEST_TAG}" >> $GITHUB_ENV
+        echo "LATEST_TAG=${{env.GKE_CLUSTER}}${LATEST_TAG}" >> $GITHUB_ENV
 
     - name: Set up Google Cloud SDK
       uses: google-github-actions/auth@v2
