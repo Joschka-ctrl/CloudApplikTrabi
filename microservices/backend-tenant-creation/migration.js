@@ -6,10 +6,10 @@ const migrationqueue = []
 async function migrate(from, to, tenantId){
     const app1 = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
-    });
+    }, 'from');
     const app2 = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
-    }, to);
+    }, 'to');
     const dbFrom = app1.firestore();
     dbFrom.settings({
         databaseId: from

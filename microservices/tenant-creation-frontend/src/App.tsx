@@ -140,7 +140,7 @@ function App() {
 
       try {
         setPlanLoading(true);
-        const response = await fetch(`${HOST}/${auth.tenantId}`, {
+        const response = await fetch(`${HOST}/api/tenants/${auth.tenantId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -171,7 +171,7 @@ function App() {
       if (!auth.tenantId) return;
 
       try {
-        const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`,
+        const response = await fetch(`${HOST}/api/tenants/users?tenantId=${auth.tenantId}`,
           {
             method: 'GET',
             headers: {
@@ -216,7 +216,7 @@ function App() {
       const plan = selectedPlan;
       const tenantId = auth.tenantId;
       if (plan && tenantId) {
-        await fetch(`${HOST}/${tenantId}/changePlan`, {
+        await fetch(`${HOST}/api/tenants/${tenantId}/changePlan`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ function App() {
         return;
       }
 
-      const response = await fetch(`${HOST}/users`, {
+      const response = await fetch(`${HOST}/api/tenants/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,7 +283,7 @@ function App() {
         return;
       }
 
-      const response = await fetch(`${HOST}/users/${userId}?tenantId=${auth.tenantId}`,
+      const response = await fetch(`${HOST}/api/tenants/users/${userId}?tenantId=${auth.tenantId}`,
         {
           method: 'DELETE',
           headers: {

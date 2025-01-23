@@ -42,7 +42,7 @@ export default function SuperAdmin() {
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
   const navigate = useNavigate();
 
-  const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
+  const HOST = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const fetchTenants = async () => {
@@ -56,7 +56,7 @@ export default function SuperAdmin() {
         }
 
         const idToken = await currentUser.getIdToken();
-        const response = await axios.get(HOST + '/allInfo', {
+        const response = await axios.get(HOST + '/api/tenants/allInfo', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
@@ -98,7 +98,7 @@ export default function SuperAdmin() {
       }
 
       const idToken = await currentUser.getIdToken();
-      await axios.delete(`${HOST}/${tenantToDelete.tenantId}`, {
+      await axios.delete(`${HOST}/api/tenants/${tenantToDelete.tenantId}`, {
         headers: {
           Authorization: `Bearer ${idToken}`,
         },
@@ -134,7 +134,7 @@ export default function SuperAdmin() {
       }
 
       const idToken = await currentUser.getIdToken();
-      await axios.post(`${HOST}/stop`, {}, {
+      await axios.post(`${HOST}/api/tenants/stop`, {}, {
         headers: {
           Authorization: `Bearer ${idToken}`,
         },
