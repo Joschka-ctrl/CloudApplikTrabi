@@ -381,7 +381,7 @@ async function handleproPlan(tenantConfig) {
     if(oldPlan === 'enterprise'){
       oldPlan = tenantConfig.tenantName;
     }
-    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
+    migrate(oldPlan || '', 'professional', tenantConfig.tenantName);
     return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);
