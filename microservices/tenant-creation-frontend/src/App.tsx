@@ -140,7 +140,7 @@ function App() {
 
       try {
         setPlanLoading(true);
-        const response = await fetch(`${HOST}/${auth.tenantId}`, {
+        const response = await fetch(`${HOST}/api/tenants/${auth.tenantId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -171,7 +171,7 @@ function App() {
       if (!auth.tenantId) return;
 
       try {
-        const response = await fetch(`${HOST}/users?tenantId=${auth.tenantId}`,
+        const response = await fetch(`${HOST}/api/tenants/users?tenantId=${auth.tenantId}`,
           {
             method: 'GET',
             headers: {
@@ -245,7 +245,7 @@ function App() {
         return;
       }
 
-      const response = await fetch(`${HOST}/users`, {
+      const response = await fetch(`${HOST}/api/tenants/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

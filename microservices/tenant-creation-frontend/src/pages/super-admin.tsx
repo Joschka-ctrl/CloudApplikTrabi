@@ -56,7 +56,7 @@ export default function SuperAdmin() {
         }
 
         const idToken = await currentUser.getIdToken();
-        const response = await axios.get(HOST + 'api/tenants/allInfo', {
+        const response = await axios.get(HOST + '/api/tenants/allInfo', {
           headers: {
             Authorization: `Bearer ${idToken}`,
           },
@@ -134,7 +134,7 @@ export default function SuperAdmin() {
       }
 
       const idToken = await currentUser.getIdToken();
-      await axios.post(`${HOST}api/tenants/stop`, {}, {
+      await axios.post(`${HOST}/api/tenants/stop`, {}, {
         headers: {
           Authorization: `Bearer ${idToken}`,
         },
