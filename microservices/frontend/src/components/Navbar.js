@@ -88,18 +88,18 @@ const Navbar = () => {
 
   const navLinks = user ? (
     <>
-      <li className="NavbarItem">
+      {/* <li className="NavbarItem">
         <Link to="/defects" onClick={closeMenu}>Defects</Link>
-      </li>
+      </li> */}
       <li className="NavbarItem" style={{ display: shouldShowReports ? 'block' : 'none' }}>
         <Link to="/reports" onClick={closeMenu}>Reports</Link>
       </li>
       <li className="NavbarItem">
         <Link to="/e-charging" onClick={closeMenu}>E-Charging</Link>
       </li>
-      <li className="NavbarItem">
+      {/* <li className="NavbarItem">
         <Link to="/parkingSpaces" onClick={closeMenu}>Parking</Link>
-      </li>
+      </li> */}
       <li className="NavbarItem">
         <Link to="/facilities" onClick={closeMenu}>Facilities</Link>
       </li>
