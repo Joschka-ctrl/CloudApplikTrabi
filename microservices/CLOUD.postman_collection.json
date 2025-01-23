@@ -1,0 +1,376 @@
+{
+	"info": {
+		"_postman_id": "f4dc9938-9a41-4d73-b887-8ee860087bfb",
+		"name": "CLOUD",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "39410251"
+	},
+	"item": [
+		{
+			"name": "parking",
+			"item": [
+				{
+					"name": "reporting",
+					"item": [
+						{
+							"name": "parkingStats-duration",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3033/parkingStats/duration/stage-pro/Parkhaus1234?startDate=2025-01-01&endDate=2026-01-02",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3033",
+									"path": [
+										"parkingStats",
+										"duration",
+										"stage-pro",
+										"Parkhaus1234"
+									],
+									"query": [
+										{
+											"key": "startDate",
+											"value": "2025-01-01"
+										},
+										{
+											"key": "endDate",
+											"value": "2026-01-02"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "parkingStats-floors",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": "http://localhost:3033/parkingStats/floors/stage-pro/Parkhaus1234"
+							},
+							"response": []
+						},
+						{
+							"name": "Alle Facilities des Tenant",
+							"request": {
+								"method": "GET",
+								"header": []
+							},
+							"response": []
+						},
+						{
+							"name": "parkingStats-usage",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3000/parkingStats/usage/1/123?startDate=2025-01-01&endDate=2025-01-02",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"parkingStats",
+										"usage",
+										"1",
+										"123"
+									],
+									"query": [
+										{
+											"key": "startDate",
+											"value": "2025-01-01"
+										},
+										{
+											"key": "endDate",
+											"value": "2025-01-02"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Extern",
+					"item": [
+						{
+							"name": "Schranke",
+							"item": [
+								{
+									"name": "Schranke -> einfahren",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:3033/getTicketNr/:tenatntId/:facilityId",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3033",
+											"path": [
+												"getTicketNr",
+												":tenatntId",
+												":facilityId"
+											],
+											"variable": [
+												{
+													"key": "tenatntId",
+													"value": "trabant-dj99y"
+												},
+												{
+													"key": "facilityId",
+													"value": ""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Schranke -> Parkhaus verlassen",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:3033/leaveParkhouse/:tenatntId/:facilityId",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3033",
+											"path": [
+												"leaveParkhouse",
+												":tenatntId",
+												":facilityId"
+											],
+											"variable": [
+												{
+													"key": "tenatntId",
+													"value": "trabant-dj99y"
+												},
+												{
+													"key": "facilityId",
+													"value": ""
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Sensor (Parkplatz)",
+							"item": [
+								{
+									"name": "Parkplatz befahren",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"jnyi1syvODfUShim1px-9\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": "http://localhost:3033/reserveParkingSpot"
+									},
+									"response": []
+								},
+								{
+									"name": "Parkplatz verlassen",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"jnyi1syvODfUShim1px-9\"\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": "http://localhost:3033/releaseParkingSpot"
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "PaymentTerminal",
+							"item": [
+								{
+									"name": "Terminal -> Parkdauer auslesen",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:3033/duration/:tenatntId/:facilityId/:ticketId",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3033",
+											"path": [
+												"duration",
+												":tenatntId",
+												":facilityId",
+												":ticketId"
+											],
+											"variable": [
+												{
+													"key": "tenatntId",
+													"value": ""
+												},
+												{
+													"key": "facilityId",
+													"value": ""
+												},
+												{
+													"key": "ticketId",
+													"value": ""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Terminal -> Berechneten preis abrufen",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:3033/getParkingFee/:tenatntId/:facilityId/:ticketId",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3033",
+											"path": [
+												"getParkingFee",
+												":tenatntId",
+												":facilityId",
+												":ticketId"
+											],
+											"variable": [
+												{
+													"key": "tenatntId",
+													"value": "trabant-dj99y"
+												},
+												{
+													"key": "facilityId",
+													"value": ""
+												},
+												{
+													"key": "ticketId",
+													"value": ""
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Terminal -> pay",
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "http://localhost:3033/payParkingFee/:tenatntId/:facilityId/:ticketId",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3033",
+											"path": [
+												"payParkingFee",
+												":tenatntId",
+												":facilityId",
+												":ticketId"
+											],
+											"variable": [
+												{
+													"key": "tenatntId",
+													"value": ""
+												},
+												{
+													"key": "facilityId",
+													"value": ""
+												},
+												{
+													"key": "ticketId",
+													"value": ""
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "AktuelleAuslastungParkhaus",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:3033/currentOccupancy/:tenatntId/:facilityId",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3033",
+									"path": [
+										"currentOccupancy",
+										":tenatntId",
+										":facilityId"
+									],
+									"variable": [
+										{
+											"key": "tenatntId",
+											"value": "trabant-dj99y"
+										},
+										{
+											"key": "facilityId",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "createSpaces",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"tenantId\": \"trabant-dj99y\",\r\n    \"facilityId\":\"Test_Facility\",\r\n    \"floors\": [14, 14, 3,6],\r\n    \"pricePerMinute\":0.1,\r\n    \"maxCapacity\":100\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://localhost:3033/createParkingSpotsForFacility"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

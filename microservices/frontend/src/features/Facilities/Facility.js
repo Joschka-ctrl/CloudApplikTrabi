@@ -21,7 +21,7 @@ export default function FacilityDetail() {
   const FACILITY_API_URL =
     process.env.NODE_ENV === "development"
       ? "http://localhost:3021"
-      : ""; 
+      : "";
 
   const { id } = useParams();
   const [facility, setFacility] = useState(null);
