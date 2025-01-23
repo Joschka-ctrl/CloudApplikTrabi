@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@google-cloud/container": "^5.19.0",
+    "@google-cloud/pubsub": "^4.9.0",
     "@octokit/rest": "^20.0.2",
     "axios": "^1.7.9",
     "cors": "^2.8.5",

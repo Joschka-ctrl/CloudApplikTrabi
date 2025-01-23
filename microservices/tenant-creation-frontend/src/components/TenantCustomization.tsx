@@ -16,7 +16,7 @@ interface TenantCustomization {
   logoUrl: string;
 }
 
-const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
+const HOST = import.meta.env.VITE_BACKEND_URL;
 
 export const TenantCustomization = () => {
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,7 @@ export const TenantCustomization = () => {
       try {
         setLoading(true);
         // First check if this tenant is enterprise
-        const response = await fetch(`${HOST}/${auth.tenantId}`, {
+        const response = await fetch(`${HOST}/api/tenants/${auth.tenantId}`, {
           headers: {
             'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
           }
@@ -53,7 +53,7 @@ export const TenantCustomization = () => {
 
         // Only fetch customization if enterprise
         if (isEnterprisePlan) {
-          const customizationResponse = await fetch(`${HOST}/${auth.tenantId}/customization`, {
+          const customizationResponse = await fetch(`${HOST}/api/tenants/${auth.tenantId}/customization`, {
             headers: {
               'Authorization': `Bearer ${await auth.currentUser.getIdToken()}`
             }
@@ -97,7 +97,7 @@ export const TenantCustomization = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${HOST}/${auth.tenantId}/customization`, {
+      const response = await fetch(`${HOST}/api/tenants/${auth.tenantId}/customization`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

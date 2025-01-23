@@ -47,7 +47,7 @@ jobs:
       - name: Deploy Backend to Cloud Run
         id: deploy-backend
         run: |
-          gcloud run deploy backend-tenant-creation \
+          BACKEND_URL=$(gcloud run deploy backend-tenant-creation \
                 --image=europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-repo/${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
                 --platform=managed \
                 --region=${{ env.REGION }} \
@@ -55,17 +55,21 @@ jobs:
                 --port=3023 \
                 --memory=1Gi \
                 --set-env-vars=GOOGLE_CLOUD_PROJECT=${{ env.PROJECT_ID }} \
-                --set-env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }}
+                --set-env-vars=GITHUB_TOKEN=${{ secrets.TOKEN }} \
+                --set-env-vars=GITHUB_OWNER=Joschka-ctrl \
+                --set-env-vars=GITHUB_REPO=CloudApplikTrabi \
+                --format='value(status.url)')
+          echo "BACKEND_URL=${BACKEND_URL}" >> $GITHUB_OUTPUT
 
       # Build frontend with backend URL
       - name: Build Frontend
         env:
-          VITE_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
+          VITE_BACKEND_URL: ${{ steps.deploy-backend.outputs.BACKEND_URL }}
           VITE_AUTH_API_KEY: ${{ secrets.AUTH_API_KEY_STAGE }}
         run: |
           cd microservices/tenant-creation-frontend
           docker build \
-            --build-arg VITE_BACKEND_URL=${{ steps.deploy-backend.outputs.url }} \
+            --build-arg VITE_BACKEND_URL=${{ steps.deploy-backend.outputs.BACKEND_URL }} \
             --build-arg VITE_AUTH_API_KEY=${{ secrets.AUTH_API_KEY_STAGE }} \
             -t ${{ env.FRONTEND_IMAGE }} .
           docker tag ${{ env.FRONTEND_IMAGE }} europe-west1-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-repo/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
@@ -86,5 +90,5 @@ jobs:
       # Output the URLs
       - name: Output Service URLs
         run: |
-          echo "Backend URL: ${{ steps.deploy-backend.outputs.url }}"
+          echo "Backend URL: ${{ steps.deploy-backend.outputs.BACKEND_URL }}"
           echo "Frontend service deployed successfully"
