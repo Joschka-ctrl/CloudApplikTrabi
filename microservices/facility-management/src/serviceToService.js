@@ -1,4 +1,5 @@
-const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-app-backend-parking.default.svc.cluster.local/api/parking';
+
 
 function sendNewFacility(facility, token) {
   const parkingFacility = {
@@ -11,6 +12,7 @@ function sendNewFacility(facility, token) {
   };
 
   console.log("Sending new facility to parking service: ", JSON.stringify(parkingFacility));
+  console.log("Adress: ", `${PARKING_SERVICE_URL}/createParkingSpotsForFacility`);
 
   fetch(`${PARKING_SERVICE_URL}/createParkingSpotsForFacility`, {
     method: "POST",
