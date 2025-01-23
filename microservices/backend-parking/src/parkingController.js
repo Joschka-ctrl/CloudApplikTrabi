@@ -156,7 +156,7 @@ router.post("/handleSpotAvalibilityStatus", authenticateToken, async (req, res) 
 });
 
 // Release a specific parking spot
-router.post("/releaseParkingSpot", authenticateToken, async (req, res) => {
+router.post("/releaseParkingSpot", async (req, res) => {
     try {
         const id = req.body.id;
         const facilityID = req.body.facilityID;

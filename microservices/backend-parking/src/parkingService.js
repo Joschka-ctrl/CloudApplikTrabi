@@ -419,6 +419,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
                     throw new Error(`Parking spot ${spotID} is already ${newStatus ? 'occupied' : 'free'}`);
                 }
                 spot.occupied = newStatus;
+                spot.avalibilityStatus = newStatus ? 'occupied' : 'free';
                 spotFound = true;
             }
         });
@@ -434,7 +435,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         });
 
         console.log(`Successfully updated parking spot ${spotID} to status: ${newStatus}`);
-        return { success: true, spotID, status: spot.occupied };
+        return { success: true, spotID, status: "updated" };
     } catch (error) {
         console.error('Error managing parking spot occupancy:', error);
         return { success: false, message: 'Failed to update parking spot occupancy.', error: error.message };
