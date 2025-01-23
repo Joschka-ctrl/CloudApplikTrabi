@@ -831,7 +831,7 @@ app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, r
     await db.collection('tenantCustomization').doc(tenantId).set(customization);
 
     // Get all users for this tenant
-    const userEmails = await getTenantUsers(tenantId);
+    const users = await getTenantUsers(tenantId);
 
     // Update claims for each user
     await Promise.all(users.map(async (user) => {
