@@ -20,7 +20,7 @@ const Navbar = () => {
   const currentHost = window.location.hostname;
   
   // Check if this is a free or pro tenant
-  const isBasicTenant = currentHost.startsWith('free') || currentHost.startsWith('pro');
+  const isBasicTenant = currentHost.startsWith('free') || currentHost.startsWith('professional');
   const shouldShowReports = !isBasicTenant;
 
   useEffect(() => {

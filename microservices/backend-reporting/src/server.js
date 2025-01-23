@@ -19,9 +19,9 @@ const app = express();
 const router = express.Router();
 const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-app-backend-parking.default.svc.cluster.local/api/parking';
 
-const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://trabant-app-backend-parking.default.svc.cluster.local/api/echarging';
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://trabant-app-backend-echarging.default.svc.cluster.local/api/echarging';
 
-const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021/api/facilities' : 'http://trabant-app-backend-parking.default.svc.cluster.local/api/facilities';
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021/api/facilities' : 'http://trabant-app-backend-backend-facility-management.default.svc.cluster.local/api/facilities';
 // Middleware
 app.use(cors());
 app.use(express.json());
