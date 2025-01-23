@@ -60,7 +60,7 @@ async function triggerWorkflow(tenantConfig) {
     console.log('Repo:', process.env.GITHUB_REPO);
     console.log('Workflow ID:', 'cluster-create-k8s.yml');
     console.log('Branch/Ref:', 'master');
-    console.log('Inputs:', { tenant_name: tenantConfig.tenantName });
+    console.log('Inputs:', { tenant_name: tenantConfig.tenantName, migrationId: tenantConfig.migrationId });
 
     await octokit.actions.createWorkflowDispatch({
       owner: process.env.GITHUB_OWNER,
@@ -69,6 +69,7 @@ async function triggerWorkflow(tenantConfig) {
       ref: 'master',
       inputs: {
         tenant_name: tenantConfig.tenantName,
+        migrationId: tenantConfig.migrationId
       },
     });
 
@@ -380,7 +381,7 @@ async function handleproPlan(tenantConfig) {
     if(oldPlan === 'enterprise'){
       oldPlan = tenantConfig.tenantName;
     }
-    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
+    migrate(oldPlan || '', 'professional', tenantConfig.tenantName);
     return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);
