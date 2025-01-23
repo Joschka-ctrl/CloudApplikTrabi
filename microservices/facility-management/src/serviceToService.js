@@ -1,3 +1,5 @@
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
+
 function sendNewFacility(facility, token) {
   const parkingFacility = {
     facilityId: facility.facilityId,
@@ -10,7 +12,7 @@ function sendNewFacility(facility, token) {
 
   console.log("Sending new facility to parking service: ", JSON.stringify(parkingFacility));
 
-  fetch(`http://localhost:3033/createParkingSpotsForFacility`, {
+  fetch(`${PARKING_SERVICE_URL}/createParkingSpotsForFacility`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
