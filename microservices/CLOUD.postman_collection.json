@@ -124,7 +124,7 @@
 											"variable": [
 												{
 													"key": "tenatntId",
-													"value": "trabant-dj99y"
+													"value": "trabant-of8ec"
 												},
 												{
 													"key": "facilityId",
@@ -159,7 +159,7 @@
 											"variable": [
 												{
 													"key": "tenatntId",
-													"value": "trabant-dj99y"
+													"value": "trabant-of8ec"
 												},
 												{
 													"key": "facilityId",
@@ -186,7 +186,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-of8ec\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -204,7 +204,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-of8ec\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -244,7 +244,7 @@
 											"variable": [
 												{
 													"key": "tenatntId",
-													"value": "trabant-dj99y"
+													"value": "trabant-of8ec"
 												},
 												{
 													"key": "facilityId",
@@ -283,7 +283,7 @@
 											"variable": [
 												{
 													"key": "tenatntId",
-													"value": "trabant-dj99y"
+													"value": "trabant-of8ec"
 												},
 												{
 													"key": "facilityId",
@@ -356,7 +356,7 @@
 									"variable": [
 										{
 											"key": "tenatntId",
-											"value": "trabant-dj99y"
+											"value": "trabant-of8ec"
 										},
 										{
 											"key": "facilityId",
@@ -376,14 +376,14 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"tenantId\": \"trabant-dj99y\",\r\n    \"facilityId\":\"Test_Facility\",\r\n    \"floors\": [14, 14, 3,6],\r\n    \"pricePerMinute\":0.1,\r\n    \"maxCapacity\":100\r\n}\r\n",
+							"raw": "{\r\n    \"tenantId\": \"trabant-of8ec\",\r\n    \"facilityId\":\"Test_Facility\",\r\n    \"floors\": [14, 14, 3,6],\r\n    \"pricePerMinute\":0.1,\r\n    \"maxCapacity\":100\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
 						},
-						"url": "http://trabant-dj99y.trabantparking.ninja/createParkingSpotsForFacility"
+						"url": "http://trabant-of8ec.trabantparking.ninja/createParkingSpotsForFacility"
 					},
 					"response": []
 				}
