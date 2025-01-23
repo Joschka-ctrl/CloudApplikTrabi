@@ -355,7 +355,7 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
 // Free Plan Tenant erstellen
 async function handleFreePlan(tenantConfig) {
   try {
-
+    
     return "free.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating Free Plan Tenant:', error);
@@ -606,6 +606,8 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       return res.status(400).json({ error: 'tenantId is required' });
     }
 
+    const oldPlan = (await db.collection('tenants').doc(tenantId).get()).data().plan;
+
     await db.collection('tenants').doc(tenantId).set({
       plan
     });
@@ -614,13 +616,14 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
     switch (plan) {
       case 'free':
         console.log("free");
-        return await handleFreePlan({ tenantName: tenantId });
+        return await handleFreePlan({ tenantName: tenantId, oldPlan: oldPlan });
       case 'pro':
         console.log("pro");
-        return await handleproPlan({ tenantName: tenantId });
+        return await handleproPlan({ tenantName: tenantId, oldPlan: oldPlan });
       case 'enterprise':
         console.log("enterprise");
         await triggerWorkflow({ tenantName: tenantId });
+        //TODO: ENTERPRISE MIGRATION TRIGGER
         return `${tenantId}.trabantparking.ninja`;
 
       default:
