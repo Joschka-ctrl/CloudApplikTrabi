@@ -407,5 +407,5 @@ jobs:
         kubectl get services -n trabi-app
     
     - name: Publish Completion Message
-        run: |
-          gcloud pubsub topics publish pipeline-completion --message="${{ github.event.inputs.migrationId }}"
+      run: |
+        gcloud pubsub topics publish pipeline-completion --message="${{ github.event.inputs.migrationId }}"
