@@ -107,13 +107,16 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "http://localhost:3033/getTicketNr/:tenatntId/:facilityId",
+											"raw": "http://free.trabantparking.ninja/api/parking/getTicketNr/:tenatntId/:facilityId",
 											"protocol": "http",
 											"host": [
-												"localhost"
+												"free",
+												"trabantparking",
+												"ninja"
 											],
-											"port": "3033",
 											"path": [
+												"api",
+												"parking",
 												"getTicketNr",
 												":tenatntId",
 												":facilityId"
@@ -125,7 +128,7 @@
 												},
 												{
 													"key": "facilityId",
-													"value": ""
+													"value": "uCBdz1r951cwVVgZ6GxTW"
 												}
 											]
 										}
@@ -138,16 +141,20 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "http://localhost:3033/leaveParkhouse/:tenatntId/:facilityId",
+											"raw": "http://free.trabantparking.ninja/api/parking/leaveParkhouse/:tenatntId/:facilityId/:ticketNr",
 											"protocol": "http",
 											"host": [
-												"localhost"
+												"free",
+												"trabantparking",
+												"ninja"
 											],
-											"port": "3033",
 											"path": [
+												"api",
+												"parking",
 												"leaveParkhouse",
 												":tenatntId",
-												":facilityId"
+												":facilityId",
+												":ticketNr"
 											],
 											"variable": [
 												{
@@ -156,7 +163,11 @@
 												},
 												{
 													"key": "facilityId",
-													"value": ""
+													"value": "uCBdz1r951cwVVgZ6GxTW"
+												},
+												{
+													"key": "ticketNr",
+													"value": "fab9e59-67a0-45f7-80a6-d50308158b16"
 												}
 											]
 										}
@@ -175,14 +186,14 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"jnyi1syvODfUShim1px-9\"\r\n}\r\n",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
 											"options": {
 												"raw": {
 													"language": "json"
 												}
 											}
 										},
-										"url": "http://localhost:3033/reserveParkingSpot"
+										"url": "http://free.trabantparking.ninja/api/parking/reserveParkingSpot"
 									},
 									"response": []
 								},
@@ -193,14 +204,14 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"jnyi1syvODfUShim1px-9\"\r\n}\r\n",
+											"raw": "{\r\n    \"id\": \"01\",\r\n    \"tenantID\": \"trabant-dj99y\",\r\n    \"facilityID\":\"uCBdz1r951cwVVgZ6GxTW\"\r\n}\r\n",
 											"options": {
 												"raw": {
 													"language": "json"
 												}
 											}
 										},
-										"url": "http://localhost:3033/releaseParkingSpot"
+										"url": "http://free.trabantparking.ninja/api/parking/releaseParkingSpot"
 									},
 									"response": []
 								}
@@ -215,13 +226,16 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "http://localhost:3033/duration/:tenatntId/:facilityId/:ticketId",
+											"raw": "http://free.trabantparking.ninja/api/parking/duration/:tenatntId/:facilityId/:ticketId",
 											"protocol": "http",
 											"host": [
-												"localhost"
+												"free",
+												"trabantparking",
+												"ninja"
 											],
-											"port": "3033",
 											"path": [
+												"api",
+												"parking",
 												"duration",
 												":tenatntId",
 												":facilityId",
@@ -230,15 +244,15 @@
 											"variable": [
 												{
 													"key": "tenatntId",
-													"value": ""
+													"value": "trabant-dj99y"
 												},
 												{
 													"key": "facilityId",
-													"value": ""
+													"value": "uCBdz1r951cwVVgZ6GxTW"
 												},
 												{
 													"key": "ticketId",
-													"value": ""
+													"value": "8fab9e59-67a0-45f7-80a6-d50308158b16"
 												}
 											]
 										}
@@ -251,13 +265,16 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "http://localhost:3033/getParkingFee/:tenatntId/:facilityId/:ticketId",
+											"raw": "http://free.trabantparking.ninja/api/parking/getParkingFee/:tenatntId/:facilityId/:ticketId",
 											"protocol": "http",
 											"host": [
-												"localhost"
+												"free",
+												"trabantparking",
+												"ninja"
 											],
-											"port": "3033",
 											"path": [
+												"api",
+												"parking",
 												"getParkingFee",
 												":tenatntId",
 												":facilityId",
@@ -270,11 +287,11 @@
 												},
 												{
 													"key": "facilityId",
-													"value": ""
+													"value": "uCBdz1r951cwVVgZ6GxTW"
 												},
 												{
 													"key": "ticketId",
-													"value": ""
+													"value": "8fab9e59-67a0-45f7-80a6-d50308158b16"
 												}
 											]
 										}
@@ -366,7 +383,7 @@
 								}
 							}
 						},
-						"url": "http://localhost:3033/createParkingSpotsForFacility"
+						"url": "http://trabant-dj99y.trabantparking.ninja/createParkingSpotsForFacility"
 					},
 					"response": []
 				}
