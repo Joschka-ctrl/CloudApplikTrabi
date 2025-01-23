@@ -39,7 +39,7 @@ jobs:
         run: |
           while IFS=$'\t' read -r cluster_name location; do
           echo "Triggering workflow for cluster: $cluster_name in location: $location"
-          if [ "$cluster_name" != "free" ] && [ "$cluster_name" != "pro" ]; then
+          if [ "$cluster_name" != "free" ] && [ "$cluster_name" != "professional" ]; then
             gh workflow run cluster-create-k8s.yml \
                 -f tenant_name="${cluster_name}" \
                 -f region="europe-west1" \

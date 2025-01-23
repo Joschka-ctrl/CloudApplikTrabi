@@ -366,7 +366,7 @@ jobs:
           TENANT_NAME=${{ env.GKE_CLUSTER }}
   
     - name: Create or Update Cloud Scheduler Job
-      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'pro' }}
+      if: ${{ env.GKE_CLUSTER != 'free' && env.GKE_CLUSTER != 'professional' }}
       run: |
         # Abrufen aller Jobs im Cloud Scheduler
         scheduler_output=$(gcloud scheduler jobs list --location=europe-west1 --format="value(name)")
@@ -396,19 +396,7 @@ jobs:
             --oidc-token-audience="https://europe-west1-trabantparking-stage.cloudfunctions.net/asyncreport${{ env.GKE_CLUSTER }}"
 
         fi
-    # - name: migrate data from plan to plan
-    #   if: ${{ env.CLUSTER_EXISTS == 'true' && env.SECRET_EXISTS == 'true' }}
-    #   run: |
-    #     if firebase database:get /${{env.GKE_CLUSTER}} --project=trabantparking-stage > ${{env.GKE_CLUSTER}}-data.json; then
-    #       echo "Database '${{env.GKE_CLUSTER}}' exists. Exporting data..."
-    #       # Import data into 'free'
-    #       firebase database:set /migrate ${{env.GKE_CLUSTER}}-data.json --project=trabantparking-stage
-    #       echo "Data migrated to 'migrate'."
-    #     else
-    #       echo "Database '${{env.GKE_CLUSTER}}' does not exist."
-    #     fi
-
-
+   
     - name: Verify Deployment
       run: |
         kubectl get pods -n trabi-app
