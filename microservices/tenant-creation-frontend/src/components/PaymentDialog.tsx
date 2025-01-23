@@ -26,9 +26,9 @@ const getPlanPrice = (plan: string): number => {
     case 'free':
       return 0;
     case 'professional':
-      return 10;
+      return 400;
     case 'enterprise':
-      return 50;
+      return 1500;
     default:
       return 0;
   }
