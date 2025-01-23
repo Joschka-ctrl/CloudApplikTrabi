@@ -20,7 +20,7 @@ const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://loc
 
 const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://backend-echarging';
 
-const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021/api/facilities' : 'api/facilities';
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://backend-facility-management/';
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -220,7 +220,7 @@ router.get('/facilities', authenticateToken, async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
     const facilities = await facilityServiceRequest(
-      `/${tenantId}`,
+      `/api/facilities/${tenantId}`,
       req.headers.authorization.split(' ')[1]
     );
     res.json(facilities);
@@ -370,7 +370,7 @@ router.get('/echarging/garages', authenticateToken, async (req, res) => {
     }
 
     const facilities = await facilityServiceRequest(
-      `/${tenantId}`,
+      `/api/facilities/${tenantId}`,
       token
     );
 
