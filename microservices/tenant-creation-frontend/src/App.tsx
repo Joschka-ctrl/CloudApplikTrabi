@@ -55,6 +55,8 @@ function App() {
 
   const HOST = import.meta.env.VITE_BACKEND_URL;
 
+  console.log(HOST);
+
   const getPlanPrice = (plan: string): number => {
     switch (plan.toLowerCase()) {
       case 'free':
