@@ -30,7 +30,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -77,10 +76,13 @@ jobs:
     - name: Import Existing Cluster
       if: ${{ env.CLUSTER_EXISTS == 'true' }}
       run: |
-        echo ${{ env.PROJECT_ID }}
-        terraform import google_container_cluster.gke projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
+        echo "Importing cluster "
+        terraform import google_container_cluster.primary projects/${{ env.PROJECT_ID }}/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}
+        
+        echo "Importing node pool for cluster "
+        terraform import google_container_node_pool.primary_preemptible_nodes projects/trabantparking-stage/locations/${{ env.GKE_ZONE }}/clusters/${{ env.GKE_CLUSTER }}/nodePools/${{ env.GKE_CLUSTER }}
       working-directory: cloud/terraform
-
+      
     - name: Cluster Name
       run: |
         echo ${{ env.GKE_CLUSTER }}
@@ -102,7 +104,7 @@ jobs:
 
     - name: Check if Firestore Database exists
       run: |
-        if [ -n "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "${{ env.GKE_CLUSTER }}"; then
+        if [ -n "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}"; then
           echo "FIRESTORE_EXISTS=true" >> $GITHUB_ENV
         else
           echo "FIRESTORE_EXISTS=false" >> $GITHUB_ENV

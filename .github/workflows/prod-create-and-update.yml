@@ -2,8 +2,8 @@ name: Production Cluster Creation
 
 on:
   push:
-    tags:
-      - '1.*' 
+    branches:
+      - master
 
 jobs:
   create-free:
@@ -18,7 +18,7 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run cluster-create-k8s.yml -f tenant_name=free -R Joschka-ctrl/CloudApplikTrabi -r stage
+          gh workflow run cluster-create-k8s.yml -f tenant_name=free -f region=europe-west1 -f zone=europe-west1-d  -R Joschka-ctrl/CloudApplikTrabi -r master
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}  
   
@@ -34,6 +34,6 @@ jobs:
 
       - name: Trigger another pipeline
         run: |
-          gh workflow run cluster-create-k8s.yml -f tenant_name=pro -R Joschka-ctrl/CloudApplikTrabi -r stage
+          gh workflow run cluster-create-k8s.yml -f tenant_name=pro -f region=europe-west1 -f zone=europe-west1-d -R Joschka-ctrl/CloudApplikTrabi -r master
         env:
           GH_TOKEN: ${{ secrets.TOKEN }}
