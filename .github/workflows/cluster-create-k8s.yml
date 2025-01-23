@@ -104,7 +104,7 @@ jobs:
 
     - name: Check if Firestore Database exists
       run: |
-        if [ -n "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "${{ env.GKE_CLUSTER }}"; then
+        if [ -n "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}" ] && gcloud firestore databases list --format="value(name)" | grep -q "projects/trabantparking-stage/databases/${{ env.GKE_CLUSTER }}"; then
           echo "FIRESTORE_EXISTS=true" >> $GITHUB_ENV
         else
           echo "FIRESTORE_EXISTS=false" >> $GITHUB_ENV
