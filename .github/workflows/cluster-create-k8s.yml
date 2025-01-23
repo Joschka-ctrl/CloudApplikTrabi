@@ -146,6 +146,13 @@ jobs:
       with:
         fetch-depth: 2
 
+    - name: Print input values
+      run: |
+        echo "tenant_name: ${{ github.event.inputs.tenant_name }}"
+        echo "region: ${{ github.event.inputs.region }}"
+        echo "zone: ${{ github.event.inputs.zone }}"
+        echo "GKE_CLUSTER: ${{ env.GKE_CLUSTER }}"
+        
     - name: Get latest tag
       id: get_latest_tag
       run: |
