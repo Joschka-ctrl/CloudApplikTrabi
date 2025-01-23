@@ -39,7 +39,33 @@ const AuthProvider = ({ children }) => {
       setAuthTenant(tenantId);
       localStorage.setItem('currentTenantId', tenantId);
       setCurrentTenantId(tenantId);
-      await signInWithEmailAndPassword(auth, email, password);
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
+
+      const host = window.location.hostname;
+
+      if (!host.includes('localhost') && !host.includes('127.0.0.1')) {
+      const user = credentials.user;
+      console.log("check users plan...");
+      const idTokenResult = await user.getIdTokenResult();
+      const claims = idTokenResult.claims;
+      const userplan = claims.plan;
+      const isFreeTenant = host.startsWith('free') 
+      const isProTenant = host.startsWith('pro');
+      const enterpriseTenant = host.startsWith(tenantId);
+
+      if (!enterpriseTenant && userplan === 'enterprise') {
+        await handleLogout();
+        throw new Error("You need a pro plan to use this tenant");
+      }
+      if (!isFreeTenant && userplan === 'free') {
+        await handleLogout();
+        throw new Error("You need a pro plan to use this tenant");
+      }
+      if (!isProTenant && userplan === 'pro') {
+        await handleLogout();
+        throw new Error("You need a free plan to use this tenant");
+      }
+    }
     } catch (error) {
       console.error("Fehler beim Anmelden:", error);
       throw error;
