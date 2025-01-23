@@ -38,11 +38,12 @@ export function AdminLogin({ onLoginSuccess, onSwitchToSignUp }: AdminLoginProps
   const [loading, setLoading] = useState(false);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loadingTenants, setLoadingTenants] = useState(true);
+  const HOST = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const fetchTenants = async () => {
       try {
-        const response = await fetch('http://localhost:3023/api/tenants');
+        const response = await fetch(`${HOST}/api/tenants`);
         if (!response.ok) {
           throw new Error('Failed to fetch tenants');
         }
