@@ -15,6 +15,10 @@
     "express": "^4.21.1",
     "firebase-admin": "^12.6.0",
     "google-auth-library": "^9.14.2",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "pdfkit": "^0.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
   }
 }

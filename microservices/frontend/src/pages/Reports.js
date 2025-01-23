@@ -14,7 +14,7 @@ import DailyRevenueChart from '../features/reports/components/DailyRevenueChart'
 import FloorUsagePatternChart from '../features/reports/components/FloorUsagePatternChart';
 import ExportPDFButton from '../features/reports/components/ExportPDFButton';
 import ParkingDurationDistributionChart from '../features/reports/components/ParkingDurationDistributionChart';
-import { Button } from 'bootstrap';
+import DailyReportsList from '../features/reports/components/DailyReportsList';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -342,46 +342,28 @@ const Reports = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Daily Reports
-          </Typography>
-          <Grid container spacing={2}>
-            {dailyReports && dailyReports.length > 0 ? (
-              dailyReports.map((report, index) => (
-                <Grid item key={report.id || index}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleReportDownload(report.id)}
-                  >
-                    {`${report.date || 'Unknown Date'} - ${report.facilityName || 'Unknown Facility'}`}
-                  </Button>
-                </Grid>
-              ))
-            ) : (
-              <Grid item>
-                <Typography variant="body2" color="text.secondary">
-                  No daily reports available
-                </Typography>
-              </Grid>
-            )}
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <FilterPanel 
+              parkingPlaces={parkingPlaces}
+              selectedParkingPlace={selectedParkingPlace}
+              startDate={startDate}
+              endDate={endDate}
+              minUsage={minUsage}
+              maxUsage={maxUsage}
+              onParkingPlaceChange={setSelectedParkingPlace}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              onMinUsageChange={setMinUsage}
+              onMaxUsageChange={setMaxUsage}
+            />
           </Grid>
-        </Box>
+          <Grid item xs={12}>
+            <DailyReportsList tenantId={user?.tenantId} />
+          </Grid>
+        </Grid>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <FilterPanel 
-            parkingPlaces={parkingPlaces}
-            selectedParkingPlace={selectedParkingPlace}
-            startDate={startDate}
-            endDate={endDate}
-            minUsage={minUsage}
-            maxUsage={maxUsage}
-            onParkingPlaceChange={setSelectedParkingPlace}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-            onMinUsageChange={setMinUsage}
-            onMaxUsageChange={setMaxUsage}
-          />
           <ExportPDFButton
             metrics={metrics}
             dailyUsageData={dailyUsageData}
