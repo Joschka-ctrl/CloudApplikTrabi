@@ -4,7 +4,11 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
 const axios = require('axios');
-const { migrate } = require('./migration');
+const { migrate, addToMigrationQueue, startQueuedMigration } = require('./migration');
+const { PubSub } = require('@google-cloud/pubsub');
+const pubsub = new PubSub();
+const subscriptionName = 'pipeline-completion-sub';
+const subscription = pubsub.subscription(subscriptionName);
 
 const app = express();
 const port = process.env.PORT || 3023;
@@ -384,6 +388,14 @@ async function handleproPlan(tenantConfig) {
   }
 }
 
+function handleEnterprisePlan(tenantConfig) {
+  let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+  addToMigrationQueue(oldPlan || "", tenantConfig.tenantName, tenantConfig.tenantName, tenantConfig.migrationId);
+}
+
 // Create new tenant endpoint
 app.post('/api/tenants', authenticateToken, async (req, res) => {
   try {
@@ -653,7 +665,9 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
         return await handleproPlan({ tenantName: tenantId, oldPlan: oldPlan });
       case 'enterprise':
         console.log("enterprise");
-        await triggerWorkflow({ tenantName: tenantId });
+        const migrationId = Math.random().toString(36).substring(7);
+        handleEnterprisePlan({ tenantName: tenantId, oldPlan: oldPlan, migrationId: migrationId });
+        await triggerWorkflow({ tenantName: tenantId, migrationId: migrationId });
         //TODO: ENTERPRISE MIGRATION TRIGGER
         return `${tenantId}.trabantparking.ninja`;
 
@@ -668,7 +682,6 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
     res.status(500).json({ error: error.message });
   }
 });
-
 
 // Stop tenant endpoint
 app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
@@ -859,3 +872,12 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
   console.log(`Tenant creation service listening on port ${port}`);
 });
+
+function messageHandler(message) {
+  console.log(`Received message: ${message.data.toString()}`);
+  startQueuedMigration(message.data.toString());
+  // Handle the message (e.g., trigger a workflow, update a database, etc.)
+  message.ack();
+}
+
+subscription.on('message', messageHandler);

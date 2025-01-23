@@ -1,5 +1,8 @@
 const { database } = require('firebase-admin');
 const admin = require('firebase-admin');
+
+const migrationqueue = []
+
 async function migrate(from, to, tenantId){
     const app1 = admin.initializeApp({
       credential: admin.credential.applicationDefault(),
@@ -42,4 +45,18 @@ async function migrate(from, to, tenantId){
     console.log("All Done!")
 }
 
-module.exports = { migrate };
+function addToMigrationQueue(from, to, tenantId, uuid){
+    migrationqueue.push({from, to, tenantId, uuid})
+}
+
+function startQueuedMigration(uuid){
+    const migration = migrationqueue.find((item) => item.uuid == uuid)
+    if(migration){
+        migrate(migration.from, migration.to, migration.tenantId)
+        migrationqueue = migrationqueue.filter((item) => item.uuid != uuid)
+    }
+}
+
+
+
+module.exports = { migrate, addToMigrationQueue, startQueuedMigration };
