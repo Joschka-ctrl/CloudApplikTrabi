@@ -27,6 +27,7 @@ env:
   TF_PLAN_BUCKET: trabantparking-stage-terraform-plans
   TF_PLAN_FILE: terraform.tfstate
   BUCKET_TF_STATE: trabantparking-stage-terraform-plans/terraform.tfstate
+  MIGRATION_ID: ${{ github.event.inputs.migrationId }}
 
 jobs:
   deploy:
@@ -408,4 +409,4 @@ jobs:
     
     - name: Publish Completion Message
       run: |
-        gcloud pubsub topics publish pipeline-completion --message="${{ github.event.inputs.migrationId }}"
+        gcloud pubsub topics publish pipeline-completion --message="${{ env.MIGRATION_ID }}"
