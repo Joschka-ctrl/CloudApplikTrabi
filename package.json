@@ -25,7 +25,6 @@
     "start:dev:async-report": "cd microservices/async-report && npm start",
     "start:dev:tenant-creation-frontend": "cd microservices/tenant-creation-frontend && npm run dev",
     "start:dev:frontend": "cd microservices/frontend && npm start"
-    
   },
   "author": "",
   "license": "ISC",

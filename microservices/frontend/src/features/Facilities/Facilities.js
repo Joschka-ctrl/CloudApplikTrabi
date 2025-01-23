@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Button,
   Card,
@@ -17,13 +17,14 @@ export default function Facilities() {
   const FACILITY_API_URL =
     process.env.NODE_ENV === "development"
       ? "http://localhost:3021"
-      : process.env.REACT_APP_API_URL;
+      : "";
 
   const PARKING_API_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : '/api/parking';   
 
   const [facilities, setFacilities] = React.useState([]);
+  const [facilitiesChanged, setFacilitiesChanged] = React.useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("current tenant id", currentTenantId);
     fetch(`${FACILITY_API_URL}/api/facilities/${currentTenantId}`, {
       method: "GET",
@@ -33,38 +34,38 @@ export default function Facilities() {
       },
     })
       .then((response) => response.json())
-      .then((data) => setFacilities(data))
+      .then((data) => {
+        setFacilities(data)
+        setFacilitiesChanged(true)
+      })
       .catch((error) => console.error("Error fetching facilities:", error));
   }, []);
 
-  React.useEffect(() => {
-    const fetchOccupancyLevels = async () => {
-      const updatedFacilities = await Promise.all(
-        facilities.map(async (facility) => {
-          const response = await fetch(`${PARKING_API_URL}/currentOccupancy/${currentTenantId}/${facility.facilityId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${user.accessToken}`,
-            },
-          });
-          const data = await response.json();
-          const occupancyLevel = (data.occupancy.currentOccupancy / data.occupancy.maxCapacity)*100;
+  useEffect(() => {
+    const fetchFacilities = async () => {
+    const updatedFacilities = await Promise.all(
+      facilities.map(async (facility) => {
+        const response = await fetch(`${PARKING_API_URL}/currentOccupancy/${currentTenantId}/${facility.facilityId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${user.accessToken}`,
+          },
+        });
+        const data = await response.json();
+        const occupancyLevel = (data.occupancy.currentOccupancy / data.occupancy.maxCapacity)*100;
           return { ...facility, occupancyLevel: occupancyLevel };
         })
       );
       setFacilities(updatedFacilities);
-    };
-
-    if (facilities.length > 0) {
-      fetchOccupancyLevels();
+      setFacilitiesChanged(false);
     }
-  });
-
-  const getFacilityOccupancyLevel = (facility) => {
-    return 47;
-  };
-
+    if(facilitiesChanged){
+      fetchFacilities();
+    }
+      
+  }, [facilitiesChanged]);
+  
   const navigate = useNavigate();
 
   return (

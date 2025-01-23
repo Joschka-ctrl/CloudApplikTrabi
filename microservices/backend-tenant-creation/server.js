@@ -164,7 +164,8 @@ async function createAdminUserAndTenant(adminData) {
     // Set custom claims for admin user
     await adminAuth.setCustomUserClaims(adminUser.uid, {
       tenantId: tenant.tenantId,
-      role: 'admin'
+      role: 'admin',
+      plan: 'free',
     });
 
     // Create tenant document in Firestore
@@ -173,7 +174,7 @@ async function createAdminUserAndTenant(adminData) {
       companyName: adminData.companyName,
       adminEmail: adminData.email,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      plan: adminData.plan || 'free',
+      plan: 'free',
       status: 'active'
     };
 
@@ -202,7 +203,7 @@ async function createAdminUserAndTenant(adminData) {
 }
 
 // Helper function to create a user in Firebase Auth
-async function createTenantUser(tenantId, email, name, role = 'user') {
+async function createTenantUser(tenantId, email, name, role = 'user', plan = 'free') {
   try {
     const tenantAuth = admin.auth().tenantManager().authForTenant(tenantId);
     const userRecord = await tenantAuth.createUser({
@@ -216,7 +217,8 @@ async function createTenantUser(tenantId, email, name, role = 'user') {
     // Set custom claims for user
     await tenantAuth.setCustomUserClaims(userRecord.uid, {
       tenantId: tenantId,
-      role: role
+      role: role,
+      plan: plan
     });
 
     // Create a user document in Firestore
@@ -365,7 +367,7 @@ async function handleFreePlan(tenantConfig) {
 
 async function handleproPlan(tenantConfig) {
   try {
-    return "pro.trabantparking.ninja";
+    return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);
     throw error;
@@ -389,8 +391,8 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
         // Trigger the workflow for free plan
         await handleFreePlan({ tenantId, tenantName: tenantId });
         break;
-      case 'pro':
-        console.log("pro");
+      case 'professional':
+        console.log("professional");
         await handleproPlan({ tenantId, tenantName: tenantId });
         // Create a document for pro plan
         // await createTenantDocument({ tenantId, plan });
@@ -548,7 +550,15 @@ app.post('/api/tenants/users', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'tenantId and email are required' });
     }
 
-    const newUser = await createTenantUser(tenantId, email, name, role);
+    //get plan of tenant
+    const tenantDoc = await db.collection('tenants').doc(tenantId).get();
+    if (!tenantDoc.exists) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    const tenantData = tenantDoc.data();
+    const plan = tenantData.plan;
+
+    const newUser = await createTenantUser(tenantId, email, name, role, plan);
     res.status(201).json(newUser);
   } catch (error) {
     console.error('Error creating user:', error);
@@ -610,13 +620,24 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       plan
     });
 
+    // update all users custom claims
+    const users = await getTenantUsers(tenantId);
+    await Promise.all(users.map(async (user) => {
+      const currentClaims = user.customClaims || {};
+      const newClaims = {
+        ...currentClaims,
+        plan
+      };
+      await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(user.uid, newClaims);
+    }));
+
     // Hier kommt später Joschkas workflow hin wenn Plan gewählt wird
     switch (plan) {
       case 'free':
         console.log("free");
         return await handleFreePlan({ tenantName: tenantId });
-      case 'pro':
-        console.log("pro");
+      case 'professional':
+        console.log("professional");
         return await handleproPlan({ tenantName: tenantId });
       case 'enterprise':
         console.log("enterprise");

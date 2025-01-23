@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name:  {{ .Release.Name }}-backend-facility-management
+  annotations:
+    cloud.google.com/neg: '{"ingress": true}'
+
+spec:
+  type: {{ .Values.backendFacilityManagement.service.type }}
+  ports:
+    - port: {{ .Values.backendFacilityManagement.service.port }}
+      targetPort: {{ .Values.backendFacilityManagement.service.targetPort }}
+      protocol: TCP
+  selector:
+    app: backend-facility-management

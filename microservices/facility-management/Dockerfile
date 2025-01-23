@@ -11,6 +11,9 @@ ENV AUTH_API_KEY=${AUTH_API_KEY}
 ARG PROJECT_ID
 ENV PROJECT_ID=${PROJECT_ID}
 
+ARG CLUSTER_NAME
+ENV CLUSTER_NAME=${CLUSTER_NAME}
+
 WORKDIR /usr/src/app
 
 # Create app directory and ensure correct permissions
@@ -37,4 +40,4 @@ COPY --chown=node:node . .
 EXPOSE 3021
 
 # Run the application
-CMD ["node", "src/server.js"]
+CMD ["node", "src/index.js"]

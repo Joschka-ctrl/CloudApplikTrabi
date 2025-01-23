@@ -4,19 +4,24 @@ const admin = require('firebase-admin');
 const moment = require('moment');
 const axios = require('axios');
 require('dotenv').config();
+const PDFDocument = require('pdfkit');
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
 
+admin.firestore().settings({
+  databaseId: process.env.CLUSTER_NAME || 'develop',
+});
+
 const db = admin.firestore();
 const app = express();
 const router = express.Router();
-const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
+const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://trabant-app-backend-parking.default.svc.cluster.local';
 
-const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://backend-echarging';
+const ECHARGING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : 'http://trabant-app-backend-echarging.default.svc.cluster.local';
 
-const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021/api/facilities' : 'api/facilities';
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://trabant-app-backend-backend-facility-management.default.svc.cluster.local';
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -156,8 +161,7 @@ router.get('/floor-occupancy', authenticateToken, async (req, res) => {
 // Get parking metrics
 router.get('/metrics', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
 
     // Get all parking spots and current occupancy
     const [spotsData, occupancyData] = await Promise.all([
@@ -217,7 +221,7 @@ router.get('/facilities', authenticateToken, async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
     const facilities = await facilityServiceRequest(
-      `/${tenantId}`,
+      `/api/facilities/${tenantId}`,
       req.headers.authorization.split(' ')[1]
     );
     res.json(facilities);
@@ -305,8 +309,7 @@ router.get('/echarging/card-provider-revenue', authenticateToken, async (req, re
 // Get parking duration statistics
 router.get('/parking-duration', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const durationStats = await parkingServiceRequest(
@@ -324,8 +327,7 @@ router.get('/parking-duration', authenticateToken, async (req, res) => {
 // Get revenue statistics
 router.get('/parking-revenue', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const revenueStats = await parkingServiceRequest(
@@ -343,8 +345,7 @@ router.get('/parking-revenue', authenticateToken, async (req, res) => {
 // Get floor statistics
 router.get('/floor-stats', authenticateToken, async (req, res) => {
   try {
-    const { parkingId: facilityId } = req.query;
-    const tenantId = req.query.tenantId;
+    const { tenantId, facilityId } = req.query;
     const { startDate, endDate } = req.query;
 
     const floorStats = await parkingServiceRequest(
@@ -370,7 +371,7 @@ router.get('/echarging/garages', authenticateToken, async (req, res) => {
     }
 
     const facilities = await facilityServiceRequest(
-      `/${tenantId}`,
+      `/api/facilities/${tenantId}`,
       token
     );
 
@@ -382,24 +383,75 @@ router.get('/echarging/garages', authenticateToken, async (req, res) => {
   }
 });
 
-
-// Get daily reports
-router.get('api/reports/daily', authenticateToken, async (req, res) => {
+// Get list of available daily reports
+router.get('/api/reporting/daily-list', authenticateToken, async (req, res) => {
   try {
     const { tenantId } = req.query;
-    const token = req.headers.authorization.split(' ')[1];
 
     if (!tenantId) {
       return res.status(400).json({ error: 'Tenant ID is required' });
     }
 
-    const reports = await db.collection('daily-report').where('tenantId', '==', tenantId).get();
+    const reportsSnapshot = await db.collection('daily-report')
+      .where('tenantId', '==', tenantId)
+      .get();
 
-    console.log('Fetched reports:', reports);
+    const reports = [];
+    reportsSnapshot.forEach(doc => {
+      reports.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+
     res.json(reports);
   } catch (error) {
-    console.error('Error fetching reports:', error);
-    res.status(500).json({ error: 'Failed to fetch reports' });
+    console.error('Error fetching reports list:', error);
+    res.status(500).json({ error: 'Failed to fetch reports list' });
+  }
+});
+
+router.get('/api/reporting/daily/document/:docId', authenticateToken, async (req, res) => {
+  try {
+    const { docId } = req.params;
+    const { tenantId } = req.query;
+      
+    // Fetch daily report from Firestore
+    const reportDoc = await db.collection('daily-report').doc(docId).get();
+
+    if (!reportDoc.exists || reportDoc.data().tenantId !== tenantId) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    const reportData = reportDoc.data();
+
+    // Create PDF document
+    const doc = new PDFDocument();
+    const chunks = [];
+
+    doc.on('data', chunk => chunks.push(chunk));
+    doc.on('end', () => {
+      const pdfData = Buffer.concat(chunks);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=daily-report-${reportData.date}.pdf`);
+      res.send(pdfData);
+    });
+
+    // Add content to PDF
+    doc.fontSize(20).text(`Daily Report - ${reportData.date}`, { align: 'center' });
+    doc.moveDown();
+
+    // Summary section
+    doc.fontSize(14).text('Report Details', { underline: true });
+    doc.fontSize(12).text(`Facility: ${reportData.facilityId}`);
+    doc.text(`Total Cars: ${reportData.totalCarsInFacility || 0}`);
+    doc.text(`Average Duration: ${reportData.averageParkingDuration}`);
+    doc.moveDown();
+
+    doc.end();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).json({ message: 'Error generating PDF report' });
   }
 });
 

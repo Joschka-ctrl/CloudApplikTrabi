@@ -97,6 +97,22 @@ const ChargingSessions = () => {
     }
   };
 
+  const handleCreateTestSessions = async () => {
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${HOST_URL}/charging-sessions/test?tenantId=${encodeURIComponent(user.tenantId)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      fetchSessions();
+    } catch (error) {
+      console.error('Error creating test sessions:', error);
+    }
+  };
+
   const formatDateTime = (timestamp) => {
     if (!timestamp) return '-';
     // Convert Firebase Timestamp to JavaScript Date
@@ -114,29 +130,38 @@ const ChargingSessions = () => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 8 }}>
+      <Box sx={{ my: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Charging Sessions
         </Typography>
-        
-        <FormControl sx={{ mb: 3, minWidth: 200 }}>
-          <InputLabel id="garage-select-label">Filter by Garage</InputLabel>
-          <Select
-            labelId="garage-select-label"
-            id="garage-select"
-            value={selectedGarage}
-            label="Filter by Garage"
-            onChange={handleGarageChange}
+        <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 2, mb: 3 }}>
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel id="garage-select-label">Garage</InputLabel>
+            <Select
+              labelId="garage-select-label"
+              id="garage-select"
+              value={selectedGarage}
+              label="Garage"
+              onChange={handleGarageChange}
+            >
+              <MenuItem value="">All</MenuItem>
+              {garages.map(garage => (
+                <MenuItem key={garage.facilityId} value={garage.facilityId}>
+                  {garage.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleCreateTestSessions}
           >
-            <MenuItem value="">All Garages</MenuItem>
-            {garages.map((garage) => (
-              <MenuItem key={garage.id} value={garage.id}>
-                {garage.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            Create Test Sessions
+          </Button>
+        </Box>
         
         <TableContainer component={Paper}>
           <Table>
@@ -153,7 +178,7 @@ const ChargingSessions = () => {
             </TableHead>
             <TableBody>
               {sessions.map((session) => {
-                const garage = garages.find(g => g.id === session.garage) || { name: session.garage };
+                const garage = garages.find(g => g.facilityId === session.garage) || { name: session.garage };
                 return (
                   <TableRow key={session.id}>
                     <TableCell>{session.stationId}</TableCell>

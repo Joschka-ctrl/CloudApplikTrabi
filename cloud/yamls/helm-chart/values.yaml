@@ -65,6 +65,22 @@ backendReporting:
     port: 80
     targetPort: 3004
 
+backendFacilityManagement:
+  replicaCount: 1
+  image:
+    repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server
+    tag: "{{ .Values.global.tag }}"
+    pullPolicy: IfNotPresent
+  containerPort: 3021
+  readinessProbe:
+    path: /api/facilities/health
+    initialDelaySeconds: 5
+    periodSeconds: 10
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3021   
+
 frontend:
   replicaCount: 1
   image:

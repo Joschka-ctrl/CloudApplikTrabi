@@ -9,7 +9,7 @@ import ProviderRevenueCards from '../components/reports/ProviderRevenueCards';
 import RevenueCharts from '../components/reports/RevenueCharts';
 import ExportPDFButton from '../components/reports/ExportPDFButton';
 
-const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3004' : '/api/reporting';
+const HOST_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3016' : '/api/echarging';
 
 const ChargingReports = () => {
   const { user } = useAuth();
@@ -45,7 +45,7 @@ const ChargingReports = () => {
         tenantId: user.tenantId
       });
       console.log('Fetching garages with params:', params.toString());
-      const response = await fetchWithAuth(`${HOST_URL}/echarging/garages?${params}`);
+      const response = await fetchWithAuth(`${HOST_URL}/garages?${params}`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch garages: ${response.statusText}`);
@@ -78,7 +78,7 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/echarging/stats?${params}`
+        `${HOST_URL}/charging-stats?${params}`
       );
       const data = await response.json();
       setChargingStats(data);
@@ -100,13 +100,18 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/echarging/station-utilization?${params}`
+        `${HOST_URL}/station-utilization?${params}`
       );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch utilization data: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       setUtilizationData(data);
     } catch (error) {
       console.error('Error fetching utilization data:', error);
-      setUtilizationData(null);  // Set to null on error to prevent UI crashes
+      setUtilizationData(null);
     } finally {
       setLoading(prev => ({ ...prev, utilization: false }));
     }
@@ -123,13 +128,12 @@ const ChargingReports = () => {
       });
 
       const response = await fetchWithAuth(
-        `${HOST_URL}/echarging/card-provider-revenue?${params}`
+        `${HOST_URL}/card-provider-revenue?${params}`
       );
       const data = await response.json();
       setProviderRevenue(data);
     } catch (error) {
       console.error('Error fetching provider revenue:', error);
-      setProviderRevenue(null);  // Set to null on error to prevent UI crashes
     } finally {
       setLoading(prev => ({ ...prev, revenue: false }));
     }

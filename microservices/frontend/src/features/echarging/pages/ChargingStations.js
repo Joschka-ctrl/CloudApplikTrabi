@@ -81,6 +81,21 @@ const ChargingStations = () => {
     setIsFormOpen(true);
   };
 
+  const handleDeleteStation = async (stationId) => {
+    try {
+      const token = await user.getIdToken();
+      await fetch(`${HOST_URL}/charging-stations/${stationId}?tenantId=${encodeURIComponent(currentTenantId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      fetchStations();
+    } catch (error) {
+      console.error('Error deleting charging station:', error);
+    }
+  };
+
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setSelectedStation(null);
@@ -130,7 +145,7 @@ const ChargingStations = () => {
           >
             <MenuItem value="">All</MenuItem>
             {garages.map(garage => (
-              <MenuItem key={garage.id} value={garage.id}>
+              <MenuItem key={garage.facilityId} value={garage.facilityId}>
                 {garage.name}
               </MenuItem>
             ))}
@@ -150,6 +165,7 @@ const ChargingStations = () => {
         <ChargingStationTable
           stations={stations}
           onEdit={handleEditStation}
+          onDelete={handleDeleteStation}
           onRefresh={fetchStations}
         />
 

@@ -3,12 +3,17 @@ require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
 const admin = require('firebase-admin');
+require('dotenv').config();
 const app = express();
 const router = express.Router();
 const port = 3016;
 
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
+});
+
+admin.firestore().settings({
+  databaseId: process.env.CLUSTER_NAME || "develop",
 });
 
 const db = admin.firestore();
@@ -19,8 +24,7 @@ app.use(express.json());
 app.use('/api/echarging', router)
 app.use('/', router)
 
-const PARKING_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3033' : 'http://backend-parking';
-const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://facility-management';
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://trabant-app-backend-facility-management.default.svc.cluster.local';
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
@@ -177,6 +181,36 @@ router.patch("/charging-stations/:id", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error updating charging station:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a charging station
+router.delete("/charging-stations/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.query.tenantId;
+    
+    if (!tenantId) {
+      return res.status(400).json({ error: "tenantId is required" });
+    }
+
+    // Get the station to verify tenant ID
+    const stationDoc = await db.collection("charging-stations").doc(id).get();
+    
+    if (!stationDoc.exists) {
+      return res.status(404).json({ error: "Charging station not found" });
+    }
+
+    const stationData = stationDoc.data();
+    if (stationData.tenantId !== tenantId) {
+      return res.status(403).json({ error: "Not authorized to delete this charging station" });
+    }
+
+    await db.collection("charging-stations").doc(id).delete();
+    res.status(200).json({ message: "Charging station deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting charging station:", error);
+    res.status(500).json({ error: "Failed to delete charging station" });
   }
 });
 
@@ -577,6 +611,68 @@ router.get("/card-provider-revenue", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error getting card provider revenue:", error);
     res.status(500).json({ error: "Failed to get card provider revenue data" });
+  }
+});
+
+// Create test charging sessions
+router.post("/charging-sessions/test", authenticateToken, async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    if (!tenantId) {
+      return res.status(400).json({ error: "tenantId is required" });
+    }
+
+    // Get all available charging stations for the tenant
+    const stationsSnapshot = await db.collection("charging-stations")
+      .where("tenantId", "==", tenantId)
+      .where("status", "==", "available")
+      .get();
+
+    const stations = stationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    if (stations.length === 0) {
+      return res.status(400).json({ error: "No available charging stations found" });
+    }
+
+    // Create 1-3 random test sessions
+    const numSessions = Math.floor(Math.random() * 3) + 1;
+    const testSessions = [];
+
+    for (let i = 0; i < numSessions && i < stations.length; i++) {
+      const station = stations[i];
+      const startTime = new Date();
+      startTime.setHours(startTime.getHours() - Math.random() * 4); // Random start time within last 4 hours
+
+      const session = {
+        stationId: station.id,
+        userId: "test-user-" + Math.floor(Math.random() * 1000),
+        chargingCardProvider: ["ec-card", "mastercard", "enbw"][Math.floor(Math.random() * 3)],
+        startTime: admin.firestore.Timestamp.fromDate(startTime),
+        status: "active",
+        endTime: null,
+        energyConsumed: 0,
+        garage: station.garage,
+        tenantId: String(tenantId)
+      };
+
+      // Update station status
+      await db.collection("charging-stations").doc(station.id).update({
+        status: "occupied",
+        lastModified: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Create session
+      const docRef = await db.collection("charging-sessions").add(session);
+      testSessions.push({ id: docRef.id, ...session });
+    }
+
+    res.status(201).json({ 
+      message: `Created ${testSessions.length} test charging sessions`,
+      sessions: testSessions 
+    });
+  } catch (error) {
+    console.error("Error creating test charging sessions:", error);
+    res.status(500).json({ error: "Failed to create test charging sessions" });
   }
 });
 

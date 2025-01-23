@@ -53,13 +53,13 @@ function App() {
   const [planLoading, setPlanLoading] = useState(true);
   const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
-  const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
+  const HOST = import.meta.env.VITE_BACKEND_URL;
 
   const getPlanPrice = (plan: string): number => {
     switch (plan.toLowerCase()) {
       case 'free':
         return 0;
-      case 'pro':
+      case 'professional':
         return 10;
       case 'enterprise':
         return 50;
@@ -72,8 +72,8 @@ function App() {
     switch (plan.toLowerCase()) {
       case 'free':
         return 'http://free.trabantparking.ninja';
-      case 'pro':
-        return 'http://parking.trabantparking.ninja';
+      case 'professional':
+        return 'http://professional.trabantparking.ninja';
       case 'enterprise':
         return `http://${tenantId}.trabantparking.ninja`;
       default:

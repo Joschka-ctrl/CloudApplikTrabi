@@ -19,6 +19,13 @@ spec:
             name: {{ .Release.Name }}-backend-parking
             port:
               number: 80
+      - path: /api/facilities
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}-backend-facility-management
+            port:
+              number: 80
       - path: /api/echarging
         pathType: Prefix
         backend:

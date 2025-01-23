@@ -5,13 +5,12 @@ const admin = require('firebase-admin');
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
-
-admin.firestore().settings({ databaseId: 'stage-pro' });
+console.log("Database:", process.env.CLUSTER_NAME || "develop");
+admin.firestore().settings({ databaseId: process.env.CLUSTER_NAME || "develop" });
 const db = admin.firestore()
 
 // Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
-
 
 
 const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute, maxCapacity) => {
@@ -420,6 +419,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
                     throw new Error(`Parking spot ${spotID} is already ${newStatus ? 'occupied' : 'free'}`);
                 }
                 spot.occupied = newStatus;
+                spot.avalibilityStatus = newStatus ? 'occupied' : 'free';
                 spotFound = true;
             }
         });
@@ -435,7 +435,7 @@ const manageParkingSpotOccupancy = async (tenantID, facilityID, spotID, newStatu
         });
 
         console.log(`Successfully updated parking spot ${spotID} to status: ${newStatus}`);
-        return { success: true, spotID, status: spot.occupied };
+        return { success: true, spotID, status: "updated" };
     } catch (error) {
         console.error('Error managing parking spot occupancy:', error);
         return { success: false, message: 'Failed to update parking spot occupancy.', error: error.message };

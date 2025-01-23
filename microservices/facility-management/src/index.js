@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const admin = require("firebase-admin");
 const cors = require("cors");
@@ -11,8 +13,9 @@ admin.initializeApp({
     credential: admin.credential.applicationDefault(),
     projectId: 'trabantparking-stage'
 });
+console.log('Database:', process.env.CLUSTER_NAME || "develop");
 admin.firestore().settings({
-    databaseId: "facilities",
+    databaseId: process.env.CLUSTER_NAME || "develop",
 });
 const db = admin.firestore();
 
@@ -37,6 +40,10 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Routes
+app.get("/api/facilities/health", (req, res) => {
+    res.status(200).send("Facility Management API is up and running");
+});
+
 app.post("/api/facilities/:tenantId", authenticateToken,async (req, res) => {
     const token = req.headers.authorization.split(' ')[1];
     console.log("POST /facility");
