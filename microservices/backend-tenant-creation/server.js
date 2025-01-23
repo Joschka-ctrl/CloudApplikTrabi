@@ -294,9 +294,9 @@ async function updateUserCustomClaims(uid, customization) {
 // Helper function to get all users for a tenant
 async function getTenantUsers(tenantId) {
   try {
-    const usersSnapshot = await db.collection('tenants').doc(tenantId).collection('users').get();
-
-    return usersSnapshot.docs.map(doc => doc.data().email);
+    const users = await admin.auth().tenantManager().authForTenant(tenantId).listUsers();
+    console.log(users);
+    return users.users;
   } catch (error) {
     console.error(`Error getting users for tenant ${tenantId}:`, error);
     throw error;
@@ -652,6 +652,8 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
         ...currentClaims,
         plan
       };
+      console.log("newClaims", newClaims);
+      console.log("user", user);
       await admin.auth().tenantManager().authForTenant(tenantId).setCustomUserClaims(user.uid, newClaims);
     }));
 
@@ -830,9 +832,6 @@ app.put('/api/tenants/:tenantId/customization', authenticateToken, async (req, r
 
     // Get all users for this tenant
     const userEmails = await getTenantUsers(tenantId);
-    const users = await Promise.all((userEmails || []).map(async (userEmail) => 
-      admin.auth().tenantManager().authForTenant(tenantId).getUserByEmail(userEmail)
-    ));
 
     // Update claims for each user
     await Promise.all(users.map(async (user) => {
