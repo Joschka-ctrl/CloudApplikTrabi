@@ -24,7 +24,7 @@ app.use(express.json());
 app.use('/api/echarging', router)
 app.use('/', router)
 
-const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://trabant-app-backend-parking.default.svc.cluster.local/api/facilities';
+const FACILITY_SERVICE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3021' : 'http://trabant-app-backend-facility-management.default.svc.cluster.local/api/facilities';
 
 // Authentication middleware
 const authenticateToken = async (req, res, next) => {
