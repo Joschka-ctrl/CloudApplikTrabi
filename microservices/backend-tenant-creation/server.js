@@ -367,7 +367,7 @@ async function handleFreePlan(tenantConfig) {
 
 async function handleproPlan(tenantConfig) {
   try {
-    return "pro.trabantparking.ninja";
+    return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);
     throw error;
@@ -391,8 +391,8 @@ app.post('/api/tenants', authenticateToken, async (req, res) => {
         // Trigger the workflow for free plan
         await handleFreePlan({ tenantId, tenantName: tenantId });
         break;
-      case 'pro':
-        console.log("pro");
+      case 'professional':
+        console.log("professional");
         await handleproPlan({ tenantId, tenantName: tenantId });
         // Create a document for pro plan
         // await createTenantDocument({ tenantId, plan });
@@ -636,8 +636,8 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       case 'free':
         console.log("free");
         return await handleFreePlan({ tenantName: tenantId });
-      case 'pro':
-        console.log("pro");
+      case 'professional':
+        console.log("professional");
         return await handleproPlan({ tenantName: tenantId });
       case 'enterprise':
         console.log("enterprise");

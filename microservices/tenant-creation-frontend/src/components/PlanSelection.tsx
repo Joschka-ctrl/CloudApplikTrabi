@@ -21,7 +21,7 @@ export const PlanSelection = ({
       description: 'Basic features for personal use.',
     },
     {
-      name: 'pro',
+      name: 'professional',
       price: 10,
       description: 'Advanced features for small teams.',
     },

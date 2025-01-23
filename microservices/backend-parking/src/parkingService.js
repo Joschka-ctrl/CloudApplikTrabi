@@ -5,13 +5,12 @@ const admin = require('firebase-admin');
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
-
+console.log("Database:", process.env.CLUSTER_NAME || "develop");
 admin.firestore().settings({ databaseId: process.env.CLUSTER_NAME || "develop" });
 const db = admin.firestore()
 
 // Parkhaus
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
-
 
 
 const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute, maxCapacity) => {

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend-facility-management
+  name:  {{ .Release.Name }}-backend-facility-management
   annotations:
     cloud.google.com/neg: '{"ingress": true}'
 
