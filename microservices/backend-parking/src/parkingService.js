@@ -13,7 +13,6 @@ const db = admin.firestore()
 let parkingSpots = [{ id: "1", occupied: false }, { id: "2", occupied: true }];
 
 
-
 const createParkingSpotObject = (tenantId, facilityId, floors, pricePerMinute, maxCapacity) => {
 
     let floorsArray = [];
