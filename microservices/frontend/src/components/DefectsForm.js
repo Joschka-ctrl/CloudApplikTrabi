@@ -21,7 +21,7 @@ export default function DefectForm({ show, onClose }) {
   const FACILITY_API_URL =
     process.env.NODE_ENV === "development"
       ? "http://localhost:3021"
-      : process.env.REACT_APP_API_URL;
+      : "";
 
   const API_URL =
     process.env.NODE_ENV === "development"

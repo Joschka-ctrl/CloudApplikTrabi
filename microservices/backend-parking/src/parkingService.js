@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
 });
-
+console.log("Database:", process.env.CLUSTER_NAME || "develop");
 admin.firestore().settings({ databaseId: process.env.CLUSTER_NAME || "develop" });
 const db = admin.firestore()
 
