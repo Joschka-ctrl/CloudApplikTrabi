@@ -4,6 +4,7 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
 const axios = require('axios');
+const { migrate } = require('./migration');
 
 const app = express();
 const port = process.env.PORT || 3023;
@@ -357,7 +358,11 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
 // Free Plan Tenant erstellen
 async function handleFreePlan(tenantConfig) {
   try {
-    
+    let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
     return "free.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating Free Plan Tenant:', error);
@@ -367,6 +372,11 @@ async function handleFreePlan(tenantConfig) {
 
 async function handleproPlan(tenantConfig) {
   try {
+    let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
     return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);

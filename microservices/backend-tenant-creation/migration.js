@@ -42,4 +42,4 @@ async function migrate(from, to, tenantId){
     console.log("All Done!")
 }
 
-migrate('parking','free', 'wegmachen-ij57r')
+module.exports = { migrate };
