@@ -53,7 +53,7 @@ function App() {
   const [planLoading, setPlanLoading] = useState(true);
   const [deploymentStatus, setDeploymentStatus] = useState<'pending' | 'deployed' | 'failed'>('pending');
 
-  const HOST = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3023/api/tenants';
+  const HOST = import.meta.env.VITE_BACKEND_URL;
 
   const getPlanPrice = (plan: string): number => {
     switch (plan.toLowerCase()) {
