@@ -4,6 +4,11 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
 const axios = require('axios');
+const { migrate, addToMigrationQueue, startQueuedMigration } = require('./migration');
+const { PubSub } = require('@google-cloud/pubsub');
+const pubsub = new PubSub();
+const subscriptionName = 'pipeline-completion-sub';
+const subscription = pubsub.subscription(subscriptionName);
 
 const app = express();
 const port = process.env.PORT || 3023;
@@ -357,7 +362,11 @@ app.post('/api/admin/verify-signup', authenticateToken, async (req, res) => {
 // Free Plan Tenant erstellen
 async function handleFreePlan(tenantConfig) {
   try {
-
+    let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
     return "free.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating Free Plan Tenant:', error);
@@ -367,11 +376,24 @@ async function handleFreePlan(tenantConfig) {
 
 async function handleproPlan(tenantConfig) {
   try {
+    let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+    migrate(oldPlan || '', 'free', tenantConfig.tenantName);
     return "professional.trabantparking.ninja";
   } catch (error) {
     console.error('Error creating pro Plan Tenant:', error);
     throw error;
   }
+}
+
+function handleEnterprisePlan(tenantConfig) {
+  let oldPlan = tenantConfig.oldPlan || '';
+    if(oldPlan === 'enterprise'){
+      oldPlan = tenantConfig.tenantName;
+    }
+  addToMigrationQueue(oldPlan || "", tenantConfig.tenantName, tenantConfig.tenantName, tenantConfig.migrationId);
 }
 
 // Create new tenant endpoint
@@ -616,6 +638,8 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
       return res.status(400).json({ error: 'tenantId is required' });
     }
 
+    const oldPlan = (await db.collection('tenants').doc(tenantId).get()).data().plan;
+
     await db.collection('tenants').doc(tenantId).set({
       plan
     });
@@ -635,13 +659,16 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
     switch (plan) {
       case 'free':
         console.log("free");
-        return await handleFreePlan({ tenantName: tenantId });
+        return await handleFreePlan({ tenantName: tenantId, oldPlan: oldPlan });
       case 'professional':
         console.log("professional");
-        return await handleproPlan({ tenantName: tenantId });
+        return await handleproPlan({ tenantName: tenantId, oldPlan: oldPlan });
       case 'enterprise':
         console.log("enterprise");
-        await triggerWorkflow({ tenantName: tenantId });
+        const migrationId = Math.random().toString(36).substring(7);
+        handleEnterprisePlan({ tenantName: tenantId, oldPlan: oldPlan, migrationId: migrationId });
+        await triggerWorkflow({ tenantName: tenantId, migrationId: migrationId });
+        //TODO: ENTERPRISE MIGRATION TRIGGER
         return `${tenantId}.trabantparking.ninja`;
 
       default:
@@ -655,7 +682,6 @@ app.put('/api/tenants/:tenantId/changePlan', authenticateToken, async (req, res)
     res.status(500).json({ error: error.message });
   }
 });
-
 
 // Stop tenant endpoint
 app.post('/api/tenants/stop', authenticateToken, async (req, res) => {
@@ -846,3 +872,12 @@ app.get('/health', (req, res) => {
 app.listen(port, () => {
   console.log(`Tenant creation service listening on port ${port}`);
 });
+
+function messageHandler(message) {
+  console.log(`Received message: ${message.data.toString()}`);
+  startQueuedMigration(message.data.toString());
+  // Handle the message (e.g., trigger a workflow, update a database, etc.)
+  message.ack();
+}
+
+subscription.on('message', messageHandler);

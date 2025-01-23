@@ -15,6 +15,10 @@ on:
         description: "Zone"
         required: false
         default: "europe-west1-b" 
+      migrationId:
+        description: "Migration ID"
+        required: false
+        default: "-1"
 
 env:
   PROJECT_ID: trabantparking-stage
@@ -401,3 +405,7 @@ jobs:
       run: |
         kubectl get pods -n trabi-app
         kubectl get services -n trabi-app
+    
+    - name: Publish Completion Message
+        run: |
+          gcloud pubsub topics publish pipeline-completion --message="${{ github.event.inputs.migrationId }}"
