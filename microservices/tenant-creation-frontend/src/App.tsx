@@ -59,7 +59,7 @@ function App() {
     switch (plan.toLowerCase()) {
       case 'free':
         return 0;
-      case 'pro':
+      case 'professional':
         return 10;
       case 'enterprise':
         return 50;
@@ -72,8 +72,8 @@ function App() {
     switch (plan.toLowerCase()) {
       case 'free':
         return 'http://free.trabantparking.ninja';
-      case 'pro':
-        return 'http://parking.trabantparking.ninja';
+      case 'professional':
+        return 'http://professional.trabantparking.ninja';
       case 'enterprise':
         return `http://${tenantId}.trabantparking.ninja`;
       default:
