@@ -101,7 +101,7 @@ const Navbar = () => {
         <Link to="/parkingSpaces" onClick={closeMenu}>Parking</Link>
       </li>
       <li className="NavbarItem">
-        <Link to="/facilities" onClick={closeMenu}>Facilities</Link>
+        <Link to="/facilities" onClick={closeMenu}>Parkhäuser</Link>
       </li>
       <li className="NavbarItem">
         <button className="sign-out-button" onClick={handleLogout}>
