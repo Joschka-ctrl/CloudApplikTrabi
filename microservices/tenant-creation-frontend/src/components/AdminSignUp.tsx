@@ -29,6 +29,8 @@ export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpPro
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const HOST = import.meta.env.VITE_BACKEND_URL;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -50,7 +52,7 @@ export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpPro
       setLoading(true);
       
       // First, create tenant and admin user in backend
-      const response = await fetch('http://localhost:3023/api/admin/signup', {
+      const response = await fetch(`${HOST}/api/admin/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +80,7 @@ export function AdminSignUp({ onSignUpSuccess, onSwitchToLogin }: AdminSignUpPro
       const idToken = await userCredential.user.getIdToken(true);
       
       // Call backend to verify the signup was successful
-      const verifyResponse = await fetch('http://localhost:3023/api/admin/verify-signup', {
+      const verifyResponse = await fetch(`${HOST}/api/admin/verify-signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
