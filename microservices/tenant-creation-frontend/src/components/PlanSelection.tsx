@@ -22,12 +22,12 @@ export const PlanSelection = ({
     },
     {
       name: 'professional',
-      price: 10,
+      price: 400,
       description: 'Advanced features for small teams.',
     },
     {
       name: 'Enterprise',
-      price: 50,
+      price: 1500,
       description: 'All features for large organizations.',
     },
   ];
