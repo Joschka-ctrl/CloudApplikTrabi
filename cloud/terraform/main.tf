@@ -33,7 +33,11 @@ resource "google_container_node_pool" "primary_preemptible_nodes" {
   name       = var.cluster_name
   location   = var.zone
   cluster    = google_container_cluster.primary.name
-  node_count = 1
+
+  autoscaling {
+    min_node_count = 1  # Mindestens 1 Node
+    max_node_count = 3  # Skalierung bis zu 3 Nodes
+  }
 
   node_config {
     preemptible  = true
