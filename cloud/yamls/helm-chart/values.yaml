@@ -2,7 +2,7 @@ global:
   tag: "latest"
 
 backend:
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-server
     tag: "{{ .Values.global.tag }}"
@@ -18,7 +18,7 @@ backend:
     targetPort: 3015
 
 backendEcharging:
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-echarging-server
     tag: "{{ .Values.global.tag }}"
@@ -34,7 +34,7 @@ backendEcharging:
     targetPort: 3016
 
 backendParking:
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-parking-server
     tag: "{{ .Values.global.tag }}"
@@ -50,7 +50,7 @@ backendParking:
     targetPort: 3033
 
 backendReporting:
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/backend-reporting-server
     tag: "{{ .Values.global.tag }}"
@@ -66,7 +66,7 @@ backendReporting:
     targetPort: 3004
 
 backendFacilityManagement:
-  replicaCount: 1
+  replicaCount: 2
   image:
     repository: europe-west1-docker.pkg.dev/trabantparking-stage/docker-repo/facility-management-server
     tag: "{{ .Values.global.tag }}"
